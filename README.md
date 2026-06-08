@@ -6,17 +6,43 @@ An autonomous, simulation-in-the-loop software engineering agent for robotics. B
 
 ---
 
-## Phase 1：线性骨架（当前阶段）
+## Phase 2：ReAct 循环（当前阶段）
 
 ```
-START → planner → reader → suggester → END
+                  ┌──────────────────────┐
+START → planner → │ should_continue?     │
+   ↑              │  - has tool_calls → "tools"
+   │              │  - else → END
+   │              │  - loop_step >= max → END (熔断)
+   │              └──────────────────────┘
+   │                       │ "tools"
+   └─────── tools (ToolNode) ◀───────────┘
 ```
 
-- **planner** —— 用结构化输出从用户 task 中抽取目标文件路径。
-- **reader** —— 调 `read_file` 工具读取文件全文。
-- **suggester** —— LLM 综合 task + file_content 输出 markdown 修复建议（含 diff）。
+`planner` 是绑定了 5 个工具的 LLM 节点，每次输出可能含 `tool_calls` 的 `AIMessage`；
+`ToolNode` 自动派发到对应工具、把返回写回 `ToolMessage`；
+条件边 `should_continue` 根据"是否还有 tool_calls"和"loop_step 是否超额"决定继续还是结束。
 
-模型层支持 **Claude 3.5 Sonnet / GPT-4o-mini / DeepSeek-Coder**，通过 `MODEL_PROVIDER` 环境变量切换，零代码改动。
+### 工具集
+
+| 工具 | 作用 |
+|------|------|
+| `list_dir(path, max_depth)` | 浏览目录结构 |
+| `read_file_chunk(path, offset, limit)` | 分页读文件，返回带行号 |
+| `grep_codebase(pattern, glob, max_results)` | 正则搜索仓库 |
+| `execute_python(code, timeout)` | subprocess 沙盒中跑 Python，复现 bug / 验证修复 |
+| `write_patch(path, old_string, new_string)` | 精确字符串替换（要求唯一匹配） |
+
+> ⚠️ `execute_python` 当前是 subprocess + tempdir 隔离，**不是真沙盒**。LLM 仍可读你的本地文件。Phase 3 会替换为 E2B Code Interpreter。
+
+### 测试 fixture 设计
+
+- `tests/fixtures/buggy_ik_template.py` —— 含 4 个 bug 的 2-link IK 函数，**永不修改**（题面源头）。
+- `tests/fixtures/_buggy_ik_workspace.py` —— 每次 demo / E2E 测试启动时从 template 复制出的副本，agent 在这上面动手。
+
+### 模型层
+
+支持 **Claude 3.5 Sonnet / GPT-4o-mini / DeepSeek-Chat**，通过 `MODEL_PROVIDER` 环境变量切换，零代码改动。
 
 ---
 
@@ -46,7 +72,14 @@ cp .env.example .env
 ### 3. 跑通 demo
 
 ```bash
-uv run python scripts/run_demo.py "请分析并修复 tests/fixtures/buggy_ik.py 中的 bug"
+# 默认任务: 修复 buggy_ik workspace (启动时自动从 template 重置)
+uv run python scripts/run_demo.py
+
+# --stream 模式: 逐节点 print, 实时看 agent 思考过程 (强烈推荐)
+uv run python scripts/run_demo.py --stream
+
+# 自定义任务
+uv run python scripts/run_demo.py "请用 grep_codebase 找出所有 TODO 注释并列举"
 ```
 
 切换 provider：
@@ -106,11 +139,13 @@ langgraph.json    # Studio 入口
 
 ## 后续阶段路线图
 
-| Phase | 主题 | 关键变化 |
-|-------|------|---------|
-| 2 | ReAct + 工具集 | 加 `execute_python` (E2B 沙盒), `read_file_chunk`, `grep_codebase`；planner 升级为 router |
-| 3 | Agentic RAG | chromadb 索引源码 + 论文 PDF，新增 `search_codebase` / `search_docs` |
-| 4 | Checkpointer + HITL | SqliteSaver 持久化，suggester 前 `interrupt_before` 人工 review |
-| 5 | 机器人闭环 | `run_simulation` 接 PyBullet/MuJoCo，构造 IK/控制器/SLAM bug 评测集 |
+| Phase | 主题 | 状态 |
+|-------|------|------|
+| 1 | 线性骨架 (planner → reader → suggester) | ✅ 完成 |
+| 2 | ReAct + 5 工具集 (本地 sandbox) | ✅ 完成 |
+| 2.5 | 替换为 E2B Code Interpreter 真沙盒 | ⏳ TODO |
+| 3 | Agentic RAG — chromadb 索引源码 + 论文 PDF | ⏳ TODO |
+| 4 | Checkpointer (SqliteSaver) + HITL interrupt | ⏳ TODO |
+| 5 | 机器人闭环 — PyBullet/MuJoCo 仿真评测集 | ⏳ TODO |
 
 详细方案见 `C:\Users\Rog\.claude\plans\langgraph-swe-agent-agent-code-executio-shiny-dragonfly.md`。

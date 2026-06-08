@@ -24,13 +24,18 @@ def inverse_kinematics_2link(x: float, y: float, l1: float = 1.0, l2: float = 1.
         (theta1, theta2) 关节角, 单位弧度。
     """
     d_sq = x * x + y * y
+    max_reach = l1 + l2
+    if d_sq > max_reach * max_reach:
+        raise ValueError(f"目标点 ({x}, {y}) 超出可达范围 (最大距离 {max_reach})")
+
     cos_theta2 = (d_sq - l1 * l1 - l2 * l2) / (2 * l1 * l2)
-    # BUG 1: acos 输入未 clip, |cos_theta2| 可能 > 1
+    # 将 cos_theta2 clip 到 [-1, 1], 避免 acos 的 math domain error
+    cos_theta2 = max(-1.0, min(1.0, cos_theta2))
     theta2 = math.acos(cos_theta2)
 
     k1 = l1 + l2 * math.cos(theta2)
     k2 = l2 * math.sin(theta2)
-    # BUG 2: 符号错误 —— 正确应为 atan2(y, x) - atan2(k2, k1)
-    theta1 = math.atan2(y, x) + math.atan2(k2, k1)
+    # 正确公式: theta1 = atan2(y, x) - atan2(k2, k1) (elbow-down 解)
+    theta1 = math.atan2(y, x) - math.atan2(k2, k1)
 
     return theta1, theta2

@@ -22,6 +22,9 @@ venv/
 # —— LangGraph Studio 本地缓存 ——
 .langgraph_api/
 
+# —— Demo / Test workspace (每次 demo 启动从 template 重置, 不入 git) ——
+tests/fixtures/_buggy_ik_workspace.py
+
 # —— Checkpoint / RAG 持久化 (Phase 4+) ——
 *.sqlite
 *.db
