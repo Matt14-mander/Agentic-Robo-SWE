@@ -16,7 +16,8 @@
 
 1. **统一入口** ``execute_python`` (@tool) 对 LLM 完全透明; backend 切换不需要改 prompt。
 2. **失败时返回 ERROR 字符串而非抛异常** —— ToolNode 收到的就是 LLM 能读懂的反馈。
-3. **E2B 后端按需上传** —— 只在 code 显式 import 项目模块时才上传 src/+tests/,
+3. **E2B 后端按需上传** —— 只在 code 显式 import 项目模块时才上传
+   src/+tests/+benchmarks/,
    单跑 ``print(1+1)`` 不走上传, 减少 80% 的冷启动延迟。
 4. **每次调用一个全新 sandbox** —— 语义与 local subprocess 一致 (无状态串扰),
    便于 LLM 推理。后续可在 graph 层做 sandbox 复用优化。
@@ -40,7 +41,7 @@ _MAX_OUTPUT_CHARS = 20_000
 
 # 检测代码是否需要项目文件 (用 import / from 语句中是否引用 agent. / tests. 命名空间)
 _PROJECT_IMPORT_RE = re.compile(
-    r"^(?:from|import)\s+(agent|tests)(?:[.\s]|$)", re.MULTILINE
+    r"^(?:from|import)\s+(agent|tests|benchmarks)(?:[.\s]|$)", re.MULTILINE
 )
 
 
@@ -111,14 +112,14 @@ def _execute_local(code: str, timeout: int) -> str:
 
 
 def _collect_project_files() -> list[tuple[str, str]]:
-    """收集 src/ 与 tests/ 下的 .py 文件 (path_in_sandbox, content) 对。
+    """收集 src/、tests/ 与 benchmarks/ 下的 .py 文件。
 
     跳过 .venv / __pycache__ / 隐藏目录, 防止 noise 上传。
     """
     pairs: list[tuple[str, str]] = []
     skip = {".venv", ".git", "__pycache__", ".mypy_cache", ".pytest_cache",
             ".ruff_cache", "node_modules", "dist", "build"}
-    for sub in ("src", "tests"):
+    for sub in ("src", "tests", "benchmarks"):
         root = PROJECT_ROOT / sub
         if not root.exists():
             continue

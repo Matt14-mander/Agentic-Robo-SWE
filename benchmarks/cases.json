@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "ik_reachability",
+      "title": "2-link IK 可达域与数值边界",
+      "category": "kinematics",
+      "difficulty": "medium",
+      "template": "benchmarks/fixtures/ik_reachability.py",
+      "workspace": "benchmarks/workspaces/ik_reachability.py",
+      "validator": "ik_reachability",
+      "prompt": "inverse_kinematics_2link 对不可达目标抛出不清晰的 math domain error，并且在浮点边界附近不稳定。请增加显式可达域检查并安全处理 acos 输入，同时保持可达目标的正运动学重建正确。",
+      "tags": ["ik", "numerical-stability", "error-handling"]
+    },
+    {
+      "id": "angle_units",
+      "title": "角度到弧度转换错误",
+      "category": "geometry",
+      "difficulty": "easy",
+      "template": "benchmarks/fixtures/angle_units.py",
+      "workspace": "benchmarks/workspaces/angle_units.py",
+      "validator": "angle_units",
+      "prompt": "degrees_to_radians 使用了反向换算比例，导致姿态角转换错误。修复换算，并保证标量与负角度输入正确。",
+      "tags": ["units", "angles"]
+    },
+    {
+      "id": "quaternion_normalization",
+      "title": "四元数归一化与零范数处理",
+      "category": "geometry",
+      "difficulty": "medium",
+      "template": "benchmarks/fixtures/quaternion_normalization.py",
+      "workspace": "benchmarks/workspaces/quaternion_normalization.py",
+      "validator": "quaternion_normalization",
+      "prompt": "normalize_quaternion 使用平方范数作除数，结果不再是单位四元数；零四元数还会触发底层除零错误。修复归一化并为零范数提供清晰的 ValueError。",
+      "tags": ["quaternion", "normalization", "error-handling"]
+    },
+    {
+      "id": "pid_anti_windup",
+      "title": "PID 执行器饱和下的积分累积",
+      "category": "control",
+      "difficulty": "hard",
+      "template": "benchmarks/fixtures/pid_anti_windup.py",
+      "workspace": "benchmarks/workspaces/pid_anti_windup.py",
+      "validator": "pid_anti_windup",
+      "prompt": "PIDController 在输出达到执行器上限后仍持续积分，误差反向时控制量长时间保持错误方向。实现条件积分或等价 anti-windup，同时维持输出限幅。",
+      "tags": ["pid", "control", "anti-windup"]
+    },
+    {
+      "id": "trajectory_endpoints",
+      "title": "线性轨迹采样遗漏终点",
+      "category": "trajectory",
+      "difficulty": "easy",
+      "template": "benchmarks/fixtures/trajectory_endpoints.py",
+      "workspace": "benchmarks/workspaces/trajectory_endpoints.py",
+      "validator": "trajectory_endpoints",
+      "prompt": "linear_trajectory 把 samples 当成分母并少生成一个样本，导致轨迹不包含终点。修复采样语义：返回恰好 samples 个点、包含首尾端点，并拒绝 samples < 2。",
+      "tags": ["trajectory", "interpolation", "off-by-one"]
+    }
+  ]
+}

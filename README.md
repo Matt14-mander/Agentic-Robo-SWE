@@ -53,7 +53,7 @@ START → planner → │ should_continue?     │
 | 隔离强度 | cwd + tempdir，**LLM 仍可读本机其它文件** | Firecracker microVM，真隔离 |
 | 启动开销 | ~0.5s | ~3-5s（云端冷启动） |
 | 需要凭据 | 无 | `E2B_API_KEY` |
-| 项目源码可用性 | PYTHONPATH 注入 | 自动上传 src/+tests/ 文件 |
+| 项目源码可用性 | PYTHONPATH 注入 | 自动上传 src/+tests/+benchmarks/ 文件 |
 | 第三方依赖 | 复用当前 venv | 需 E2B 镜像预装或由执行代码安装 |
 | 适合场景 | 学习/快速迭代 | 生产/不可信代码 |
 
@@ -131,7 +131,23 @@ uv run pytest -v
 
 带 `e2e` marker 的测试会真实调用 LLM 或 E2B；缺少对应 key/依赖时自动跳过。
 
-### 5. LangGraph Studio 可视化（强烈推荐）
+### 5. M1 机器人任务评测
+
+```bash
+# 查看首批案例，不调用 LLM
+uv run python scripts/run_benchmark.py --list
+
+# 确认所有原始 fixture 都会被验证器判为失败，不调用 LLM
+uv run python scripts/run_benchmark.py --validate-fixtures
+
+# 运行单题；可重复传 --case，省略时运行全部案例
+uv run python scripts/run_benchmark.py --case angle_units --max-loops 12
+```
+
+每次运行都会从 `benchmarks/fixtures/` 重置一次性 workspace，并把成功率、耗时、
+循环数、工具调用数和模型 token 写入 `benchmarks/results/<run-id>/report.json`。
+
+### 6. LangGraph Studio 可视化（强烈推荐）
 
 ```bash
 uv run langgraph dev
@@ -153,6 +169,7 @@ uv run langgraph dev
 
 ```
 src/agent/
+  benchmark.py    # M1 任务加载、运行、指标采集与报告
   state.py        # AgentState TypedDict (messages/current_file/loop_step + 预留)
   graph.py        # build_graph() + 顶层 graph
   config.py       # get_chat_model() 模型工厂
@@ -163,6 +180,11 @@ tests/
   test_graph_e2e.py      # 端到端 + 单元测试
 scripts/
   run_demo.py     # CLI 演示
+  run_benchmark.py # M1 benchmark CLI
+benchmarks/
+  cases.json      # 评测任务清单
+  fixtures/       # 永不修改的带 bug 题面
+  validators.py   # 独立确定性判分器
 langgraph.json    # Studio 入口
 ```
 
@@ -175,6 +197,7 @@ langgraph.json    # Studio 入口
 | 1 | 线性骨架 (planner → reader → suggester) | ✅ 完成 |
 | 2 | ReAct + 5 工具集 (本地 sandbox) | ✅ 完成 |
 | 2.5 | E2B Code Interpreter 真沙盒（与 local 并存，env 切换） | ✅ 完成 |
+| M1 | 机器人代码任务评测框架与首批 5 个确定性案例 | 🚧 初版 |
 | 3 | Agentic RAG — chromadb 索引源码 + 论文 PDF | ⏳ TODO |
 | 4 | Checkpointer (SqliteSaver) + HITL interrupt | ⏳ TODO |
 | 5 | 机器人闭环 — PyBullet/MuJoCo 仿真评测集 | ⏳ TODO |

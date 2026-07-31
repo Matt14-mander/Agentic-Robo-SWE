@@ -25,6 +25,10 @@ venv/
 # —— Demo / Test workspace (每次 demo 启动从 template 重置, 不入 git) ——
 tests/fixtures/_buggy_ik_workspace.py
 
+# —— M1 benchmark 可重复运行产物 ——
+benchmarks/workspaces/
+benchmarks/results/
+
 # —— Checkpoint / RAG 持久化 (Phase 4+) ——
 *.sqlite
 *.db
