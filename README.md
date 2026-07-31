@@ -53,7 +53,8 @@ START → planner → │ should_continue?     │
 | 隔离强度 | cwd + tempdir，**LLM 仍可读本机其它文件** | Firecracker microVM，真隔离 |
 | 启动开销 | ~0.5s | ~3-5s（云端冷启动） |
 | 需要凭据 | 无 | `E2B_API_KEY` |
-| 项目代码可用性 | PYTHONPATH 注入 | 自动上传 src/+tests/ 文件 |
+| 项目源码可用性 | PYTHONPATH 注入 | 自动上传 src/+tests/ 文件 |
+| 第三方依赖 | 复用当前 venv | 需 E2B 镜像预装或由执行代码安装 |
 | 适合场景 | 学习/快速迭代 | 生产/不可信代码 |
 
 #### 启用 E2B

@@ -8,7 +8,8 @@
 | 启动开销 | ~0.5s | ~3-5s (云端 sandbox 冷启动) |
 | 依赖 | Python 标准库 | e2b-code-interpreter + 网络 |
 | 凭据 | 无 | E2B_API_KEY |
-| 项目代码可用性 | PYTHONPATH 注入即可 import | 需先 upload 文件到沙盒 |
+| 项目源码可用性 | PYTHONPATH 注入即可 import | 上传 src/+tests/ 后注入 sys.path |
+| 第三方依赖 | 复用当前 venv | 需 E2B 镜像预装或由调用代码安装 |
 | 适合场景 | 学习/快速迭代 | 生产/不可信代码 |
 
 ## 设计要点
@@ -233,8 +234,9 @@ def execute_python(code: str, timeout: int = 30) -> str:
     - ``local`` (默认) - subprocess + tempdir, 快但不隔离
     - ``e2b`` - E2B Code Interpreter 云沙盒, 真隔离, 需要 E2B_API_KEY
 
-    项目代码可用: ``from agent.xxx import ...`` 与 ``import tests.fixtures.xxx`` 均工作
-    (local 走 PYTHONPATH, e2b 走文件上传 + sys.path 注入)。
+    项目源码可用: local 走 PYTHONPATH, e2b 走文件上传 + sys.path 注入。
+    E2B 不会自动安装项目的第三方依赖; 导入的模块若依赖额外包, 需确保沙盒镜像已包含
+    这些依赖, 或先在沙盒中安装。
 
     Args:
         code: 要执行的 Python 代码 (字符串)。

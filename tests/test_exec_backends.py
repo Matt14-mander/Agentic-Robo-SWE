@@ -67,11 +67,15 @@ def test_exception_traceback(backend):
 
 @pytest.mark.parametrize("backend", ["local", pytest.param("e2b", marks=[requires_e2b, pytest.mark.e2e])], indirect=True)
 def test_project_module_import(backend):
-    """两后端都应能 import 项目代码: local 走 PYTHONPATH; e2b 走文件上传 + sys.path。"""
+    """两后端都能 import 仅依赖标准库的项目模块。
+
+    此用例验证源码上传与 ``sys.path`` 注入，不假设 E2B 基础镜像已经安装
+    项目的第三方依赖。
+    """
     out = execute_python.invoke({
         "code": (
-            "from agent.state import AgentState\n"
-            "print('OK', 'messages' in AgentState.__annotations__)"
+            "from tests.fixtures.buggy_ik import inverse_kinematics_2link\n"
+            "print('OK', callable(inverse_kinematics_2link))"
         ),
     })
     assert "exit_code: 0" in out
