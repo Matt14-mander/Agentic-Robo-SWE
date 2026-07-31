@@ -13,6 +13,7 @@ from functools import lru_cache
 
 from dotenv import load_dotenv
 from langchain_core.language_models import BaseChatModel
+from pydantic import SecretStr
 
 # 让 .env 始终优先于 shell 环境变量 —— 避免老 shell 里残留的空/过期 key
 # 屏蔽掉 .env 实际填的新值, 是学习场景下最隐蔽的坑之一。
@@ -48,7 +49,7 @@ def get_chat_model(temperature: float = 0.0) -> BaseChatModel:
         # 真要更强代码推理可换 "deepseek-reasoner"。
         return ChatOpenAI(
             model="deepseek-chat",
-            api_key=api_key,
+            api_key=SecretStr(api_key),
             base_url="https://api.deepseek.com/v1",
             temperature=temperature,
         )

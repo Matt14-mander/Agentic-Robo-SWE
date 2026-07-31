@@ -21,7 +21,6 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 import shutil
-from pathlib import Path
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
@@ -51,11 +50,11 @@ def _format_message(msg) -> str:
     """把一条 LangChain 消息渲染成可读多行字符串。"""
     cls = type(msg).__name__
     if isinstance(msg, SystemMessage):
-        return f"[SYSTEM] (omitted)"
+        return "[SYSTEM] (omitted)"
     if isinstance(msg, HumanMessage):
         return f"[HUMAN] {msg.content}"
     if isinstance(msg, AIMessage):
-        parts = [f"[AI]"]
+        parts = ["[AI]"]
         content = msg.content if isinstance(msg.content, str) else str(msg.content)
         if content.strip():
             parts.append(content.strip())

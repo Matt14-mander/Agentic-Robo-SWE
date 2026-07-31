@@ -33,7 +33,7 @@ START → planner → │ should_continue?     │
 | `execute_python(code, timeout)` | subprocess 沙盒中跑 Python，复现 bug / 验证修复 |
 | `write_patch(path, old_string, new_string)` | 精确字符串替换（要求唯一匹配） |
 
-> ⚠️ `execute_python` 当前是 subprocess + tempdir 隔离，**不是真沙盒**。LLM 仍可读你的本地文件。Phase 3 会替换为 E2B Code Interpreter。
+> ✅ **Phase 2.5 已支持双后端**：`execute_python` 可通过 `EXECUTOR_BACKEND` env 切换 `local`（subprocess）或 `e2b`（E2B Code Interpreter 云沙盒，Firecracker microVM 真隔离）。
 
 ### 测试 fixture 设计
 
@@ -43,6 +43,32 @@ START → planner → │ should_continue?     │
 ### 模型层
 
 支持 **Claude 3.5 Sonnet / GPT-4o-mini / DeepSeek-Chat**，通过 `MODEL_PROVIDER` 环境变量切换，零代码改动。
+
+### 执行后端（Phase 2.5）
+
+`execute_python` 工具支持两种 sandbox，由 `EXECUTOR_BACKEND` 切换：
+
+| 维度 | `local` | `e2b` |
+|------|---------|-------|
+| 隔离强度 | cwd + tempdir，**LLM 仍可读本机其它文件** | Firecracker microVM，真隔离 |
+| 启动开销 | ~0.5s | ~3-5s（云端冷启动） |
+| 需要凭据 | 无 | `E2B_API_KEY` |
+| 项目代码可用性 | PYTHONPATH 注入 | 自动上传 src/+tests/ 文件 |
+| 适合场景 | 学习/快速迭代 | 生产/不可信代码 |
+
+#### 启用 E2B
+
+1. 安装 sandbox 依赖：`uv sync --extra dev --extra sandbox`
+2. 去 [e2b.dev](https://e2b.dev) 注册账号、申请 API key（新用户有免费配额）
+3. 在 `.env` 设置：
+   ```
+   EXECUTOR_BACKEND=e2b
+   E2B_API_KEY=<your key>
+   ```
+4. 跑 demo 时切回 local 不需要改代码，只改 env：
+   ```
+   EXECUTOR_BACKEND=local
+   ```
 
 ---
 
@@ -95,10 +121,14 @@ MODEL_PROVIDER=openai uv run python scripts/run_demo.py
 ### 4. 跑测试
 
 ```bash
+# 离线验收：不消耗 LLM/E2B API 额度，也是 CI 默认执行项
+uv run pytest -q -m "not e2e"
+
+# 完整测试：配置好当前模型和 E2B 凭据后执行
 uv run pytest -v
 ```
 
-`test_linear_flow_*` 会真实调用 LLM；无 key 时自动跳过。
+带 `e2e` marker 的测试会真实调用 LLM 或 E2B；缺少对应 key/依赖时自动跳过。
 
 ### 5. LangGraph Studio 可视化（强烈推荐）
 
@@ -143,7 +173,7 @@ langgraph.json    # Studio 入口
 |-------|------|------|
 | 1 | 线性骨架 (planner → reader → suggester) | ✅ 完成 |
 | 2 | ReAct + 5 工具集 (本地 sandbox) | ✅ 完成 |
-| 2.5 | 替换为 E2B Code Interpreter 真沙盒 | ⏳ TODO |
+| 2.5 | E2B Code Interpreter 真沙盒（与 local 并存，env 切换） | ✅ 完成 |
 | 3 | Agentic RAG — chromadb 索引源码 + 论文 PDF | ⏳ TODO |
 | 4 | Checkpointer (SqliteSaver) + HITL interrupt | ⏳ TODO |
 | 5 | 机器人闭环 — PyBullet/MuJoCo 仿真评测集 | ⏳ TODO |

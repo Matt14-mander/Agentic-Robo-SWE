@@ -57,7 +57,7 @@ def test_react_loop_attempts_real_fix(buggy_ik_copy: Path):
     assert result["loop_step"] >= 2, f"too few loops: {result['loop_step']}"
 
     # 2. 至少有一次工具调用
-    tool_messages = [m for m in messages if isinstance(m, ToolMessage)]
+    tool_messages = [m for m in messages if isinstance(m, ToolMessage)] # 过滤出工具调用消息
     assert len(tool_messages) >= 1, "no tool was invoked"
 
     # 3. 用过的工具名集合应该非空 (一般会含 read_file_chunk 或 execute_python)

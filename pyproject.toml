@@ -23,7 +23,7 @@ dev = [
     "langgraph-cli[inmem]>=0.1.55",
 ]
 # —— Phase 2+ 预留 ——
-sandbox = ["e2b-code-interpreter>=0.0.10"]
+sandbox = ["e2b-code-interpreter>=2.7"]
 rag = ["chromadb>=0.5", "langchain-community>=0.3"]
 checkpoint = ["langgraph-checkpoint-sqlite>=2.0"]
 

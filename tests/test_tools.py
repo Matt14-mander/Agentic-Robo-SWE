@@ -87,7 +87,7 @@ def test_list_dir_outside_root():
 
 
 @pytest.fixture
-def scratch_file(tmp_path: Path):
+def scratch_file():
     """在仓库内放一个临时文件 (write_patch 只允许仓库内路径)。"""
     scratch = PROJECT_ROOT / "tests" / "_scratch_for_write_patch.txt"
     scratch.write_text("alpha\nbeta\ngamma\n", encoding="utf-8")
