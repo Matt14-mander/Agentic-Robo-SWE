@@ -140,12 +140,33 @@ uv run python scripts/run_benchmark.py --list
 # 确认所有原始 fixture 都会被验证器判为失败，不调用 LLM
 uv run python scripts/run_benchmark.py --validate-fixtures
 
-# 运行单题；可重复传 --case，省略时运行全部案例
-uv run python scripts/run_benchmark.py --case angle_units --max-loops 12
+# M1.0 单次通用策略基线（便于与已有报告对比）
+uv run python scripts/run_benchmark.py --case angle_units --strategy general --repair-attempts 0 --max-loops 12
+
+# M1.1 聚焦策略：直读目标、强制官方验证，失败后反馈修复一次
+uv run python scripts/run_benchmark.py --case quaternion_normalization --strategy focused --repair-attempts 1 --max-loops 6
+
+# M1.2 可选覆盖工具预算；不传时按 easy=5、medium=7、hard=9 自动分配
+uv run python scripts/run_benchmark.py --case angle_units --strategy focused --tool-budget 5 --max-loops 6
+
+# 稳定性评估：每题从原始 fixture 独立运行 3 次
+uv run python scripts/run_benchmark.py --repeats 3 --strategy focused --repair-attempts 1 --max-loops 8 --task-timeout 300
 ```
 
 每次运行都会从 `benchmarks/fixtures/` 重置一次性 workspace，并把成功率、耗时、
 循环数、工具调用数和模型 token 写入 `benchmarks/results/<run-id>/report.json`。
+M1.1 报告还记录每次尝试的官方 validator 调用合规率、模型宣称成功但独立验证失败的
+false positive、反馈修复次数，以及多次运行的逐题成功率和平均成本。
+
+长任务会实时输出题目、尝试次数、耗时和结果。每完成一题都会立即写入
+`cases/repeat-<N>__<case-id>.json` 并原子更新 `checkpoint.json`；即使按 `Ctrl+C`
+中断，已完成结果仍会保留。`--task-timeout` 是每次 Agent 尝试的硬超时（默认 300 秒），
+超时子进程会被终止并计入报告；传 `--task-timeout 0` 可关闭超时。
+
+M1.2 在 graph 路由层加入官方 validator gate：Focused Agent 若准备结束但没有成功的
+官方验证证据，框架会自动执行验证；失败则把确定性证据送回修复循环。Focused 模式只
+暴露 `read_file_chunk / write_patch / execute_python`，并压缩旧工具轮次，减少无关探索
+和重复上下文。schema v4 报告增加逐题 `tool_budget`、`within_tool_budget` 与总体预算合规率。
 
 ### 6. LangGraph Studio 可视化（强烈推荐）
 
@@ -197,7 +218,7 @@ langgraph.json    # Studio 入口
 | 1 | 线性骨架 (planner → reader → suggester) | ✅ 完成 |
 | 2 | ReAct + 5 工具集 (本地 sandbox) | ✅ 完成 |
 | 2.5 | E2B Code Interpreter 真沙盒（与 local 并存，env 切换） | ✅ 完成 |
-| M1 | 机器人代码任务评测框架与首批 5 个确定性案例 | 🚧 初版 |
+| M1 | 机器人代码任务评测、确定性验证门禁与成本预算 | 🚧 M1.2 |
 | 3 | Agentic RAG — chromadb 索引源码 + 论文 PDF | ⏳ TODO |
 | 4 | Checkpointer (SqliteSaver) + HITL interrupt | ⏳ TODO |
 | 5 | 机器人闭环 — PyBullet/MuJoCo 仿真评测集 | ⏳ TODO |

@@ -154,7 +154,7 @@ def _execute_e2b(code: str, timeout: int) -> str:
 
     # 延迟 import: 用户没装 sandbox group 时只在调用时报清晰错误
     try:
-        from e2b_code_interpreter import Sandbox  # type: ignore[import-not-found]
+        from e2b_code_interpreter import Sandbox  # type: ignore[import-not-found,import-untyped]
     except ImportError:
         return "ERROR: e2b-code-interpreter not installed. Run: uv sync --extra sandbox"
 

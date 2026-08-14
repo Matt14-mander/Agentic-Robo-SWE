@@ -14,7 +14,10 @@ from typing import Callable
 def _load_workspace(path: str) -> ModuleType:
     workspace = Path(path)
     if not workspace.is_absolute():
-        workspace = Path.cwd() / workspace
+        # Validators are also called from execute_python, whose cwd is an isolated
+        # temporary directory. Resolve benchmark paths from the uploaded/project
+        # repository root instead of depending on the caller's cwd.
+        workspace = Path(__file__).resolve().parents[1] / workspace
     if not workspace.is_file():
         raise FileNotFoundError(f"Workspace not found: {workspace}")
     module_name = f"benchmark_workspace_{workspace.stem}"

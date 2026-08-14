@@ -7,7 +7,7 @@ import importlib
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.graph import END
 
-from agent.graph import should_continue
+from agent.graph import after_benchmark_validation, should_continue
 
 
 def _tool_call(call_id: str = "call-1") -> dict:
@@ -16,6 +16,30 @@ def _tool_call(call_id: str = "call-1") -> dict:
         "args": {"path": "README.md"},
         "id": call_id,
         "type": "tool_call",
+    }
+
+
+def _validator_call(call_id: str = "validator-1") -> dict:
+    return {
+        "name": "execute_python",
+        "args": {
+            "code": "from benchmarks.validators import validate\n"
+            "print(validate('angle_units', 'benchmarks/workspaces/angle_units.py'))"
+        },
+        "id": call_id,
+        "type": "tool_call",
+    }
+
+
+def _benchmark_state(messages, loop_step=1, max_steps=4):
+    return {
+        "messages": messages,
+        "loop_step": loop_step,
+        "max_loop_steps": max_steps,
+        "benchmark_mode": True,
+        "benchmark_strategy": "focused",
+        "benchmark_validator": "angle_units",
+        "benchmark_workspace": "benchmarks/workspaces/angle_units.py",
     }
 
 
@@ -53,6 +77,43 @@ def test_should_continue_empty_messages_is_safe():
     assert should_continue({"messages": []}) == END
 
 
+def test_benchmark_final_answer_is_gated_until_official_validation():
+    state = _benchmark_state([AIMessage(content="fixed")])
+
+    assert should_continue(state) == "benchmark_validate"
+
+
+def test_successful_model_validator_call_allows_benchmark_to_end():
+    call = _validator_call()
+    state = _benchmark_state([
+        AIMessage(content="", tool_calls=[call]),
+        ToolMessage(
+            content="exit_code: 0\n--- stdout ---\n{'passed': True, 'details': []}",
+            tool_call_id=call["id"],
+            name="execute_python",
+        ),
+        AIMessage(content="verified"),
+    ])
+
+    assert should_continue(state) == END
+
+
+def test_official_validator_call_can_cross_loop_budget():
+    state = _benchmark_state(
+        [AIMessage(content="", tool_calls=[_validator_call()])],
+        loop_step=4,
+        max_steps=4,
+    )
+
+    assert should_continue(state) == "tools"
+
+
+def test_benchmark_gate_routes_by_result_and_remaining_budget():
+    assert after_benchmark_validation({"benchmark_validation_passed": True}) == END
+    assert after_benchmark_validation({"loop_step": 1, "max_loop_steps": 2}) == "planner"
+    assert after_benchmark_validation({"loop_step": 2, "max_loop_steps": 2}) == "finalize"
+
+
 def test_finalize_balances_pending_tool_calls_and_writes_suggestion(monkeypatch):
     finalize_module = importlib.import_module("agent.nodes.finalize")
     pending = AIMessage(
@@ -83,3 +144,30 @@ def test_finalize_balances_pending_tool_calls_and_writes_suggestion(monkeypatch)
     assert all(message.content.startswith("SKIPPED:") for message in skipped)
     assert captured_messages[-2:] == skipped
     assert update["suggestion"] == "forced final summary"
+
+
+def test_focused_planner_binds_only_targeted_tools(monkeypatch):
+    planner_module = importlib.import_module("agent.nodes.planner")
+    bound_tool_names = []
+
+    class FakeModel:
+        def bind_tools(self, tools):
+            bound_tool_names.extend(tool.name for tool in tools)
+            return self
+
+        def invoke(self, messages):
+            return AIMessage(content="done")
+
+    monkeypatch.setattr(
+        planner_module,
+        "get_chat_model",
+        lambda temperature=0.0: FakeModel(),
+    )
+    planner_module.planner({
+        "task": "fix target",
+        "benchmark_mode": True,
+        "benchmark_strategy": "focused",
+        "benchmark_tool_budget": 5,
+    })
+
+    assert bound_tool_names == ["read_file_chunk", "execute_python", "write_patch"]

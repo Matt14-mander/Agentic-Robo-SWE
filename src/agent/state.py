@@ -27,6 +27,17 @@ class AgentState(TypedDict, total=False):
     # —— 用户入口 ——
     task: str
 
+    # Optional hints used by the benchmark harness. Normal agent calls retain the
+    # general exploratory workflow when these keys are absent.
+    benchmark_mode: bool
+    benchmark_strategy: Literal["focused", "general"]
+    benchmark_validator: str
+    benchmark_workspace: str
+    benchmark_validator_calls: int
+    benchmark_validation_passed: bool
+    benchmark_tool_budget: int
+    benchmark_context_rounds: int
+
     # —— Phase 1 兼容字段 (节点不再主动写, 但 Studio/旧测试仍可读) ——
     current_file: str | None
     file_content: str | None

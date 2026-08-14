@@ -2,7 +2,8 @@
 工具执行由 ``langgraph.prebuilt.ToolNode`` 统一承担, 见 graph.py。
 """
 
+from agent.nodes.benchmark import benchmark_validate
 from agent.nodes.finalize import finalize
 from agent.nodes.planner import planner
 
-__all__ = ["finalize", "planner"]
+__all__ = ["benchmark_validate", "finalize", "planner"]

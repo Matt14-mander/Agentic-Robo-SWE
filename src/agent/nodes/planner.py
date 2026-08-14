@@ -8,11 +8,11 @@
 
 from __future__ import annotations
 
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
 
 from agent.config import get_chat_model
 from agent.state import AgentState
-from agent.tools import ALL_TOOLS
+from agent.tools import ALL_TOOLS, FOCUSED_BENCHMARK_TOOLS
 
 _DEFAULT_MAX_LOOP_STEPS = 15
 
@@ -40,10 +40,57 @@ _SYSTEM = """你是一个面向机器人算法仓库的自主排障 Agent。
 """
 
 
+_BENCHMARK_FOCUSED = """
+
+Benchmark focused mode (this section overrides conflicting exploration steps above):
+- The task gives an exact target file and an official validator command.
+- Read the target file directly. Do not call list_dir or grep_codebase unless the
+  target cannot be read or the supplied information is internally inconsistent.
+- Make the smallest targeted patch, then run the exact supplied official validator
+  with execute_python. A self-written check is not a substitute.
+- Do not write a separate reproduction script and do not re-read after a successful
+  write_patch. The official validator is the sole post-patch check.
+- Stay within the supplied tool-call budget. Prefer exactly: read target, patch,
+  official validator, then finish.
+- Do not claim completion unless the official validator reports passed=True.
+- If it fails, use its details as evidence and continue fixing within the loop budget.
+"""
+
+
+def build_system_prompt(state: AgentState) -> str:
+    """Build the planner prompt and apply the requested benchmark strategy."""
+    max_steps = state.get("max_loop_steps", _DEFAULT_MAX_LOOP_STEPS)
+    prompt = _SYSTEM.format(max_loop_steps=max_steps)
+    if state.get("benchmark_mode") and state.get("benchmark_strategy", "focused") == "focused":
+        budget = state.get("benchmark_tool_budget", 6)
+        prompt += _BENCHMARK_FOCUSED + f"\nTool-call budget: {budget}.\n"
+    return prompt
+
+
+def focused_message_context(
+    messages: list[BaseMessage], tool_rounds: int = 3
+) -> list[BaseMessage]:
+    """Keep the task plus recent complete tool rounds for benchmark LLM calls."""
+    if tool_rounds < 1 or len(messages) <= 2:
+        return messages
+    round_starts = [
+        index
+        for index, message in enumerate(messages)
+        if getattr(message, "tool_calls", None)
+    ]
+    if len(round_starts) <= tool_rounds:
+        return messages
+    start = round_starts[-tool_rounds]
+    return [
+        messages[0],
+        HumanMessage(content="Earlier benchmark tool rounds omitted; use the current workspace state."),
+        *messages[start:],
+    ]
+
+
 def planner(state: AgentState) -> dict:
     messages = list(state.get("messages") or [])
     loop_step = state.get("loop_step", 0)
-    max_steps = state.get("max_loop_steps", _DEFAULT_MAX_LOOP_STEPS)
 
     # 第一次进入时, 把 task 注入为首条 HumanMessage
     if not messages:
@@ -52,10 +99,20 @@ def planner(state: AgentState) -> dict:
             raise ValueError("AgentState must contain either 'messages' or 'task'.")
         messages = [HumanMessage(content=task)]
 
-    llm = get_chat_model(temperature=0.0).bind_tools(ALL_TOOLS)
+    focused = bool(
+        state.get("benchmark_mode")
+        and state.get("benchmark_strategy", "focused") == "focused"
+    )
+    tools = FOCUSED_BENCHMARK_TOOLS if focused else ALL_TOOLS
+    llm = get_chat_model(temperature=0.0).bind_tools(tools)
 
-    system = SystemMessage(content=_SYSTEM.format(max_loop_steps=max_steps))
-    response = llm.invoke([system, *messages])
+    system = SystemMessage(content=build_system_prompt(state))
+    model_messages = (
+        focused_message_context(messages, state.get("benchmark_context_rounds", 3))
+        if focused
+        else messages
+    )
+    response = llm.invoke([system, *model_messages])
 
     update: dict = {
         "messages": [response],

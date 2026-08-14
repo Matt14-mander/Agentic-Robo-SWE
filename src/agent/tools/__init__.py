@@ -18,8 +18,17 @@ ALL_TOOLS = [
     write_patch,        # 写操作类工具放最后, 因为它是"动手改代码", 需要 LLM 确认好前面信息后再用它, 减少误用的风险
 ]
 
+# M1.2 benchmark tasks already provide an exact file and validator. Removing
+# discovery tools from the bound schema prevents redundant repository traversal.
+FOCUSED_BENCHMARK_TOOLS = [
+    read_file_chunk,
+    execute_python,
+    write_patch,
+]
+
 __all__ = [
     "ALL_TOOLS",
+    "FOCUSED_BENCHMARK_TOOLS",
     "execute_python",
     "grep_codebase",
     "list_dir",
