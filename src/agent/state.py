@@ -43,7 +43,12 @@ class AgentState(TypedDict, total=False):
     file_content: str | None
     suggestion: str | None
 
-    # —— Phase 3+ 预留 ——
+    # —— Phase 4 持久化与人工审批 ——
+    hitl_enabled: bool
+    hitl_decision: bool | None
+    hitl_feedback: str | None
+
+    # —— 后续阶段预留 ——
     error_log: str | None
     sandbox_id: str | None
     next_action: Literal["read", "search", "execute", "respond"] | None

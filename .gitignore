@@ -34,6 +34,7 @@ benchmarks/rag_results/
 *.sqlite
 *.db
 chroma_db/
+.agent_state/
 
 # —— 编辑器 ——
 .vscode/

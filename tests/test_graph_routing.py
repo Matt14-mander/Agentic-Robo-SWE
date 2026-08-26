@@ -31,6 +31,15 @@ def _validator_call(call_id: str = "validator-1") -> dict:
     }
 
 
+def _write_call(call_id: str = "write-1") -> dict:
+    return {
+        "name": "write_patch",
+        "args": {"path": "README.md", "old_string": "old", "new_string": "new"},
+        "id": call_id,
+        "type": "tool_call",
+    }
+
+
 def _benchmark_state(messages, loop_step=1, max_steps=4):
     return {
         "messages": messages,
@@ -49,6 +58,24 @@ def test_should_continue_routes_tool_call_with_budget():
         "loop_step": 1,
         "max_loop_steps": 2,
     }
+
+    assert should_continue(state) == "tools"
+
+
+def test_should_continue_routes_interactive_write_to_approval():
+    state = {
+        "messages": [AIMessage(content="", tool_calls=[_write_call()])],
+        "loop_step": 1,
+        "max_loop_steps": 2,
+        "hitl_enabled": True,
+    }
+
+    assert should_continue(state) == "approval"
+
+
+def test_benchmark_write_never_blocks_on_hitl():
+    state = _benchmark_state([AIMessage(content="", tool_calls=[_write_call()])])
+    state["hitl_enabled"] = True
 
     assert should_continue(state) == "tools"
 

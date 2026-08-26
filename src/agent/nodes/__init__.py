@@ -3,7 +3,21 @@
 """
 
 from agent.nodes.benchmark import benchmark_validate
+from agent.nodes.approval import (
+    after_write_approval,
+    reject_pending_tools,
+    request_write_approval,
+    requires_write_approval,
+)
 from agent.nodes.finalize import finalize
 from agent.nodes.planner import planner
 
-__all__ = ["benchmark_validate", "finalize", "planner"]
+__all__ = [
+    "after_write_approval",
+    "benchmark_validate",
+    "finalize",
+    "planner",
+    "reject_pending_tools",
+    "request_write_approval",
+    "requires_write_approval",
+]

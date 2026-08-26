@@ -30,7 +30,15 @@ from langchain_core.messages import ToolMessage
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 
-from agent.nodes import benchmark_validate, finalize, planner
+from agent.nodes import (
+    after_write_approval,
+    benchmark_validate,
+    finalize,
+    planner,
+    reject_pending_tools,
+    request_write_approval,
+    requires_write_approval,
+)
 from agent.state import AgentState
 from agent.tools import ALL_TOOLS
 
@@ -76,7 +84,7 @@ def _focused_benchmark(state: AgentState) -> bool:
 
 def should_continue(
     state: AgentState,
-) -> Literal["tools", "benchmark_validate", "finalize", "__end__"]:
+) -> Literal["approval", "tools", "benchmark_validate", "finalize", "__end__"]:
     """条件路由 —— ReAct 循环的"刹车"。"""
     messages = state.get("messages") or []
     if not messages:
@@ -106,6 +114,8 @@ def should_continue(
         return "benchmark_validate" if benchmark_focused and not validation_passed else "__end__"
 
     if has_tool_calls:
+        if requires_write_approval(state):
+            return "approval"
         return "tools"
     return "benchmark_validate" if benchmark_focused and not validation_passed else "__end__"
 
@@ -119,11 +129,13 @@ def after_benchmark_validation(state: AgentState) -> Literal["planner", "finaliz
     return "planner"
 
 
-def build_graph():
+def build_graph(*, checkpointer: Any | None = None):
     workflow = StateGraph(AgentState)
 
     workflow.add_node("planner", planner)
+    workflow.add_node("approval", request_write_approval)
     workflow.add_node("tools", ToolNode(ALL_TOOLS))
+    workflow.add_node("reject_tools", reject_pending_tools)
     workflow.add_node("benchmark_validate", benchmark_validate)
     workflow.add_node("finalize", finalize)
 
@@ -132,13 +144,20 @@ def build_graph():
         "planner",
         should_continue,
         {
+            "approval": "approval",
             "tools": "tools",
             "benchmark_validate": "benchmark_validate",
             "finalize": "finalize",
             END: END,
         },
     )
+    workflow.add_conditional_edges(
+        "approval",
+        after_write_approval,
+        {"tools": "tools", "reject_tools": "reject_tools"},
+    )
     workflow.add_edge("tools", "planner")  # 工具执行完回到 planner
+    workflow.add_edge("reject_tools", "planner")
     workflow.add_conditional_edges(
         "benchmark_validate",
         after_benchmark_validation,
@@ -146,7 +165,7 @@ def build_graph():
     )
     workflow.add_edge("finalize", END)
 
-    return workflow.compile()
+    return workflow.compile(checkpointer=checkpointer)
 
 
 # Studio / langgraph.json 通过此顶层名发现入口

@@ -261,6 +261,45 @@ RAG 质量评测始终显式绕过缓存，并在报告中写入 `retrieval_cach
 Phase 3.1/3.1b 的召回率和延迟基线不会被缓存命中污染。此缓存只保存确定性的只读检索结果，
 不缓存补丁、工具执行、validator 或 LLM 回答。
 
+### 10. Phase 4 Checkpointer 与 HITL
+
+安装 SQLite Checkpointer，同时保留其它开发能力：
+
+```bash
+uv sync --extra dev --extra sandbox --extra rag --extra checkpoint
+```
+
+启动带持久 checkpoint 的普通 Agent。`--hitl` 会在每个 `write_patch` 前暂停；读取、检索
+和沙盒执行仍自动进行。命令会输出稳定的 `thread_id`：
+
+```bash
+uv run python scripts/run_agent.py \
+  "分析并修复 src/control.py 中的控制器问题" \
+  --thread-id control-fix-01 \
+  --hitl --stream
+```
+
+暂停后，文件尚未修改。可以关闭当前进程，检查提议后再从 SQLite 恢复：
+
+```bash
+# 查看 checkpoint、下一节点和待审批 patch
+uv run python scripts/run_agent.py --thread-id control-fix-01 --status
+
+# 批准并继续执行 write_patch
+uv run python scripts/run_agent.py --thread-id control-fix-01 --resume approve
+
+# 或拒绝，并把反馈交回 Planner
+uv run python scripts/run_agent.py --thread-id control-fix-01 \
+  --resume deny --feedback "不要改变公开函数签名"
+
+# 从非 HITL 的普通待执行 checkpoint 继续
+uv run python scripts/run_agent.py --thread-id control-fix-01 --continue
+```
+
+默认数据库位于 `.agent_state/checkpoints.sqlite`，可用 `--checkpoint-db` 覆盖，但路径仍须
+位于项目目录内。M1 Benchmark 明确绕过 HITL，避免无人值守评测被审批暂停。旧的
+`scripts/run_demo.py` 继续作为无持久化教学 Demo，持久任务统一使用 `scripts/run_agent.py`。
+
 ---
 
 ## 项目结构
@@ -270,6 +309,7 @@ src/agent/
   benchmark.py    # M1 任务加载、运行、指标采集与报告
   state.py        # AgentState TypedDict (messages/current_file/loop_step + 预留)
   graph.py        # build_graph() + 顶层 graph
+  persistence.py  # Phase 4 SQLite Checkpointer 生命周期
   config.py       # get_chat_model() 模型工厂
   nodes/          # planner / reader / suggester (状态→状态的纯函数)
   tools/          # read_file (Phase 2 扩展为 chunk/search/execute_python)
@@ -282,6 +322,7 @@ scripts/
   run_benchmark.py # M1 benchmark CLI
   index_codebase.py # Phase 3 源码索引与查询 CLI
   run_rag_eval.py # Phase 3.1 RAG 检索质量评测 CLI
+  run_agent.py    # Phase 4 持久会话、状态查看和 HITL 恢复 CLI
 benchmarks/
   cases.json      # 评测任务清单
   rag_cases.json  # RAG 固定查询与相关路径/符号标注
@@ -304,8 +345,8 @@ langgraph.json    # Studio 入口
 | 3.1 | RAG 评测 — Recall@K、MRR、文件/符号命中率 | ✅ 完成 |
 | 3.1b | 混合检索 — 语义 + 词法/符号召回与重排 | ✅ 完成 |
 | 3.2 | 安全 Retrieval Cache — 索引版本感知、命中与失效指标 | ✅ 完成 |
-| 4 | Checkpointer (SqliteSaver) + HITL interrupt | ⏳ TODO |
-| 4.1 | LLM Semantic Cache — 工作区指纹隔离，仅限安全只读场景 | ⏳ 评估后实施 |
+| 4 | Checkpointer (SqliteSaver) + HITL interrupt | ✅ 完成 |
+| 4.1 | LLM Semantic Cache — 工作区指纹隔离，仅限安全只读场景 | ⏳ 下一阶段 |
 | 5 | 机器人闭环 — PyBullet/MuJoCo 仿真评测集 | ⏳ TODO |
 
 详细方案见 `C:\Users\Rog\.claude\plans\langgraph-swe-agent-agent-code-executio-shiny-dragonfly.md`。
