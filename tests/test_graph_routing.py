@@ -171,3 +171,25 @@ def test_focused_planner_binds_only_targeted_tools(monkeypatch):
     })
 
     assert bound_tool_names == ["read_file_chunk", "execute_python", "write_patch"]
+
+
+def test_general_planner_exposes_semantic_rag_tool(monkeypatch):
+    planner_module = importlib.import_module("agent.nodes.planner")
+    bound_tool_names = []
+
+    class FakeModel:
+        def bind_tools(self, tools):
+            bound_tool_names.extend(tool.name for tool in tools)
+            return self
+
+        def invoke(self, messages):
+            return AIMessage(content="done")
+
+    monkeypatch.setattr(
+        planner_module,
+        "get_chat_model",
+        lambda temperature=0.0: FakeModel(),
+    )
+    planner_module.planner({"task": "locate anti-windup logic"})
+
+    assert "search_code_knowledge" in bound_tool_names

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "official_validator_gate",
+      "query": "run the official validator gate before benchmark completion",
+      "targets": [{"path": "src/agent/nodes/benchmark.py", "symbol": "benchmark_validate"}],
+      "tags": ["benchmark", "validation"]
+    },
+    {
+      "id": "graph_validation_routing",
+      "query": "detect whether official validation ran and passed in graph routing",
+      "targets": [{"path": "src/agent/graph.py", "symbol": "official_validation_status"}],
+      "tags": ["graph", "validation"]
+    },
+    {
+      "id": "benchmark_hard_timeout",
+      "query": "terminate an isolated agent benchmark attempt after a hard timeout",
+      "targets": [{"path": "src/agent/benchmark.py", "symbol": "_invoke_graph_subprocess"}],
+      "tags": ["benchmark", "timeout"]
+    },
+    {
+      "id": "incremental_code_index",
+      "query": "incrementally update changed source chunks by content hash and delete stale chunks",
+      "targets": [{"path": "src/agent/rag/index.py", "symbol": "CodeIndex.sync"}],
+      "tags": ["rag", "index"]
+    },
+    {
+      "id": "ast_source_chunking",
+      "query": "split Python source with AST into module function class and method chunks",
+      "targets": [{"path": "src/agent/rag/chunking.py", "symbol": "chunk_python_file"}],
+      "tags": ["rag", "chunking"]
+    },
+    {
+      "id": "e2b_project_upload",
+      "query": "collect project source files for upload into the E2B sandbox",
+      "targets": [{"path": "src/agent/tools/exec_ops.py", "symbol": "_collect_project_files"}],
+      "tags": ["sandbox", "e2b"]
+    },
+    {
+      "id": "path_traversal_guard",
+      "query": "reject file paths that escape outside the project root",
+      "targets": [{"path": "src/agent/tools/_paths.py", "symbol": "resolve_within_root"}],
+      "tags": ["tools", "security"]
+    },
+    {
+      "id": "focused_context_compression",
+      "query": "compress focused benchmark message history to recent tool rounds",
+      "targets": [{"path": "src/agent/nodes/planner.py", "symbol": "focused_message_context"}],
+      "tags": ["planner", "context"]
+    },
+    {
+      "id": "semantic_search_tool",
+      "query": "semantic source knowledge search tool with path prefix and ranked results",
+      "targets": [{"path": "src/agent/tools/rag_ops.py", "symbol": "search_code_knowledge"}],
+      "tags": ["rag", "tool"]
+    },
+    {
+      "id": "model_provider_factory",
+      "query": "create the configured chat model provider with deterministic temperature",
+      "targets": [{"path": "src/agent/config.py", "symbol": "get_chat_model"}],
+      "tags": ["model", "configuration"]
+    }
+  ]
+}

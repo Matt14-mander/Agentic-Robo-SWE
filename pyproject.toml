@@ -24,7 +24,7 @@ dev = [
 ]
 # —— Phase 2+ 预留 ——
 sandbox = ["e2b-code-interpreter>=2.7"]
-rag = ["chromadb>=0.5", "langchain-community>=0.3"]
+rag = ["chromadb>=1.5,<2"]
 checkpoint = ["langgraph-checkpoint-sqlite>=2.0"]
 
 [build-system]

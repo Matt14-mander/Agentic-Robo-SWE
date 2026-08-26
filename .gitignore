@@ -28,6 +28,7 @@ tests/fixtures/_buggy_ik_workspace.py
 # —— M1 benchmark 可重复运行产物 ——
 benchmarks/workspaces/
 benchmarks/results/
+benchmarks/rag_results/
 
 # —— Checkpoint / RAG 持久化 (Phase 4+) ——
 *.sqlite

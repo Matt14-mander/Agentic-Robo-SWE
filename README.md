@@ -184,6 +184,64 @@ uv run langgraph dev
 > ```
 > 这个变量是 [PEP 540](https://peps.python.org/pep-0540/) 标准, 安全且向后兼容, 强烈建议所有中文 Windows 用户长期开启。
 
+### 7. Phase 3.0 源码 RAG
+
+安装 ChromaDB，同时保留开发和 E2B extras：
+
+```bash
+uv sync --extra dev --extra sandbox --extra rag
+```
+
+建立或增量刷新源码索引（默认只索引 `src/`，避免测试和故障 fixture 污染结果）：
+
+```bash
+uv run python scripts/index_codebase.py
+
+# 同步后立即检查一次检索
+uv run python scripts/index_codebase.py \
+  --query "official validator gate benchmark completion" \
+  --top-k 5
+
+# 需要时显式加入其它源码根
+uv run python scripts/index_codebase.py --root src --root examples
+```
+
+Phase 3.0 使用 AST 按模块、函数、类和方法切块，保存路径、符号、行号和内容哈希；
+重复执行只更新变化 chunk，并删除已消失 chunk。默认 hashing embedding 完全本地运行，
+无需下载模型或配置额外 API Key，向量持久化在被 Git 忽略的 `chroma_db/`。
+
+通用 Agent 新增 `search_code_knowledge` 工具：目标未知、自然语言概念匹配或跨文件定位时
+使用语义检索；精确字符串仍优先 `grep_codebase`，已知文件直接 `read_file_chunk`。
+M1.2 focused benchmark 不暴露 RAG 工具，因此原有成本基线不会被改变。
+
+### 8. Phase 3.1 RAG 评测
+
+RAG 质量使用固定查询集 `benchmarks/rag_cases.json` 做确定性离线评测，不调用 LLM。
+评测会自动增量同步索引，实时显示每条查询的首个相关结果排名，并将逐题结果和汇总报告
+写入 `benchmarks/rag_results/<run-id>/`：
+
+```bash
+uv run python scripts/run_rag_eval.py
+
+# 查看案例或只运行部分查询
+uv run python scripts/run_rag_eval.py --list
+uv run python scripts/run_rag_eval.py --case official_validator_gate --top-k 1 --top-k 5
+
+# 用同一查询集比较向量与混合检索
+uv run python scripts/run_rag_eval.py --strategy vector
+uv run python scripts/run_rag_eval.py --strategy hybrid
+
+# 已确认索引是最新时跳过同步
+uv run python scripts/run_rag_eval.py --no-sync
+```
+
+报告包含 Hit Rate@K、Recall@K、MRR@K、目标文件命中率、目标符号命中率和平均查询延迟。
+这些指标将作为后续混合检索、Embedding 替换和 Semantic Cache 的回归基线。
+当前 10 条固定查询的向量基线为 Hit@1 50%、Hit@3 80%、Hit@5 90%、MRR@5 0.670；
+Phase 3.1b 混合检索将其提升到 Hit@1 80%、Hit@3/5 100%、MRR@5 0.883，并将此前
+Top-5 漏召回的 `semantic_search_tool` 提升到第 3 位。当前索引规模下，混合检索平均约
+32 ms，仍远低于一次 LLM 调用。
+
 ---
 
 ## 项目结构
@@ -196,14 +254,18 @@ src/agent/
   config.py       # get_chat_model() 模型工厂
   nodes/          # planner / reader / suggester (状态→状态的纯函数)
   tools/          # read_file (Phase 2 扩展为 chunk/search/execute_python)
+  rag/             # Phase 3 AST 切块、hash embedding、Chroma 增量索引
 tests/
   fixtures/buggy_ik.py   # 故意带 bug 的 2-link IK 示例
   test_graph_e2e.py      # 端到端 + 单元测试
 scripts/
   run_demo.py     # CLI 演示
   run_benchmark.py # M1 benchmark CLI
+  index_codebase.py # Phase 3 源码索引与查询 CLI
+  run_rag_eval.py # Phase 3.1 RAG 检索质量评测 CLI
 benchmarks/
   cases.json      # 评测任务清单
+  rag_cases.json  # RAG 固定查询与相关路径/符号标注
   fixtures/       # 永不修改的带 bug 题面
   validators.py   # 独立确定性判分器
 langgraph.json    # Studio 入口
@@ -219,8 +281,12 @@ langgraph.json    # Studio 入口
 | 2 | ReAct + 5 工具集 (本地 sandbox) | ✅ 完成 |
 | 2.5 | E2B Code Interpreter 真沙盒（与 local 并存，env 切换） | ✅ 完成 |
 | M1 | 机器人代码任务评测、确定性验证门禁与成本预算 | 🚧 M1.2 |
-| 3 | Agentic RAG — chromadb 索引源码 + 论文 PDF | ⏳ TODO |
+| 3.0 | Agentic RAG — Chroma 源码索引与条件式检索 | ✅ 完成 |
+| 3.1 | RAG 评测 — Recall@K、MRR、文件/符号命中率 | ✅ 完成 |
+| 3.1b | 混合检索 — 语义 + 词法/符号召回与重排 | ✅ 完成 |
+| 3.2 | 安全 Retrieval Cache — 索引版本感知、命中与失效指标 | ⏳ 下一阶段 |
 | 4 | Checkpointer (SqliteSaver) + HITL interrupt | ⏳ TODO |
+| 4.1 | LLM Semantic Cache — 工作区指纹隔离，仅限安全只读场景 | ⏳ 评估后实施 |
 | 5 | 机器人闭环 — PyBullet/MuJoCo 仿真评测集 | ⏳ TODO |
 
 详细方案见 `C:\Users\Rog\.claude\plans\langgraph-swe-agent-agent-code-executio-shiny-dragonfly.md`。

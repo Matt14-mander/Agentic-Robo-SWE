@@ -5,6 +5,7 @@ Phase 1 老测试通过 ``agent.tools.file_ops.read_file`` 仍能工作 (向后�
 """
 
 from agent.tools.exec_ops import execute_python
+from agent.tools.rag_ops import search_code_knowledge
 from agent.tools.read_ops import grep_codebase, list_dir, read_file_chunk
 from agent.tools.write_ops import write_patch
 
@@ -12,6 +13,7 @@ from agent.tools.write_ops import write_patch
 # 引导 LLM 先看清再动手。
 ALL_TOOLS = [
     list_dir,           # 探索类工具放前面, 帮助 LLM 先了解环境
+    search_code_knowledge,  # Phase 3: 目标未知/跨文件语义定位
     read_file_chunk,    # 也是探索类工具, 让 LLM 能查看文件内容
     grep_codebase,      # 也是探索类工具, 让 LLM 能搜索代码库
     execute_python,     # 执行类工具, 让 LLM 能运行 Python 代码 (如测试脚本)
@@ -33,5 +35,6 @@ __all__ = [
     "grep_codebase",
     "list_dir",
     "read_file_chunk",
+    "search_code_knowledge",
     "write_patch",
 ]
