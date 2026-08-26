@@ -7,6 +7,7 @@ import math
 import pytest
 
 from agent.rag.chunking import chunk_python_file
+from agent.rag.cache import RetrievalCache
 from agent.rag.index import CodeIndex
 from agent.rag.models import SearchResult
 from agent.tools._paths import PROJECT_ROOT
@@ -15,8 +16,11 @@ from agent.tools._paths import PROJECT_ROOT
 class MemoryCollection:
     def __init__(self) -> None:
         self.data = {}
+        self.get_calls = 0
+        self.query_calls = 0
 
     def get(self, include):
+        self.get_calls += 1
         ids = list(self.data)
         return {
             "ids": ids,
@@ -38,6 +42,7 @@ class MemoryCollection:
         return len(self.data)
 
     def query(self, query_embeddings, n_results, include):
+        self.query_calls += 1
         query = query_embeddings[0]
         ranked = sorted(
             self.data.items(),
@@ -168,6 +173,83 @@ def test_search_rejects_unknown_strategy():
     index = CodeIndex(MemoryCollection())
     with pytest.raises(ValueError, match="Unsupported search strategy"):
         index.search("query", strategy="unknown")
+
+
+def test_retrieval_cache_normalizes_query_and_tracks_bypass():
+    path = PROJECT_ROOT / "benchmarks/workspaces/_test_rag_cache.py"
+    relative = "benchmarks/workspaces/_test_rag_cache.py"
+    collection = MemoryCollection()
+    index = CodeIndex(collection)
+    path.write_text(
+        "def normalize_quaternion(value):\n"
+        "    # reject zero norm before normalization\n"
+        "    return value\n",
+        encoding="utf-8",
+    )
+    try:
+        index.sync([relative])
+        first = index.search("zero norm normalization", top_k=1, strategy="vector")
+        second = index.search("  ZERO   NORM normalization  ", top_k=1, strategy="vector")
+        index.search("zero norm normalization", top_k=2, strategy="vector")
+        index.search(
+            "zero norm normalization",
+            top_k=1,
+            strategy="vector",
+            use_cache=False,
+        )
+    finally:
+        path.unlink(missing_ok=True)
+
+    stats = index.cache_stats()
+    assert first == second
+    assert collection.query_calls == 3
+    assert stats.hits == 1
+    assert stats.misses == 2
+    assert stats.bypasses == 1
+    assert stats.hit_rate == pytest.approx(1 / 3, abs=0.0001)
+    assert stats.entries == 2
+
+
+def test_retrieval_cache_invalidates_when_index_revision_changes():
+    path = PROJECT_ROOT / "benchmarks/workspaces/_test_rag_cache_revision.py"
+    relative = "benchmarks/workspaces/_test_rag_cache_revision.py"
+    collection = MemoryCollection()
+    index = CodeIndex(collection)
+    path.write_text("def controller(error):\n    return error\n", encoding="utf-8")
+    try:
+        index.sync([relative])
+        index.search("controller error", strategy="hybrid")
+        old_revision = index.cache_stats().revision
+        path.write_text(
+            "def controller(error):\n    return max(-1.0, min(1.0, error))\n",
+            encoding="utf-8",
+        )
+        index.sync([relative])
+        new_stats = index.cache_stats()
+    finally:
+        path.unlink(missing_ok=True)
+
+    assert new_stats.revision != old_revision
+    assert new_stats.invalidations == 1
+    assert new_stats.entries == 0
+
+
+def test_retrieval_cache_is_lru_bounded():
+    path = PROJECT_ROOT / "benchmarks/workspaces/_test_rag_cache_lru.py"
+    relative = "benchmarks/workspaces/_test_rag_cache_lru.py"
+    collection = MemoryCollection()
+    index = CodeIndex(collection, cache=RetrievalCache(max_entries=1))
+    path.write_text("def controller(error):\n    return error\n", encoding="utf-8")
+    try:
+        index.sync([relative])
+        index.search("controller", strategy="vector")
+        index.search("error", strategy="vector")
+    finally:
+        path.unlink(missing_ok=True)
+
+    stats = index.cache_stats()
+    assert stats.entries == 1
+    assert stats.evictions == 1
 
 
 def test_rag_tool_formats_ranked_source_results(monkeypatch):

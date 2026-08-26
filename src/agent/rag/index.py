@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import math
+import hashlib
+import time
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Literal
 
 from agent.rag.chunking import chunk_codebase
+from agent.rag.cache import RetrievalCache, RetrievalCacheStats
 from agent.rag.embedding import HashingEmbedder, tokenize
 from agent.rag.models import CodeChunk, IndexStats, SearchResult
 from agent.tools._paths import PROJECT_ROOT, resolve_within_root
@@ -27,9 +30,16 @@ class _Candidate:
 class CodeIndex:
     """Backend-neutral index logic operating on a Chroma-compatible collection."""
 
-    def __init__(self, collection: Any, embedder: HashingEmbedder | None = None) -> None:
+    def __init__(
+        self,
+        collection: Any,
+        embedder: HashingEmbedder | None = None,
+        cache: RetrievalCache | None = None,
+    ) -> None:
         self.collection = collection
         self.embedder = embedder or HashingEmbedder()
+        self.cache = cache or RetrievalCache()
+        self._revision: str | None = None
 
     def sync(
         self,
@@ -68,6 +78,8 @@ class CodeIndex:
                 embeddings=self.embedder.embed(documents),
             )
 
+        self._set_revision(_revision_for_chunks(chunks))
+
         return IndexStats(
             files=len(files),
             chunks=len(chunks),
@@ -83,12 +95,51 @@ class CodeIndex:
         top_k: int = 5,
         path_prefix: str | None = None,
         strategy: SearchStrategy = "hybrid",
+        use_cache: bool = True,
     ) -> list[SearchResult]:
         if not query.strip():
             raise ValueError("query must not be empty")
         if strategy not in {"vector", "lexical", "hybrid"}:
             raise ValueError(f"Unsupported search strategy: {strategy}")
         top_k = min(max(1, top_k), 20)
+        revision = self._ensure_revision()
+        key = self.cache.make_key(
+            revision=revision,
+            query=query,
+            top_k=top_k,
+            path_prefix=path_prefix,
+            strategy=strategy,
+        )
+        if use_cache:
+            found, cached = self.cache.get(key)
+            if found:
+                return cached
+        else:
+            self.cache.record_bypass()
+
+        started = time.perf_counter()
+        results = self._search_uncached(
+            query,
+            top_k=top_k,
+            path_prefix=path_prefix,
+            strategy=strategy,
+        )
+        if use_cache:
+            self.cache.put(
+                key,
+                results,
+                compute_ms=(time.perf_counter() - started) * 1000,
+            )
+        return results
+
+    def _search_uncached(
+        self,
+        query: str,
+        *,
+        top_k: int,
+        path_prefix: str | None,
+        strategy: SearchStrategy,
+    ) -> list[SearchResult]:
         count = int(self.collection.count())
         if count == 0:
             return []
@@ -102,6 +153,29 @@ class CodeIndex:
             return [candidate.result for candidate in lexical_ranked[:top_k]]
 
         return self._fuse_rankings(vector_ranked, lexical_ranked, top_k)
+
+    def cache_stats(self) -> RetrievalCacheStats:
+        return self.cache.stats()
+
+    def _ensure_revision(self) -> str:
+        # Re-read lightweight metadata on every lookup so a long-lived Agent also notices
+        # an index refreshed by another process. This is cheaper than stale source results.
+        payload = self.collection.get(include=["metadatas"])
+        ids = [str(item) for item in payload.get("ids") or []]
+        metadatas = payload.get("metadatas") or []
+        pairs = [
+            (chunk_id, str(metadata.get("content_hash", "")))
+            for chunk_id, metadata in zip(ids, metadatas)
+            if isinstance(metadata, dict)
+        ]
+        revision = _revision_for_pairs(pairs)
+        if revision != self._revision:
+            self._set_revision(revision)
+        return revision
+
+    def _set_revision(self, revision: str) -> None:
+        self._revision = revision
+        self.cache.prepare_revision(revision)
 
     def _vector_candidates(
         self,
@@ -226,6 +300,20 @@ class CodeIndex:
 def _batches(items: list[CodeChunk], size: int) -> Iterable[list[CodeChunk]]:
     for start in range(0, len(items), size):
         yield items[start:start + size]
+
+
+def _revision_for_chunks(chunks: Iterable[CodeChunk]) -> str:
+    return _revision_for_pairs((chunk.id, chunk.content_hash) for chunk in chunks)
+
+
+def _revision_for_pairs(pairs: Iterable[tuple[str, str]]) -> str:
+    digest = hashlib.sha256()
+    for chunk_id, content_hash in sorted(pairs):
+        digest.update(chunk_id.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(content_hash.encode("ascii", errors="replace"))
+        digest.update(b"\n")
+    return digest.hexdigest()[:16]
 
 
 def _first_result_list(value: Any) -> list[Any]:

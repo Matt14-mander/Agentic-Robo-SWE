@@ -27,6 +27,7 @@ class SearchIndex(Protocol):
         top_k: int = 5,
         path_prefix: str | None = None,
         strategy: SearchStrategy = "hybrid",
+        use_cache: bool = True,
     ) -> list[SearchResult]: ...
 
 
@@ -142,6 +143,7 @@ def evaluate_case(
         top_k=top_k,
         path_prefix=case.path_prefix,
         strategy=strategy,
+        use_cache=False,
     ))
     latency_ms = round((time.perf_counter() - started) * 1000, 3)
 
@@ -279,6 +281,7 @@ def run_rag_evaluation(
         "created_at": datetime.now(UTC).isoformat(),
         "case_count": len(results),
         "strategy": strategy,
+        "retrieval_cache_enabled": False,
         "top_ks": list(normalized_ks),
         "max_top_k": max_k,
         "duration_seconds": round(time.perf_counter() - started, 4),

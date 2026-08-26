@@ -33,7 +33,8 @@ class FakeIndex:
     def __init__(self, results: dict[str, list[SearchResult]]) -> None:
         self.results = results
 
-    def search(self, query, *, top_k, path_prefix, strategy="hybrid"):
+    def search(self, query, *, top_k, path_prefix, strategy="hybrid", use_cache=True):
+        assert not use_cache
         values = self.results[query]
         if path_prefix:
             values = [item for item in values if item.path.startswith(path_prefix)]
@@ -107,6 +108,7 @@ def test_run_rag_evaluation_computes_metrics_and_writes_per_case(tmp_path):
         assert report["metrics"]["at_3"]["mrr"] == 0.25
         assert loaded["schema_version"] == 1
         assert loaded["strategy"] == "hybrid"
+        assert not loaded["retrieval_cache_enabled"]
         assert (destination / "cases" / "first.json").exists()
         assert (destination / "cases" / "miss.json").exists()
     finally:

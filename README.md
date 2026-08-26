@@ -240,7 +240,26 @@ uv run python scripts/run_rag_eval.py --no-sync
 当前 10 条固定查询的向量基线为 Hit@1 50%、Hit@3 80%、Hit@5 90%、MRR@5 0.670；
 Phase 3.1b 混合检索将其提升到 Hit@1 80%、Hit@3/5 100%、MRR@5 0.883，并将此前
 Top-5 漏召回的 `semantic_search_tool` 提升到第 3 位。当前索引规模下，混合检索平均约
-32 ms，仍远低于一次 LLM 调用。
+41 ms（包含安全的 revision 核对），仍远低于一次 LLM 调用。
+
+### 9. Phase 3.2 Retrieval Cache
+
+实际 Agent 的重复源码检索使用进程内 LRU Cache，默认最多保存 128 个结果。缓存键包含
+标准化查询、`top_k`、路径前缀、检索策略和源码索引 revision。每次查询都会核对 Chroma
+中的 chunk 内容哈希；本进程或其它进程刷新索引后，旧结果会自动清空，不会返回过期代码。
+
+缓存记录 hit、miss、bypass、invalidation、eviction、命中率和估算节省延迟。可通过重复
+查询检查行为：
+
+```bash
+uv run python scripts/index_codebase.py \
+  --query "official validator gate" \
+  --repeat-query 3
+```
+
+RAG 质量评测始终显式绕过缓存，并在报告中写入 `retrieval_cache_enabled: false`，因此
+Phase 3.1/3.1b 的召回率和延迟基线不会被缓存命中污染。此缓存只保存确定性的只读检索结果，
+不缓存补丁、工具执行、validator 或 LLM 回答。
 
 ---
 
@@ -284,7 +303,7 @@ langgraph.json    # Studio 入口
 | 3.0 | Agentic RAG — Chroma 源码索引与条件式检索 | ✅ 完成 |
 | 3.1 | RAG 评测 — Recall@K、MRR、文件/符号命中率 | ✅ 完成 |
 | 3.1b | 混合检索 — 语义 + 词法/符号召回与重排 | ✅ 完成 |
-| 3.2 | 安全 Retrieval Cache — 索引版本感知、命中与失效指标 | ⏳ 下一阶段 |
+| 3.2 | 安全 Retrieval Cache — 索引版本感知、命中与失效指标 | ✅ 完成 |
 | 4 | Checkpointer (SqliteSaver) + HITL interrupt | ⏳ TODO |
 | 4.1 | LLM Semantic Cache — 工作区指纹隔离，仅限安全只读场景 | ⏳ 评估后实施 |
 | 5 | 机器人闭环 — PyBullet/MuJoCo 仿真评测集 | ⏳ TODO |
