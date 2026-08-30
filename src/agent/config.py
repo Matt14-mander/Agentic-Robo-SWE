@@ -58,3 +58,15 @@ def get_chat_model(temperature: float = 0.0) -> BaseChatModel:
         f"Unknown MODEL_PROVIDER: {provider!r}. "
         "Expected one of: anthropic, openai, deepseek."
     )
+
+
+def get_model_identity() -> str:
+    """Stable cache partition without exposing credentials or constructing a client."""
+    provider = os.getenv("MODEL_PROVIDER", "anthropic").lower()
+    models = {
+        "anthropic": "claude-3-5-sonnet-latest",
+        "openai": "gpt-4o-mini",
+        "deepseek": "deepseek-chat",
+    }
+    model = models.get(provider, "unknown")
+    return f"{provider}:{model}:temperature=0"

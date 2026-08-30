@@ -8,11 +8,12 @@
 
 from __future__ import annotations
 
-from langchain_core.messages import BaseMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 
-from agent.config import get_chat_model
+from agent.config import get_chat_model, get_model_identity
+from agent.semantic_cache import get_semantic_cache, semantic_cache_scope
 from agent.state import AgentState
-from agent.tools import ALL_TOOLS, FOCUSED_BENCHMARK_TOOLS
+from agent.tools import ALL_TOOLS, FOCUSED_BENCHMARK_TOOLS, READ_ONLY_TOOLS
 
 _DEFAULT_MAX_LOOP_STEPS = 15
 
@@ -58,6 +59,14 @@ Benchmark focused mode (this section overrides conflicting exploration steps abo
 - If it fails, use its details as evidence and continue fixing within the loop budget.
 """
 
+_READ_ONLY = """
+
+Read-only analysis mode:
+- You may inspect and search repository content, but you must not modify files or execute code.
+- Diagnose, explain, compare, or recommend based on evidence from the available read-only tools.
+- Finish with a self-contained answer that identifies the inspected files and any uncertainty.
+"""
+
 
 def build_system_prompt(state: AgentState) -> str:
     """Build the planner prompt and apply the requested benchmark strategy."""
@@ -66,6 +75,8 @@ def build_system_prompt(state: AgentState) -> str:
     if state.get("benchmark_mode") and state.get("benchmark_strategy", "focused") == "focused":
         budget = state.get("benchmark_tool_budget", 6)
         prompt += _BENCHMARK_FOCUSED + f"\nTool-call budget: {budget}.\n"
+    elif state.get("read_only_mode"):
+        prompt += _READ_ONLY
     return prompt
 
 
@@ -105,10 +116,37 @@ def planner(state: AgentState) -> dict:
         state.get("benchmark_mode")
         and state.get("benchmark_strategy", "focused") == "focused"
     )
-    tools = FOCUSED_BENCHMARK_TOOLS if focused else ALL_TOOLS
-    llm = get_chat_model(temperature=0.0).bind_tools(tools)
+    read_only = bool(state.get("read_only_mode") and not state.get("benchmark_mode"))
+    tools = FOCUSED_BENCHMARK_TOOLS if focused else READ_ONLY_TOOLS if read_only else ALL_TOOLS
 
     system = SystemMessage(content=build_system_prompt(state))
+    task = state.get("task", "")
+    cache_enabled = bool(state.get("semantic_cache_enabled") and read_only and task)
+    cache_scope = None
+    cache = None
+    if cache_enabled:
+        cache = get_semantic_cache()
+        cache_scope = semantic_cache_scope(
+            model_identity=get_model_identity(),
+            system_prompt=str(system.content),
+            tools=tools,
+        )
+        if loop_step == 0:
+            match = cache.lookup(task, cache_scope)
+            if match is not None:
+                response = AIMessage(content=match.response)
+                return {
+                    "messages": [response],
+                    "loop_step": loop_step + 1,
+                    "suggestion": match.response,
+                    "semantic_cache_hit": True,
+                    "semantic_cache_similarity": match.similarity,
+                    "semantic_cache_workspace": cache_scope.workspace,
+                }
+    elif state.get("semantic_cache_enabled"):
+        get_semantic_cache().record_bypass()
+
+    llm = get_chat_model(temperature=0.0).bind_tools(tools)
     model_messages = (
         focused_message_context(messages, state.get("benchmark_context_rounds", 3))
         if focused
@@ -125,5 +163,10 @@ def planner(state: AgentState) -> dict:
     if not getattr(response, "tool_calls", None):
         content = response.content if isinstance(response.content, str) else str(response.content)
         update["suggestion"] = content
+        if cache is not None and cache_scope is not None:
+            cache.store(task, content, cache_scope)
+            update["semantic_cache_hit"] = False
+            update["semantic_cache_similarity"] = None
+            update["semantic_cache_workspace"] = cache_scope.workspace
 
     return update

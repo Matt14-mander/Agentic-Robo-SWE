@@ -22,6 +22,12 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--checkpoint-db", default=".agent_state/checkpoints.sqlite")
     parser.add_argument("--max-loops", type=int, default=12)
     parser.add_argument("--hitl", action="store_true", help="write_patch 前暂停并请求审批")
+    parser.add_argument("--read-only", action="store_true", help="仅暴露读取/检索工具")
+    parser.add_argument(
+        "--semantic-cache",
+        action="store_true",
+        help="在 read-only 模式启用工作区隔离的语义响应缓存",
+    )
     parser.add_argument("--stream", action="store_true", help="逐节点显示新增消息")
     parser.add_argument("--status", action="store_true", help="只查看指定会话状态")
     parser.add_argument("--continue", dest="continue_run", action="store_true", help="从普通待执行 checkpoint 继续")
@@ -51,6 +57,12 @@ def _print_status(snapshot: Any, thread_id: str) -> None:
     print(f"Next nodes: {', '.join(snapshot.next) if snapshot.next else '<complete>'}")
     print(f"Loop step: {values.get('loop_step', 0)}")
     print(f"HITL enabled: {bool(values.get('hitl_enabled'))}")
+    print(f"Read-only mode: {bool(values.get('read_only_mode'))}")
+    if values.get("semantic_cache_enabled"):
+        status = "hit" if values.get("semantic_cache_hit") else "miss/store"
+        similarity = values.get("semantic_cache_similarity")
+        suffix = f" similarity={similarity:.3f}" if similarity is not None else ""
+        print(f"Semantic cache: {status}{suffix}")
     if snapshot.interrupts:
         print("Pending interrupts:")
         for item in snapshot.interrupts:
@@ -86,6 +98,12 @@ def main() -> int:
         return 2
     if not (args.status or args.continue_run or args.resume) and not args.task:
         print("ERROR: provide a task for a new session", file=sys.stderr)
+        return 2
+    if args.semantic_cache and not args.read_only:
+        print("ERROR: --semantic-cache requires --read-only", file=sys.stderr)
+        return 2
+    if args.hitl and args.read_only:
+        print("ERROR: --hitl is unnecessary and incompatible with --read-only", file=sys.stderr)
         return 2
 
     thread_id = args.thread_id or f"agent-{uuid.uuid4().hex[:12]}"
@@ -132,6 +150,9 @@ def main() -> int:
                     "loop_step": 0,
                     "max_loop_steps": max(1, args.max_loops),
                     "hitl_enabled": args.hitl,
+                    "read_only_mode": args.read_only,
+                    "semantic_cache_enabled": args.semantic_cache,
+                    "semantic_cache_hit": False,
                 }
 
             print(f"Thread: {thread_id}")
@@ -152,6 +173,11 @@ def main() -> int:
             if result.get("suggestion"):
                 print("\n=== Final summary ===\n")
                 print(result["suggestion"])
+            if result.get("semantic_cache_enabled"):
+                status = "HIT" if result.get("semantic_cache_hit") else "MISS → STORED"
+                similarity = result.get("semantic_cache_similarity")
+                suffix = f" ({similarity:.3f})" if similarity is not None else ""
+                print(f"\nSemantic cache: {status}{suffix}")
             return 0
     except (RuntimeError, ValueError, OSError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)

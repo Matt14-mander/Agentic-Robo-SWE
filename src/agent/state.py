@@ -48,6 +48,13 @@ class AgentState(TypedDict, total=False):
     hitl_decision: bool | None
     hitl_feedback: str | None
 
+    # —— Phase 4.1 安全只读 Semantic Cache ——
+    read_only_mode: bool
+    semantic_cache_enabled: bool
+    semantic_cache_hit: bool
+    semantic_cache_similarity: float | None
+    semantic_cache_workspace: str | None
+
     # —— 后续阶段预留 ——
     error_log: str | None
     sandbox_id: str | None

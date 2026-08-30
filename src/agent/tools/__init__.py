@@ -28,9 +28,19 @@ FOCUSED_BENCHMARK_TOOLS = [
     write_patch,
 ]
 
+# Phase 4.1 semantic responses are only reusable when the graph cannot mutate or
+# execute repository code. This list is deliberately narrower than ALL_TOOLS.
+READ_ONLY_TOOLS = [
+    list_dir,
+    search_code_knowledge,
+    read_file_chunk,
+    grep_codebase,
+]
+
 __all__ = [
     "ALL_TOOLS",
     "FOCUSED_BENCHMARK_TOOLS",
+    "READ_ONLY_TOOLS",
     "execute_python",
     "grep_codebase",
     "list_dir",

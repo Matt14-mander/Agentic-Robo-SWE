@@ -300,6 +300,34 @@ uv run python scripts/run_agent.py --thread-id control-fix-01 --continue
 位于项目目录内。M1 Benchmark 明确绕过 HITL，避免无人值守评测被审批暂停。旧的
 `scripts/run_demo.py` 继续作为无持久化教学 Demo，持久任务统一使用 `scripts/run_agent.py`。
 
+### 11. Phase 4.1 安全 Semantic Cache
+
+Semantic Cache 只对显式只读会话开放。`--read-only` 会移除 `execute_python` 和
+`write_patch`，只保留目录浏览、源码读取、grep 与 RAG；`--semantic-cache` 在此基础上缓存
+最终纯文本回答。普通修复任务、Benchmark、工具调用、补丁和执行结果不会进入缓存。
+
+```bash
+# 首次运行：正常调用 LLM，最终回答写入缓存
+uv run python scripts/run_agent.py \
+  "解释 official validator gate 如何阻止假阳性" \
+  --thread-id explain-gate-01 --read-only --semantic-cache
+
+# 新会话中的相同或近重复问题可命中缓存
+uv run python scripts/run_agent.py \
+  "解释 official validator gate 如何阻止假阳性？" \
+  --thread-id explain-gate-02 --read-only --semantic-cache
+```
+
+默认缓存位于 `.agent_state/semantic_cache.sqlite`，相似度阈值 0.97、TTL 7 天、最多 512 条。
+缓存分区同时包含工作区内容指纹、模型标识、System Prompt 和只读工具 schema。源码、配置、
+Prompt、模型或工具契约变化后不会复用旧回答。工作区指纹忽略 `.git`、虚拟环境、Chroma、
+benchmark 结果和 `.agent_state` 等生成内容，避免缓存自身导致无意义失效。
+
+这是回答级缓存而不是 Agent 轨迹缓存：命中时只返回以前的最终文本，绝不重放工具调用。
+当前默认使用完全离线的确定性 Hashing Embedding，并刻意采用高阈值，只复用相同或近重复
+问题，不承诺命中大幅改写的同义问法。环境变量 `SEMANTIC_CACHE_DB` 可以覆盖数据库位置，
+但仍限制在项目目录内。
+
 ---
 
 ## 项目结构
@@ -310,6 +338,7 @@ src/agent/
   state.py        # AgentState TypedDict (messages/current_file/loop_step + 预留)
   graph.py        # build_graph() + 顶层 graph
   persistence.py  # Phase 4 SQLite Checkpointer 生命周期
+  semantic_cache.py # Phase 4.1 工作区隔离的只读回答缓存
   config.py       # get_chat_model() 模型工厂
   nodes/          # planner / reader / suggester (状态→状态的纯函数)
   tools/          # read_file (Phase 2 扩展为 chunk/search/execute_python)
@@ -346,7 +375,7 @@ langgraph.json    # Studio 入口
 | 3.1b | 混合检索 — 语义 + 词法/符号召回与重排 | ✅ 完成 |
 | 3.2 | 安全 Retrieval Cache — 索引版本感知、命中与失效指标 | ✅ 完成 |
 | 4 | Checkpointer (SqliteSaver) + HITL interrupt | ✅ 完成 |
-| 4.1 | LLM Semantic Cache — 工作区指纹隔离，仅限安全只读场景 | ⏳ 下一阶段 |
+| 4.1 | LLM Semantic Cache — 工作区指纹隔离，仅限安全只读场景 | ✅ 完成 |
 | 5 | 机器人闭环 — PyBullet/MuJoCo 仿真评测集 | ⏳ TODO |
 
 详细方案见 `C:\Users\Rog\.claude\plans\langgraph-swe-agent-agent-code-executio-shiny-dragonfly.md`。
