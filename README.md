@@ -365,6 +365,35 @@ Phase 5 当前只支持 `EXECUTOR_BACKEND=local`。E2B 公共镜像未保证包�
 沙盒镜像前，不应把 E2B 结果与本地仿真基线混合统计。仿真完全无 GUI、固定 timestep，
 相同控制器的指标可逐值复现。
 
+### 13. Phase 5.1 多关节轨迹与安全约束
+
+第二个闭环任务扩展到平面 2-DOF 机械臂。目标不是只判断最终姿态，而是在两条平滑时变轨迹上
+同时验证：
+
+- 全程轨迹 RMSE、尾段 RMSE、最终最大关节误差和最终速度；
+- 肩/肘关节分别为 10/8 N·m 的控制器内部扭矩限幅；
+- MuJoCo 关节范围是否被突破；
+- 连杆是否接触场景中的红色禁入区障碍物。
+
+题面故意将两个关节的目标索引互换，并让原始控制量绕过 `torque_limits`。Agent 只修复
+`TwoJointTrajectoryController`，官方仿真模型、轨迹和判分阈值保持不可修改。查看故障指标：
+
+```bash
+uv run python scripts/run_simulation.py --case two-joint
+```
+
+单独运行 Phase 5.1 Agent 修复任务：
+
+```bash
+uv run python scripts/run_benchmark.py \
+  --manifest benchmarks/sim_cases.json \
+  --case sim_two_joint_trajectory \
+  --strategy focused --repair-attempts 1 \
+  --max-loops 10 --task-timeout 180
+```
+
+`benchmarks/sim_cases.json` 现在包含单关节和双关节两个任务；省略 `--case` 可连续评测二者。
+
 ---
 
 ## 项目结构
@@ -417,6 +446,7 @@ langgraph.json    # Studio 入口
 | 4 | Checkpointer (SqliteSaver) + HITL interrupt | ✅ 完成 |
 | 4.1 | LLM Semantic Cache — 工作区指纹隔离，仅限安全只读场景 | ✅ 完成 |
 | 5.0 | 机器人闭环 — MuJoCo 单关节 PD 跟踪与安全指标 | ✅ 完成 |
-| 5.1 | 多关节闭环 — 轨迹跟踪、碰撞与约束评测 | ⏳ 下一阶段 |
+| 5.1 | 多关节闭环 — 2-DOF 轨迹跟踪、碰撞与约束评测 | ✅ 完成 |
+| 5.2 | 仿真评测扩展 — 随机种子矩阵、扰动鲁棒性与聚合评分 | ⏳ 下一阶段 |
 
 详细方案见 `C:\Users\Rog\.claude\plans\langgraph-swe-agent-agent-code-executio-shiny-dragonfly.md`。

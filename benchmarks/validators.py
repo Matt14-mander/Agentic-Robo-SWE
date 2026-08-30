@@ -170,6 +170,72 @@ def _sim_joint_pd_tracking(module: ModuleType) -> ValidatorOutput:
     return failures, diagnostics
 
 
+def _sim_two_joint_trajectory(module: ModuleType) -> ValidatorOutput:
+    from agent.simulation import simulate_two_joint_trajectory
+
+    failures: list[str] = []
+    diagnostics: list[str] = []
+    torque_limits = (10.0, 8.0)
+    controller = module.TwoJointTrajectoryController(
+        kp=(28.0, 22.0),
+        kd=(7.0, 5.5),
+        torque_limits=torque_limits,
+    )
+    scenarios = (
+        ((-1.00, 0.50), (-0.30, -1.00)),
+        ((0.55, -0.80), (0.10, 0.90)),
+    )
+    for initial_positions, goal_positions in scenarios:
+        metrics = simulate_two_joint_trajectory(
+            controller.compute,
+            initial_positions=initial_positions,
+            goal_positions=goal_positions,
+        )
+        label = f"initial={initial_positions}, goal={goal_positions}"
+        diagnostics.append(
+            f"{label}: final_error={metrics.final_max_error:.6f}, "
+            f"tracking_rmse={metrics.tracking_rmse:.6f}, "
+            f"tail_rmse={metrics.tail_rmse:.6f}, "
+            f"max_commands={metrics.max_abs_commands}, "
+            f"collisions={metrics.collision_steps}"
+        )
+        if not metrics.finite:
+            failures.append(f"{label}: simulation produced non-finite state or command")
+            continue
+        for joint, (actual, limit) in enumerate(
+            zip(metrics.max_abs_commands, torque_limits, strict=True)
+        ):
+            if actual > limit + 1e-9:
+                failures.append(
+                    f"{label}: joint {joint} command {actual:.4f} exceeds torque limit {limit}"
+                )
+        if metrics.final_max_error > 0.04:
+            failures.append(
+                f"{label}: final maximum tracking error "
+                f"{metrics.final_max_error:.4f} exceeds 0.04"
+            )
+        if metrics.tracking_rmse > 0.09:
+            failures.append(
+                f"{label}: trajectory RMSE {metrics.tracking_rmse:.4f} exceeds 0.09"
+            )
+        if metrics.tail_rmse > 0.035:
+            failures.append(f"{label}: tail RMSE {metrics.tail_rmse:.4f} exceeds 0.035")
+        if max(abs(value) for value in metrics.final_velocities) > 0.06:
+            failures.append(
+                f"{label}: final joint velocity exceeds 0.06 rad/s: "
+                f"{metrics.final_velocities}"
+            )
+        if metrics.max_joint_limit_violation > 1e-9:
+            failures.append(
+                f"{label}: joint limit violation {metrics.max_joint_limit_violation:.6f} rad"
+            )
+        if metrics.collision_steps:
+            failures.append(
+                f"{label}: keep-out obstacle contacted for {metrics.collision_steps} steps"
+            )
+    return failures, diagnostics
+
+
 _VALIDATORS: dict[str, Callable[[ModuleType], ValidatorOutput]] = {
     "ik_reachability": _ik_reachability,
     "angle_units": _angle_units,
@@ -177,6 +243,7 @@ _VALIDATORS: dict[str, Callable[[ModuleType], ValidatorOutput]] = {
     "pid_anti_windup": _pid_anti_windup,
     "trajectory_endpoints": _trajectory_endpoints,
     "sim_joint_pd_tracking": _sim_joint_pd_tracking,
+    "sim_two_joint_trajectory": _sim_two_joint_trajectory,
 }
 
 

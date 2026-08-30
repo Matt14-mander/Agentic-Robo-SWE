@@ -11,6 +11,17 @@
       "validator": "sim_joint_pd_tracking",
       "prompt": "JointPDController 在 MuJoCo 单关节闭环中朝目标反方向加速，并输出超过执行器安全范围的扭矩。修复误差方向并在控制器内部实施对称 torque_limit 限幅，使正负目标都能稳定跟踪。不得修改仿真器或官方 validator。",
       "tags": ["mujoco", "closed-loop", "pd-control", "actuator-safety"]
+    },
+    {
+      "id": "sim_two_joint_trajectory",
+      "title": "MuJoCo 双关节轨迹跟踪、碰撞与约束安全",
+      "category": "simulation",
+      "difficulty": "hard",
+      "template": "benchmarks/fixtures/sim_two_joint_trajectory.py",
+      "workspace": "benchmarks/workspaces/sim_two_joint_trajectory.py",
+      "validator": "sim_two_joint_trajectory",
+      "prompt": "TwoJointTrajectoryController 把两个关节的目标索引交叉使用，并绕过逐关节 torque_limits，导致时变轨迹跟踪失败和安全约束风险。修复关节映射并在控制器内部对每个关节实施对称限幅，使两个方向的轨迹均满足跟踪、扭矩、关节范围和禁入区碰撞要求。不得修改仿真器或官方 validator。",
+      "tags": ["mujoco", "multi-joint", "trajectory-tracking", "collision", "constraints"]
     }
   ]
 }
