@@ -328,6 +328,43 @@ benchmark 结果和 `.agent_state` 等生成内容，避免缓存自身导致无
 问题，不承诺命中大幅改写的同义问法。环境变量 `SEMANTIC_CACHE_DB` 可以覆盖数据库位置，
 但仍限制在项目目录内。
 
+### 12. Phase 5.0 MuJoCo 闭环评测
+
+安装无头 MuJoCo 仿真依赖：
+
+```bash
+uv sync --extra dev --extra checkpoint --extra simulation
+```
+
+首个真实动力学任务是单关节 PD 跟踪。Validator 在两个不同初始状态下跟踪正、负目标，
+同时检查最终误差、尾段 RMSE、最终速度、稳定时间、最大关节偏移、数值有限性，以及控制器
+自身是否遵守 8 N·m 扭矩限制。MuJoCo 执行器的物理限幅不能替代控制器内部限幅。
+
+不调用 LLM 即可查看原始故障轨迹：
+
+```bash
+uv run python scripts/run_simulation.py
+
+# 确认所有仿真题面都按设计失败
+uv run python scripts/run_benchmark.py \
+  --manifest benchmarks/sim_cases.json \
+  --validate-fixtures
+```
+
+运行 Agent 修复闭环任务：
+
+```bash
+uv run python scripts/run_benchmark.py \
+  --manifest benchmarks/sim_cases.json \
+  --case sim_joint_pd_tracking \
+  --strategy focused --repair-attempts 1 \
+  --max-loops 10 --task-timeout 180
+```
+
+Phase 5 当前只支持 `EXECUTOR_BACKEND=local`。E2B 公共镜像未保证包含 MuJoCo；在没有自定义
+沙盒镜像前，不应把 E2B 结果与本地仿真基线混合统计。仿真完全无 GUI、固定 timestep，
+相同控制器的指标可逐值复现。
+
 ---
 
 ## 项目结构
@@ -339,6 +376,7 @@ src/agent/
   graph.py        # build_graph() + 顶层 graph
   persistence.py  # Phase 4 SQLite Checkpointer 生命周期
   semantic_cache.py # Phase 4.1 工作区隔离的只读回答缓存
+  simulation/     # Phase 5 MuJoCo 无头闭环与指标
   config.py       # get_chat_model() 模型工厂
   nodes/          # planner / reader / suggester (状态→状态的纯函数)
   tools/          # read_file (Phase 2 扩展为 chunk/search/execute_python)
@@ -352,9 +390,11 @@ scripts/
   index_codebase.py # Phase 3 源码索引与查询 CLI
   run_rag_eval.py # Phase 3.1 RAG 检索质量评测 CLI
   run_agent.py    # Phase 4 持久会话、状态查看和 HITL 恢复 CLI
+  run_simulation.py # Phase 5 单独运行控制器闭环并输出指标
 benchmarks/
   cases.json      # 评测任务清单
   rag_cases.json  # RAG 固定查询与相关路径/符号标注
+  sim_cases.json  # MuJoCo 闭环修复任务清单
   fixtures/       # 永不修改的带 bug 题面
   validators.py   # 独立确定性判分器
 langgraph.json    # Studio 入口
@@ -376,6 +416,7 @@ langgraph.json    # Studio 入口
 | 3.2 | 安全 Retrieval Cache — 索引版本感知、命中与失效指标 | ✅ 完成 |
 | 4 | Checkpointer (SqliteSaver) + HITL interrupt | ✅ 完成 |
 | 4.1 | LLM Semantic Cache — 工作区指纹隔离，仅限安全只读场景 | ✅ 完成 |
-| 5 | 机器人闭环 — PyBullet/MuJoCo 仿真评测集 | ⏳ TODO |
+| 5.0 | 机器人闭环 — MuJoCo 单关节 PD 跟踪与安全指标 | ✅ 完成 |
+| 5.1 | 多关节闭环 — 轨迹跟踪、碰撞与约束评测 | ⏳ 下一阶段 |
 
 详细方案见 `C:\Users\Rog\.claude\plans\langgraph-swe-agent-agent-code-executio-shiny-dragonfly.md`。

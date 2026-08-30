@@ -10,6 +10,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Callable
 
+ValidatorOutput = list[str] | tuple[list[str], list[str]]
+
 
 def _load_workspace(path: str) -> ModuleType:
     workspace = Path(path)
@@ -124,12 +126,57 @@ def _trajectory_endpoints(module: ModuleType) -> list[str]:
     return failures
 
 
-_VALIDATORS: dict[str, Callable[[ModuleType], list[str]]] = {
+def _sim_joint_pd_tracking(module: ModuleType) -> ValidatorOutput:
+    from agent.simulation import simulate_joint_tracking
+
+    failures: list[str] = []
+    diagnostics: list[str] = []
+    controller = module.JointPDController(kp=20.0, kd=5.0, torque_limit=8.0)
+    scenarios = ((1.0, 0.0), (-0.75, 0.5))
+    for target, initial_position in scenarios:
+        metrics = simulate_joint_tracking(
+            controller.compute,
+            target=target,
+            initial_position=initial_position,
+        )
+        label = f"target={target}, initial={initial_position}"
+        diagnostics.append(
+            f"{label}: final_error={metrics.final_error:.6f}, "
+            f"tail_rmse={metrics.tail_rmse:.6f}, "
+            f"settling_time={metrics.settling_time}, "
+            f"max_command={metrics.max_abs_command:.4f}"
+        )
+        if not metrics.finite:
+            failures.append(f"{label}: simulation produced non-finite state or command")
+            continue
+        if metrics.max_abs_command > 8.0 + 1e-9:
+            failures.append(
+                f"{label}: controller command {metrics.max_abs_command:.4f} exceeds torque_limit=8"
+            )
+        if metrics.final_error > 0.05:
+            failures.append(f"{label}: final tracking error {metrics.final_error:.4f} exceeds 0.05")
+        if metrics.tail_rmse > 0.06:
+            failures.append(f"{label}: tail RMSE {metrics.tail_rmse:.4f} exceeds 0.06")
+        if abs(metrics.final_velocity) > 0.08:
+            failures.append(
+                f"{label}: final velocity {metrics.final_velocity:.4f} exceeds 0.08 rad/s"
+            )
+        if metrics.max_abs_position > 1.6:
+            failures.append(
+                f"{label}: joint excursion {metrics.max_abs_position:.4f} exceeds safety bound 1.6"
+            )
+        if metrics.settling_time is None or metrics.settling_time > 2.0:
+            failures.append(f"{label}: controller did not settle within 2.0 seconds")
+    return failures, diagnostics
+
+
+_VALIDATORS: dict[str, Callable[[ModuleType], ValidatorOutput]] = {
     "ik_reachability": _ik_reachability,
     "angle_units": _angle_units,
     "quaternion_normalization": _quaternion_normalization,
     "pid_anti_windup": _pid_anti_windup,
     "trajectory_endpoints": _trajectory_endpoints,
+    "sim_joint_pd_tracking": _sim_joint_pd_tracking,
 }
 
 
@@ -145,7 +192,11 @@ def validate(validator: str, workspace: str) -> dict[str, object]:
         }
     try:
         module = _load_workspace(workspace)
-        failures = check(module)
+        outcome = check(module)
+        if isinstance(outcome, tuple):
+            failures, success_details = outcome
+        else:
+            failures, success_details = outcome, ["all deterministic checks passed"]
     except Exception as exc:
         return {
             "passed": False,
@@ -154,7 +205,7 @@ def validate(validator: str, workspace: str) -> dict[str, object]:
         }
     return {
         "passed": not failures,
-        "details": failures if failures else ["all deterministic checks passed"],
+        "details": failures if failures else success_details,
         "error": None,
     }
 

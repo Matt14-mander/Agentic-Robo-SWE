@@ -67,6 +67,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run Agentic-Robo-SWE M1 benchmark cases")
     parser.add_argument("--list", action="store_true", help="列出案例，不调用 LLM")
     parser.add_argument(
+        "--manifest",
+        default="benchmarks/cases.json",
+        help="案例清单；Phase 5 使用 benchmarks/sim_cases.json",
+    )
+    parser.add_argument(
         "--validate-fixtures",
         action="store_true",
         help="重置并验证原始题目均处于失败状态，不调用 LLM",
@@ -118,7 +123,7 @@ def _build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = _build_parser().parse_args()
     try:
-        cases = select_cases(load_cases(), args.case_ids)
+        cases = select_cases(load_cases(args.manifest), args.case_ids)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2

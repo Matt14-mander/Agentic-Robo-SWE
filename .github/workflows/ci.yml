@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         run: uv python install 3.12
       - name: Install locked dependencies
-        run: uv sync --frozen --extra dev --extra checkpoint
+        run: uv sync --frozen --extra dev --extra checkpoint --extra simulation
       - name: Lint
         run: uv run ruff check .
       - name: Type check
