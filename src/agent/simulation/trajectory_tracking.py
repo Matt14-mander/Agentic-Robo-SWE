@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import random
 from dataclasses import asdict, dataclass
 from typing import Callable, Sequence
 
@@ -44,6 +45,31 @@ _MODEL_XML = """
 
 
 @dataclass(frozen=True)
+class TrajectoryPerturbation:
+    """Reproducible dynamics, sensing and actuation perturbations for one trial."""
+
+    seed: int = 0
+    mass_scale: float = 1.0
+    damping_scale: float = 1.0
+    actuator_strength: float = 1.0
+    sensor_noise_std: float = 0.0
+    control_delay_steps: int = 0
+    disturbance_torque: JointVector = (0.0, 0.0)
+    disturbance_start: float = 1.0
+    disturbance_duration: float = 0.0
+
+    def validate(self) -> None:
+        if self.mass_scale <= 0 or self.damping_scale <= 0:
+            raise ValueError("mass_scale and damping_scale must be positive")
+        if not 0 < self.actuator_strength <= 1:
+            raise ValueError("actuator_strength must be in (0, 1]")
+        if self.sensor_noise_std < 0 or self.control_delay_steps < 0:
+            raise ValueError("sensor noise and control delay must be non-negative")
+        if self.disturbance_start < 0 or self.disturbance_duration < 0:
+            raise ValueError("disturbance timing must be non-negative")
+
+
+@dataclass(frozen=True)
 class TrajectoryTrackingMetrics:
     initial_positions: JointVector
     goal_positions: JointVector
@@ -57,6 +83,7 @@ class TrajectoryTrackingMetrics:
     max_joint_limit_violation: float
     collision_steps: int
     finite: bool
+    perturbation: TrajectoryPerturbation
 
     def to_dict(self) -> dict[str, object]:
         return asdict(self)
@@ -70,6 +97,7 @@ def simulate_two_joint_trajectory(
     move_seconds: float = 2.0,
     duration_seconds: float = 3.0,
     timestep: float = 0.002,
+    perturbation: TrajectoryPerturbation | None = None,
 ) -> TrajectoryTrackingMetrics:
     """Track a smooth point-to-point trajectory and report safety metrics."""
     if move_seconds <= 0 or duration_seconds <= 0 or timestep <= 0:
@@ -78,6 +106,8 @@ def simulate_two_joint_trajectory(
         raise ValueError("move_seconds must not exceed duration_seconds")
     if any(abs(value) > limit for value, limit in zip(initial_positions, (1.5, 1.7), strict=True)):
         raise ValueError("initial_positions exceed model joint limits")
+    perturbation = perturbation or TrajectoryPerturbation()
+    perturbation.validate()
     try:
         import mujoco  # type: ignore[import-not-found,import-untyped]
     except ImportError as exc:
@@ -88,6 +118,10 @@ def simulate_two_joint_trajectory(
     model = mujoco.MjModel.from_xml_string(_MODEL_XML)
     model.opt.timestep = timestep
     data = mujoco.MjData(model)
+    model.body_mass[1:] *= perturbation.mass_scale
+    model.body_inertia[1:] *= perturbation.mass_scale
+    model.dof_damping[:] *= perturbation.damping_scale
+    mujoco.mj_setConst(model, data)
     data.qpos[:] = initial_positions
     data.qvel[:] = (0.0, 0.0)
     mujoco.mj_forward(model, data)
@@ -99,6 +133,10 @@ def simulate_two_joint_trajectory(
     positions: list[JointVector] = []
     collision_steps = 0
     finite = True
+    rng = random.Random(perturbation.seed)
+    delayed_commands: list[JointVector] = [
+        (0.0, 0.0) for _ in range(perturbation.control_delay_steps)
+    ]
 
     for step in range(steps):
         elapsed = step * timestep
@@ -108,8 +146,17 @@ def simulate_two_joint_trajectory(
             goal_positions,
             move_seconds,
         )
-        current_positions = (float(data.qpos[0]), float(data.qpos[1]))
-        current_velocities = (float(data.qvel[0]), float(data.qvel[1]))
+        actual_positions = (float(data.qpos[0]), float(data.qpos[1]))
+        actual_velocities = (float(data.qvel[0]), float(data.qvel[1]))
+        current_positions: JointVector = (
+            actual_positions[0] + rng.gauss(0.0, perturbation.sensor_noise_std),
+            actual_positions[1] + rng.gauss(0.0, perturbation.sensor_noise_std),
+        )
+        velocity_noise_std = 2.0 * perturbation.sensor_noise_std
+        current_velocities: JointVector = (
+            actual_velocities[0] + rng.gauss(0.0, velocity_noise_std),
+            actual_velocities[1] + rng.gauss(0.0, velocity_noise_std),
+        )
         raw = controller(
             elapsed,
             target_positions,
@@ -120,11 +167,19 @@ def simulate_two_joint_trajectory(
         if len(raw) != 2:
             raise ValueError("controller must return exactly two joint commands")
         command = (float(raw[0]), float(raw[1]))
-        values = current_positions + current_velocities + command
+        values = actual_positions + actual_velocities + command
         if not all(math.isfinite(value) for value in values):
             finite = False
             break
-        data.ctrl[:] = command
+        delayed_commands.append(command)
+        applied_command = delayed_commands.pop(0)
+        data.ctrl[:] = tuple(
+            value * perturbation.actuator_strength for value in applied_command
+        )
+        data.qfrc_applied[:] = (0.0, 0.0)
+        disturbance_end = perturbation.disturbance_start + perturbation.disturbance_duration
+        if perturbation.disturbance_start <= elapsed < disturbance_end:
+            data.qfrc_applied[:] = perturbation.disturbance_torque
         mujoco.mj_step(model, data)
 
         position = (float(data.qpos[0]), float(data.qpos[1]))
@@ -139,7 +194,12 @@ def simulate_two_joint_trajectory(
             collision_steps += 1
 
     if not positions:
-        return _failed_metrics(initial_positions, goal_positions, duration_seconds)
+        return _failed_metrics(
+            initial_positions,
+            goal_positions,
+            duration_seconds,
+            perturbation,
+        )
 
     final_positions = positions[-1]
     final_velocities = (float(data.qvel[0]), float(data.qvel[1]))
@@ -172,6 +232,7 @@ def simulate_two_joint_trajectory(
             for position in positions
             for value in position
         ),
+        perturbation=perturbation,
     )
 
 
@@ -207,6 +268,7 @@ def _failed_metrics(
     initial_positions: JointVector,
     goal_positions: JointVector,
     duration_seconds: float,
+    perturbation: TrajectoryPerturbation,
 ) -> TrajectoryTrackingMetrics:
     return TrajectoryTrackingMetrics(
         initial_positions=initial_positions,
@@ -221,4 +283,5 @@ def _failed_metrics(
         max_joint_limit_violation=float("inf"),
         collision_steps=0,
         finite=False,
+        perturbation=perturbation,
     )

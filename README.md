@@ -392,7 +392,41 @@ uv run python scripts/run_benchmark.py \
   --max-loops 10 --task-timeout 180
 ```
 
-`benchmarks/sim_cases.json` 现在包含单关节和双关节两个任务；省略 `--case` 可连续评测二者。
+`benchmarks/sim_cases.json` 包含单关节、双关节名义轨迹和鲁棒性任务；省略 `--case` 可连续评测。
+
+### 14. Phase 5.2 固定种子扰动鲁棒性
+
+鲁棒性评测不再只运行固定轨迹。默认的五个 seed 会分别生成安全的初始/目标关节状态，并对
+以下条件进行有界扰动：
+
+- 连杆质量与关节阻尼；
+- 执行器输出衰减；
+- 传感器高斯噪声与 0–3 timestep 控制延迟；
+- 可复现的短时外力脉冲。
+
+每个 seed 都创建新的控制器实例，避免有状态控制器在不同试验间泄漏状态。聚合报告包含通过率、
+P50/P95 轨迹 RMSE、最坏最终误差、最坏尾段 RMSE、碰撞总数和 0–100 鲁棒性评分。碰撞、关节
+越界、扭矩越界或非有限数值属于安全硬门禁，即使平均分较高也不能通过。
+
+不调用 LLM 运行扰动矩阵：
+
+```bash
+uv run python scripts/run_robustness.py
+```
+
+结果默认写入 `benchmarks/results/robustness/<timestamp>/report.json`，同时在相邻 `seeds/`
+目录为每个 seed 写入独立 JSON，失败可通过对应 seed 精确复现。可以用多个 `--seed` 覆盖默认
+矩阵，或用 `--output` 指定项目内报告路径。
+
+运行 Agent 的 Phase 5.2 泛化修复任务：
+
+```bash
+uv run python scripts/run_benchmark.py \
+  --manifest benchmarks/sim_cases.json \
+  --case sim_two_joint_robustness \
+  --strategy focused --repair-attempts 1 \
+  --max-loops 10 --task-timeout 180
+```
 
 ---
 
@@ -420,6 +454,7 @@ scripts/
   run_rag_eval.py # Phase 3.1 RAG 检索质量评测 CLI
   run_agent.py    # Phase 4 持久会话、状态查看和 HITL 恢复 CLI
   run_simulation.py # Phase 5 单独运行控制器闭环并输出指标
+  run_robustness.py # Phase 5.2 固定 seed 扰动矩阵与逐 seed 报告
 benchmarks/
   cases.json      # 评测任务清单
   rag_cases.json  # RAG 固定查询与相关路径/符号标注
@@ -447,6 +482,7 @@ langgraph.json    # Studio 入口
 | 4.1 | LLM Semantic Cache — 工作区指纹隔离，仅限安全只读场景 | ✅ 完成 |
 | 5.0 | 机器人闭环 — MuJoCo 单关节 PD 跟踪与安全指标 | ✅ 完成 |
 | 5.1 | 多关节闭环 — 2-DOF 轨迹跟踪、碰撞与约束评测 | ✅ 完成 |
-| 5.2 | 仿真评测扩展 — 随机种子矩阵、扰动鲁棒性与聚合评分 | ⏳ 下一阶段 |
+| 5.2 | 仿真评测扩展 — 固定种子矩阵、扰动鲁棒性与聚合评分 | ✅ 完成 |
+| 5.3 | 仿真诊断 — 失败轨迹时序落盘与可视化报告 | ⏳ 下一阶段 |
 
 详细方案见 `C:\Users\Rog\.claude\plans\langgraph-swe-agent-agent-code-executio-shiny-dragonfly.md`。

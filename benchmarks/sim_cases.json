@@ -22,6 +22,17 @@
       "validator": "sim_two_joint_trajectory",
       "prompt": "TwoJointTrajectoryController 把两个关节的目标索引交叉使用，并绕过逐关节 torque_limits，导致时变轨迹跟踪失败和安全约束风险。修复关节映射并在控制器内部对每个关节实施对称限幅，使两个方向的轨迹均满足跟踪、扭矩、关节范围和禁入区碰撞要求。不得修改仿真器或官方 validator。",
       "tags": ["mujoco", "multi-joint", "trajectory-tracking", "collision", "constraints"]
+    },
+    {
+      "id": "sim_two_joint_robustness",
+      "title": "MuJoCo 双关节固定种子扰动鲁棒性",
+      "category": "simulation",
+      "difficulty": "hard",
+      "template": "benchmarks/fixtures/sim_two_joint_trajectory.py",
+      "workspace": "benchmarks/workspaces/sim_two_joint_robustness.py",
+      "validator": "sim_two_joint_robustness",
+      "prompt": "TwoJointTrajectoryController 必须在未知但可复现的多组动力学与控制扰动下泛化。修复交叉的关节目标映射，并严格执行每个关节自己的 torque_limits；不得针对具体 seed 或轨迹硬编码，不得修改仿真器、扰动矩阵或官方 validator。",
+      "tags": ["mujoco", "robustness", "seed-matrix", "domain-randomization", "safety-gate"]
     }
   ]
 }

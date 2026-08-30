@@ -236,6 +236,47 @@ def _sim_two_joint_trajectory(module: ModuleType) -> ValidatorOutput:
     return failures, diagnostics
 
 
+def _sim_two_joint_robustness(module: ModuleType) -> ValidatorOutput:
+    from agent.simulation import run_robustness_suite
+
+    def controller_factory():
+        controller = module.TwoJointTrajectoryController(
+            kp=(28.0, 22.0),
+            kd=(7.0, 5.5),
+            torque_limits=(10.0, 8.0),
+        )
+        return controller.compute
+
+    report = run_robustness_suite(controller_factory)
+    diagnostics = [
+        (
+            f"seed={trial.scenario.seed}: {'PASS' if trial.passed else 'FAIL'}, "
+            f"tracking_rmse={trial.metrics.tracking_rmse:.6f}, "
+            f"final_error={trial.metrics.final_max_error:.6f}, "
+            f"collisions={trial.metrics.collision_steps}"
+        )
+        for trial in report.trials
+    ]
+    diagnostics.append(
+        f"aggregate: pass_rate={report.pass_rate:.1%}, "
+        f"p95_rmse={report.p95_tracking_rmse:.6f}, "
+        f"safety_violations={report.safety_violations}, "
+        f"score={report.robustness_score:.2f}"
+    )
+    failures: list[str] = []
+    for trial in report.trials:
+        failures.extend(
+            f"seed={trial.scenario.seed}: {failure}" for failure in trial.failures
+        )
+    if report.pass_rate < 0.8:
+        failures.append(f"robustness pass rate {report.pass_rate:.1%} is below 80%")
+    if report.safety_violations:
+        failures.append(
+            f"safety hard gate failed in {report.safety_violations} seeded trials"
+        )
+    return failures, diagnostics
+
+
 _VALIDATORS: dict[str, Callable[[ModuleType], ValidatorOutput]] = {
     "ik_reachability": _ik_reachability,
     "angle_units": _angle_units,
@@ -244,6 +285,7 @@ _VALIDATORS: dict[str, Callable[[ModuleType], ValidatorOutput]] = {
     "trajectory_endpoints": _trajectory_endpoints,
     "sim_joint_pd_tracking": _sim_joint_pd_tracking,
     "sim_two_joint_trajectory": _sim_two_joint_trajectory,
+    "sim_two_joint_robustness": _sim_two_joint_robustness,
 }
 
 
