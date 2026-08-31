@@ -57,7 +57,7 @@ class RobustnessReport:
     passed: bool
 
     def to_dict(self) -> dict[str, object]:
-        return {"schema_version": 1, **asdict(self)}
+        return {"schema_version": 2, **asdict(self)}
 
 
 def generate_robustness_scenarios(
@@ -107,6 +107,8 @@ def run_robustness_suite(
     controller_factory: Callable[[], TrajectoryController],
     *,
     seeds: tuple[int, ...] = DEFAULT_ROBUSTNESS_SEEDS,
+    capture_traces: bool = False,
+    trace_stride: int = 10,
 ) -> RobustnessReport:
     """Evaluate a fresh controller instance for every deterministic scenario."""
     trials: list[RobustnessTrial] = []
@@ -116,6 +118,8 @@ def run_robustness_suite(
             initial_positions=scenario.initial_positions,
             goal_positions=scenario.goal_positions,
             perturbation=scenario.perturbation,
+            capture_trace=capture_traces,
+            trace_stride=trace_stride,
         )
         failures = _trial_failures(metrics)
         trials.append(

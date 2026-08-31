@@ -12,7 +12,9 @@ pytest.importorskip("mujoco")
 from agent.benchmark import load_cases, prepare_workspace
 from agent.simulation import (
     TrajectoryPerturbation,
+    diagnose_trial,
     generate_robustness_scenarios,
+    render_diagnostic_html,
     run_robustness_suite,
     simulate_joint_tracking,
     simulate_two_joint_trajectory,
@@ -45,6 +47,26 @@ def _safe_trajectory_controller(
             + (7.0, 5.5)[joint] * (target_velocities[joint] - velocities[joint])
         )
         commands.append(max(-limit, min(limit, command)))
+    return commands
+
+
+def _unsafe_trajectory_controller(
+    time_seconds,
+    target_positions,
+    target_velocities,
+    positions,
+    velocities,
+):
+    del time_seconds
+    commands = []
+    for joint in range(2):
+        target_joint = 1 - joint
+        commands.append(
+            (28.0, 22.0)[joint]
+            * (target_positions[target_joint] - positions[joint])
+            + (7.0, 5.5)[joint]
+            * (target_velocities[target_joint] - velocities[joint])
+        )
     return commands
 
 
@@ -286,9 +308,74 @@ def test_robustness_report_persists_aggregate_and_each_seed(tmp_path):
     _write_report(report, output)
 
     payload = json.loads(output.read_text(encoding="utf-8"))
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == 2
     assert payload["total_trials"] == 2
+    assert len(payload["diagnostics"]) == 2
+    assert (tmp_path / "diagnostics.html").is_file()
     assert sorted(path.name for path in (tmp_path / "seeds").iterdir()) == [
         "seed-00011.json",
         "seed-00023.json",
     ]
+
+
+def test_trace_capture_is_optional_downsampled_and_deterministic():
+    without_trace = simulate_two_joint_trajectory(
+        _safe_trajectory_controller,
+        initial_positions=(-1.0, 0.5),
+        goal_positions=(-0.3, -1.0),
+    )
+    first = simulate_two_joint_trajectory(
+        _safe_trajectory_controller,
+        initial_positions=(-1.0, 0.5),
+        goal_positions=(-0.3, -1.0),
+        capture_trace=True,
+        trace_stride=25,
+    )
+    second = simulate_two_joint_trajectory(
+        _safe_trajectory_controller,
+        initial_positions=(-1.0, 0.5),
+        goal_positions=(-0.3, -1.0),
+        capture_trace=True,
+        trace_stride=25,
+    )
+
+    assert without_trace.trace is None
+    assert first == second
+    assert first.trace is not None
+    assert 50 <= len(first.trace) <= 65
+    assert first.trace[-1].time_seconds == pytest.approx(3.0)
+    assert first.first_safety_event is None
+
+
+def test_failure_diagnosis_locates_first_event_and_renders_charts():
+    report = run_robustness_suite(
+        lambda: _unsafe_trajectory_controller,
+        seeds=(11,),
+        capture_traces=True,
+        trace_stride=20,
+    )
+    trial = report.trials[0]
+    diagnosis = diagnose_trial(trial)
+    rendered = render_diagnostic_html(report)
+
+    assert not trial.passed
+    assert trial.metrics.first_safety_event is not None
+    assert trial.metrics.first_safety_event.kind == "torque_limit"
+    assert trial.metrics.first_safety_event.time_seconds == 0.0
+    assert diagnosis.category == "torque_limit"
+    assert diagnosis.first_failure_time == 0.0
+    assert diagnosis.peak_tracking_error is not None
+    assert "Seed 11" in rendered
+    assert "Raw controller commands" in rendered
+    assert rendered.count("<svg") == 3
+
+
+def test_trace_stride_must_be_positive():
+    with pytest.raises(ValueError, match="trace_stride"):
+        simulate_two_joint_trajectory(
+            _safe_trajectory_controller,
+            initial_positions=(-1.0, 0.5),
+            goal_positions=(-0.3, -1.0),
+            capture_trace=True,
+            trace_stride=0,
+        )

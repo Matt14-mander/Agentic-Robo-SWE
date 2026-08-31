@@ -428,6 +428,32 @@ uv run python scripts/run_benchmark.py \
   --max-loops 10 --task-timeout 180
 ```
 
+### 15. Phase 5.3 失败轨迹诊断与可视化
+
+`run_robustness.py` 现在默认采集下采样时序，并在原有聚合 JSON 之外生成可直接打开的
+`diagnostics.html`。每条轨迹记录：
+
+- 目标/实际关节位置、实际速度与逐关节误差；
+- 控制器原始命令、延迟和执行器衰减后送入执行器的命令；
+- 碰撞状态、外力扰动窗口和扰动参数；
+- 首个扭矩越界、关节越界、碰撞或非有限数值事件及精确时刻。
+
+诊断页按 seed 展示关节跟踪、原始控制量和跟踪误差三组时序图，并用红色竖线标记首个安全
+事件。聚合 `report.json` 和每个 `seeds/seed-xxxxx.json` 都包含结构化 diagnosis，便于 Agent
+或后续分析工具直接消费，而不需要解析 HTML。
+
+```bash
+# 默认每 10 个 MuJoCo timestep 记录一次，并保留事件切换点
+uv run python scripts/run_robustness.py
+
+# 提高采样密度，或只生成轻量汇总
+uv run python scripts/run_robustness.py --trace-stride 5
+uv run python scripts/run_robustness.py --no-trace
+```
+
+时序采集是可选诊断能力：官方 Validator 默认关闭 trace，不改变 Phase 5.2 的判分结果和运行成本。
+报告 schema 已升级到版本 2；相同源码、seed、扰动参数与 `trace_stride` 会生成确定性一致的轨迹。
+
 ---
 
 ## 项目结构
@@ -439,7 +465,7 @@ src/agent/
   graph.py        # build_graph() + 顶层 graph
   persistence.py  # Phase 4 SQLite Checkpointer 生命周期
   semantic_cache.py # Phase 4.1 工作区隔离的只读回答缓存
-  simulation/     # Phase 5 MuJoCo 无头闭环与指标
+  simulation/     # Phase 5 MuJoCo 闭环、鲁棒性、时序诊断与 HTML 报告
   config.py       # get_chat_model() 模型工厂
   nodes/          # planner / reader / suggester (状态→状态的纯函数)
   tools/          # read_file (Phase 2 扩展为 chunk/search/execute_python)
@@ -454,7 +480,7 @@ scripts/
   run_rag_eval.py # Phase 3.1 RAG 检索质量评测 CLI
   run_agent.py    # Phase 4 持久会话、状态查看和 HITL 恢复 CLI
   run_simulation.py # Phase 5 单独运行控制器闭环并输出指标
-  run_robustness.py # Phase 5.2 固定 seed 扰动矩阵与逐 seed 报告
+  run_robustness.py # Phase 5.2/5.3 固定 seed 扰动、时序与诊断报告
 benchmarks/
   cases.json      # 评测任务清单
   rag_cases.json  # RAG 固定查询与相关路径/符号标注
@@ -483,8 +509,8 @@ langgraph.json    # Studio 入口
 | 5.0 | 机器人闭环 — MuJoCo 单关节 PD 跟踪与安全指标 | ✅ 完成 |
 | 5.1 | 多关节闭环 — 2-DOF 轨迹跟踪、碰撞与约束评测 | ✅ 完成 |
 | 5.2 | 仿真评测扩展 — 固定种子矩阵、扰动鲁棒性与聚合评分 | ✅ 完成 |
-| 5.3 | 仿真诊断 — 失败轨迹时序落盘与可视化报告 | ⏳ 下一阶段 |
-| 6.0 | Robotics Domain Pack — 可插拔领域工具、环境与 Validator 契约 | 📋 规划中 |
+| 5.3 | 仿真诊断 — 失败轨迹时序落盘、首个事件定位与可视化报告 | ✅ 完成 |
+| 6.0 | Robotics Domain Pack — 可插拔领域工具、环境与 Validator 契约 | ⏳ 下一阶段 |
 | 6.1 | Autodiff CodeGen MVP — AD 兼容检查、CppAD tape 与 Jacobian 验证 | 📋 规划中 |
 | 6.2 | 数值正确性门禁 — FD/AD/CodeGen 等价性与固定 seed 验证 | 📋 规划中 |
 | 6.3 | Pinocchio 集成 — 机器人动力学 CodeGen 与解析导数性能决策 | 📋 规划中 |

@@ -70,6 +70,33 @@ class TrajectoryPerturbation:
 
 
 @dataclass(frozen=True)
+class TrajectorySample:
+    """One downsampled closed-loop observation for diagnostics."""
+
+    time_seconds: float
+    target_positions: JointVector
+    positions: JointVector
+    velocities: JointVector
+    raw_commands: JointVector
+    applied_commands: JointVector
+    joint_errors: JointVector
+    collision: bool
+    disturbance_active: bool
+
+
+@dataclass(frozen=True)
+class SafetyEvent:
+    """The first safety-relevant event observed during a simulation."""
+
+    kind: str
+    time_seconds: float
+    joint: int | None
+    value: float | None
+    limit: float | None
+    message: str
+
+
+@dataclass(frozen=True)
 class TrajectoryTrackingMetrics:
     initial_positions: JointVector
     goal_positions: JointVector
@@ -84,6 +111,9 @@ class TrajectoryTrackingMetrics:
     collision_steps: int
     finite: bool
     perturbation: TrajectoryPerturbation
+    first_safety_event: SafetyEvent | None = None
+    trace: tuple[TrajectorySample, ...] | None = None
+    trace_stride: int | None = None
 
     def to_dict(self) -> dict[str, object]:
         return asdict(self)
@@ -98,12 +128,16 @@ def simulate_two_joint_trajectory(
     duration_seconds: float = 3.0,
     timestep: float = 0.002,
     perturbation: TrajectoryPerturbation | None = None,
+    capture_trace: bool = False,
+    trace_stride: int = 10,
 ) -> TrajectoryTrackingMetrics:
     """Track a smooth point-to-point trajectory and report safety metrics."""
     if move_seconds <= 0 or duration_seconds <= 0 or timestep <= 0:
         raise ValueError("move_seconds, duration_seconds and timestep must be positive")
     if move_seconds > duration_seconds:
         raise ValueError("move_seconds must not exceed duration_seconds")
+    if trace_stride <= 0:
+        raise ValueError("trace_stride must be positive")
     if any(abs(value) > limit for value, limit in zip(initial_positions, (1.5, 1.7), strict=True)):
         raise ValueError("initial_positions exceed model joint limits")
     perturbation = perturbation or TrajectoryPerturbation()
@@ -132,7 +166,10 @@ def simulate_two_joint_trajectory(
     commands: list[JointVector] = []
     positions: list[JointVector] = []
     collision_steps = 0
+    previous_collision = False
     finite = True
+    first_safety_event: SafetyEvent | None = None
+    trace: list[TrajectorySample] = []
     rng = random.Random(perturbation.seed)
     delayed_commands: list[JointVector] = [
         (0.0, 0.0) for _ in range(perturbation.control_delay_steps)
@@ -170,19 +207,41 @@ def simulate_two_joint_trajectory(
         values = actual_positions + actual_velocities + command
         if not all(math.isfinite(value) for value in values):
             finite = False
+            first_safety_event = first_safety_event or SafetyEvent(
+                kind="non_finite",
+                time_seconds=elapsed,
+                joint=None,
+                value=None,
+                limit=None,
+                message="simulation produced a non-finite state or command",
+            )
             break
+        for joint, (value, limit) in enumerate(zip(command, (10.0, 8.0), strict=True)):
+            if abs(value) > limit + 1e-9 and first_safety_event is None:
+                first_safety_event = SafetyEvent(
+                    kind="torque_limit",
+                    time_seconds=elapsed,
+                    joint=joint,
+                    value=value,
+                    limit=limit,
+                    message=f"joint {joint} command exceeded its torque limit",
+                )
         delayed_commands.append(command)
         applied_command = delayed_commands.pop(0)
-        data.ctrl[:] = tuple(
-            value * perturbation.actuator_strength for value in applied_command
+        actuated_command: JointVector = (
+            applied_command[0] * perturbation.actuator_strength,
+            applied_command[1] * perturbation.actuator_strength,
         )
+        data.ctrl[:] = actuated_command
         data.qfrc_applied[:] = (0.0, 0.0)
         disturbance_end = perturbation.disturbance_start + perturbation.disturbance_duration
-        if perturbation.disturbance_start <= elapsed < disturbance_end:
+        disturbance_active = perturbation.disturbance_start <= elapsed < disturbance_end
+        if disturbance_active:
             data.qfrc_applied[:] = perturbation.disturbance_torque
         mujoco.mj_step(model, data)
 
         position = (float(data.qpos[0]), float(data.qpos[1]))
+        velocity = (float(data.qvel[0]), float(data.qvel[1]))
         positions.append(position)
         commands.append(command)
         squared_errors.append(
@@ -190,8 +249,53 @@ def simulate_two_joint_trajectory(
                 target_positions, position, strict=True
             )) / 2
         )
-        if _touches_keepout(data, keepout_id):
+        collision = _touches_keepout(data, keepout_id)
+        collision_changed = collision != previous_collision
+        if collision:
             collision_steps += 1
+            if first_safety_event is None:
+                first_safety_event = SafetyEvent(
+                    kind="collision",
+                    time_seconds=elapsed + timestep,
+                    joint=None,
+                    value=None,
+                    limit=None,
+                    message="robot contacted the keep-out obstacle",
+                )
+        for joint, (value, limit) in enumerate(zip(position, (1.5, 1.7), strict=True)):
+            violation = abs(value) - limit
+            if violation > 1e-9 and first_safety_event is None:
+                first_safety_event = SafetyEvent(
+                    kind="joint_limit",
+                    time_seconds=elapsed + timestep,
+                    joint=joint,
+                    value=value,
+                    limit=limit,
+                    message=f"joint {joint} exceeded its position limit",
+                )
+        if capture_trace and (
+            step % trace_stride == 0
+            or step == steps - 1
+            or collision_changed
+            or (first_safety_event is not None and first_safety_event.time_seconds >= elapsed)
+        ):
+            trace.append(
+                TrajectorySample(
+                    time_seconds=elapsed + timestep,
+                    target_positions=target_positions,
+                    positions=position,
+                    velocities=velocity,
+                    raw_commands=command,
+                    applied_commands=actuated_command,
+                    joint_errors=(
+                        target_positions[0] - position[0],
+                        target_positions[1] - position[1],
+                    ),
+                    collision=collision,
+                    disturbance_active=disturbance_active,
+                )
+            )
+        previous_collision = collision
 
     if not positions:
         return _failed_metrics(
@@ -199,6 +303,9 @@ def simulate_two_joint_trajectory(
             goal_positions,
             duration_seconds,
             perturbation,
+            first_safety_event=first_safety_event,
+            trace=tuple(trace) if capture_trace else None,
+            trace_stride=trace_stride if capture_trace else None,
         )
 
     final_positions = positions[-1]
@@ -233,6 +340,9 @@ def simulate_two_joint_trajectory(
             for value in position
         ),
         perturbation=perturbation,
+        first_safety_event=first_safety_event,
+        trace=tuple(trace) if capture_trace else None,
+        trace_stride=trace_stride if capture_trace else None,
     )
 
 
@@ -269,6 +379,9 @@ def _failed_metrics(
     goal_positions: JointVector,
     duration_seconds: float,
     perturbation: TrajectoryPerturbation,
+    first_safety_event: SafetyEvent | None = None,
+    trace: tuple[TrajectorySample, ...] | None = None,
+    trace_stride: int | None = None,
 ) -> TrajectoryTrackingMetrics:
     return TrajectoryTrackingMetrics(
         initial_positions=initial_positions,
@@ -284,4 +397,7 @@ def _failed_metrics(
         collision_steps=0,
         finite=False,
         perturbation=perturbation,
+        first_safety_event=first_safety_event,
+        trace=trace,
+        trace_stride=trace_stride,
     )

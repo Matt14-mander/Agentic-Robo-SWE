@@ -1,4 +1,4 @@
-"""Run and persist the deterministic Phase 5.2 robustness matrix without an LLM."""
+"""Run Phase 5.2 robustness and persist Phase 5.3 diagnostics without an LLM."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-from agent.simulation import run_robustness_suite
+from agent.simulation import diagnose_trial, render_diagnostic_html, run_robustness_suite
 from agent.tools._paths import PROJECT_ROOT, resolve_within_root
 
 
@@ -37,24 +37,35 @@ def _default_output() -> Path:
     return PROJECT_ROOT / "benchmarks" / "results" / "robustness" / run_id / "report.json"
 
 
-def _write_report(report, output: Path) -> None:
+def _write_report(report, output: Path) -> Path:
     output.parent.mkdir(parents=True, exist_ok=True)
+    report_payload = report.to_dict()
+    report_payload["diagnostics"] = [
+        diagnose_trial(trial).to_dict() for trial in report.trials
+    ]
     output.write_text(
-        json.dumps(report.to_dict(), ensure_ascii=False, indent=2),
+        json.dumps(report_payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     seed_directory = output.parent / "seeds"
     seed_directory.mkdir(parents=True, exist_ok=True)
     for trial in report.trials:
         seed_path = seed_directory / f"seed-{trial.scenario.seed:05d}.json"
+        seed_payload = trial.to_dict()
+        seed_payload["diagnosis"] = diagnose_trial(trial).to_dict()
         seed_path.write_text(
-            json.dumps(trial.to_dict(), ensure_ascii=False, indent=2),
+            json.dumps(seed_payload, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+    diagnostic_path = output.parent / "diagnostics.html"
+    diagnostic_path.write_text(render_diagnostic_html(report), encoding="utf-8")
+    return diagnostic_path
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run the Phase 5.2 seeded robustness matrix")
+    parser = argparse.ArgumentParser(
+        description="Run the seeded robustness matrix and render diagnostics"
+    )
     parser.add_argument(
         "controller",
         nargs="?",
@@ -62,17 +73,37 @@ def main() -> int:
     )
     parser.add_argument("--seed", action="append", type=int, dest="seeds")
     parser.add_argument("--output", help="JSON report path inside the project")
+    parser.add_argument(
+        "--trace-stride",
+        type=int,
+        default=10,
+        help="capture every N simulation steps (default: 10)",
+    )
+    parser.add_argument(
+        "--no-trace",
+        action="store_true",
+        help="disable time-series capture and render summary-only diagnostics",
+    )
     args = parser.parse_args()
     try:
         factory = _load_controller_factory(args.controller)
         seeds = tuple(args.seeds) if args.seeds else None
         report = (
-            run_robustness_suite(factory, seeds=seeds)
+            run_robustness_suite(
+                factory,
+                seeds=seeds,
+                capture_traces=not args.no_trace,
+                trace_stride=args.trace_stride,
+            )
             if seeds is not None
-            else run_robustness_suite(factory)
+            else run_robustness_suite(
+                factory,
+                capture_traces=not args.no_trace,
+                trace_stride=args.trace_stride,
+            )
         )
         output = resolve_within_root(args.output) if args.output else _default_output()
-        _write_report(report, output)
+        diagnostic_path = _write_report(report, output)
     except (ImportError, RuntimeError, ValueError, OSError, AttributeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
@@ -84,7 +115,8 @@ def main() -> int:
         f"{report.p95_tracking_rmse:.5f}\n"
         f"Safety violations: {report.safety_violations}  "
         f"Score: {report.robustness_score:.2f}\n"
-        f"Report: {output}"
+        f"Report: {output}\n"
+        f"Diagnostics: {diagnostic_path}"
     )
     return 0 if report.passed else 1
 
