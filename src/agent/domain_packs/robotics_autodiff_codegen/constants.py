@@ -1,0 +1,11 @@
+"""Pinned identity and numerical gates for the Phase 6.1 Domain Pack."""
+
+PACK_ID = "robotics_autodiff_codegen"
+PACK_VERSION = "0.1.0"
+DEPENDENCY_LAYOUT_VERSION = "v1"
+CPPAD_TAG = "20240000.7"
+CPPAD_COMMIT = "67bdbf1bbf89cb0c490e7bdf6eac6fe92508f072"
+CPPAD_CODEGEN_TAG = "v2.5.0"
+CPPAD_CODEGEN_COMMIT = "656d23e3c06e0e3d573f02336eb457e1f30896f2"
+OUTPUT_TOLERANCE = 1.0e-10
+JACOBIAN_RELATIVE_TOLERANCE = 1.0e-6

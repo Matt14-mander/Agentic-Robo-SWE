@@ -40,6 +40,11 @@ packages = ["src/agent"]
 "src/agent/domain_packs/cpp_reference/prompt.md" = "agent/domain_packs/cpp_reference/prompt.md"
 "src/agent/domain_packs/cpp_reference/harness/CMakeLists.txt" = "agent/domain_packs/cpp_reference/harness/CMakeLists.txt"
 "src/agent/domain_packs/cpp_reference/harness/main.cpp" = "agent/domain_packs/cpp_reference/harness/main.cpp"
+"src/agent/domain_packs/robotics_autodiff_codegen/pack.toml" = "agent/domain_packs/robotics_autodiff_codegen/pack.toml"
+"src/agent/domain_packs/robotics_autodiff_codegen/prompt.md" = "agent/domain_packs/robotics_autodiff_codegen/prompt.md"
+"src/agent/domain_packs/robotics_autodiff_codegen/dependencies.lock.json" = "agent/domain_packs/robotics_autodiff_codegen/dependencies.lock.json"
+"src/agent/domain_packs/robotics_autodiff_codegen/harness/CMakeLists.txt" = "agent/domain_packs/robotics_autodiff_codegen/harness/CMakeLists.txt"
+"src/agent/domain_packs/robotics_autodiff_codegen/harness/main.cpp" = "agent/domain_packs/robotics_autodiff_codegen/harness/main.cpp"
 
 [tool.hatch.build.targets.wheel.sources]
 "src/agent" = "agent"
@@ -55,6 +60,7 @@ markers = [
     "e2e: end-to-end test requiring live LLM or sandbox API access",
     "simulation: test requiring the optional MuJoCo dependency",
     "cpp: test requiring a local CMake and C++ compiler toolchain",
+    "autodiff_codegen: test requiring pinned CppAD/CppADCodeGen and Linux runtime compilation",
 ]
 
 [tool.ruff]

@@ -1,0 +1,53 @@
+{
+  "schema_version": 2,
+  "cases": [
+    {
+      "id": "autodiff_hardcoded_scalar",
+      "title": "CppADCodeGen 模型写死 double",
+      "category": "localization",
+      "difficulty": "medium",
+      "template": "benchmarks/fixtures/autodiff_hardcoded_scalar.hpp",
+      "workspace": "benchmarks/workspaces/autodiff_hardcoded_scalar.hpp",
+      "validator": "robotics_autodiff_codegen.output_and_jacobian",
+      "prompt": "模型接口写死为 double，无法用 CppAD/CppADCodeGen Scalar 录制。将模型最小化改造成 Scalar 泛型，同时保持函数名、输入顺序与数学表达式不变。只能修改目标头文件。",
+      "tags": ["cpp", "cppad", "codegen", "scalar"],
+      "domain_pack": "robotics_autodiff_codegen",
+      "required_capabilities": ["cmake", "cxx_compiler", "linux_codegen_runtime"],
+      "validator_timeout": 300,
+      "artifact_policy": "preserve_on_failure",
+      "execution_environment": "local"
+    },
+    {
+      "id": "autodiff_scalar_propagation",
+      "title": "自动微分中间量丢失 Scalar",
+      "category": "localization",
+      "difficulty": "medium",
+      "template": "benchmarks/fixtures/autodiff_scalar_propagation.hpp",
+      "workspace": "benchmarks/workspaces/autodiff_scalar_propagation.hpp",
+      "validator": "robotics_autodiff_codegen.output_and_jacobian",
+      "prompt": "模板模型中的中间量退化为 double，切断了自动微分类型传播。修复中间量类型并保留函数契约和数学表达式。只能修改目标头文件。",
+      "tags": ["cpp", "cppad", "codegen", "scalar-propagation"],
+      "domain_pack": "robotics_autodiff_codegen",
+      "required_capabilities": ["cmake", "cxx_compiler", "linux_codegen_runtime"],
+      "validator_timeout": 300,
+      "artifact_policy": "preserve_on_failure",
+      "execution_environment": "local"
+    },
+    {
+      "id": "autodiff_jacobian_input_order",
+      "title": "CodeGen Jacobian 输入顺序错位",
+      "category": "correctness",
+      "difficulty": "hard",
+      "template": "benchmarks/fixtures/autodiff_input_order.hpp",
+      "workspace": "benchmarks/workspaces/autodiff_input_order.hpp",
+      "validator": "robotics_autodiff_codegen.output_and_jacobian",
+      "prompt": "函数可模板实例化，但实现将 [joint_position, joint_velocity] 当成相反顺序，导致输出和 Jacobian 契约错误。按注释契约恢复公式的变量顺序。只能修改目标头文件。",
+      "tags": ["cpp", "cppad", "codegen", "jacobian", "input-order"],
+      "domain_pack": "robotics_autodiff_codegen",
+      "required_capabilities": ["cmake", "cxx_compiler", "linux_codegen_runtime"],
+      "validator_timeout": 300,
+      "artifact_policy": "preserve_on_failure",
+      "execution_environment": "local"
+    }
+  ]
+}

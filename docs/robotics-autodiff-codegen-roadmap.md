@@ -90,6 +90,27 @@ Benchmark 契约，使不同领域包能够独立安装、测试和演进。
 
 ### Phase 6.1：`robotics_autodiff_codegen` MVP
 
+状态：✅ 已完成 MVP 实现。内置 Pack 提供确定性的 AD 兼容性诊断，锁定 CppAD 20240000.7 与
+CppADCodeGen v2.5.0，并通过显式 bootstrap 安装到 `.agent_state`。Linux 官方 Validator 执行
+“源模型 → CppAD tape → CodeGen 动态库 → 固定 seed 输出/Jacobian 对照”；Windows 明确报告
+`linux_codegen_runtime` 能力缺失，不会用弱化检查误报通过。首批三题覆盖写死 `double`、中间量
+Scalar 丢失和 Jacobian 输入顺序错位。更完整的多 seed、边界状态、稀疏导数和诊断工件仍属于
+Phase 6.2。
+
+Linux/WSL 参考执行顺序：
+
+```bash
+uv run python scripts/bootstrap_autodiff_codegen.py
+uv run pytest -q tests/test_autodiff_codegen_pack.py -m autodiff_codegen
+uv run python scripts/run_benchmark.py \
+  --manifest benchmarks/autodiff_codegen_cases.json --validate-fixtures
+uv run python scripts/run_benchmark.py \
+  --manifest benchmarks/autodiff_codegen_cases.json --max-loops 12
+```
+
+`bootstrap_autodiff_codegen.py --check` 只读取本地状态，不联网也不安装。普通 Benchmark 和
+Validator 也不会下载依赖；缺依赖或在原生 Windows 上运行时会返回明确的 capability 错误。
+
 目标：完成第一个“源代码修复 → 生成 → 编译 → 验证”闭环。
 
 新增 AD 兼容性检查工具，重点发现：

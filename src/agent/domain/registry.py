@@ -70,8 +70,11 @@ def get_domain_registry() -> DomainRegistry:
     global _BUILTINS_LOADED
     if not _BUILTINS_LOADED:
         from agent.domain_packs.cpp_reference import create_pack
+        from agent.domain_packs.robotics_autodiff_codegen import (
+            create_pack as create_autodiff_codegen_pack,
+        )
 
         _REGISTRY.register(create_pack())
+        _REGISTRY.register(create_autodiff_codegen_pack())
         _BUILTINS_LOADED = True
     return _REGISTRY
-
