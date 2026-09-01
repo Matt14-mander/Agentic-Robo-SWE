@@ -37,14 +37,39 @@ READ_ONLY_TOOLS = [
     grep_codebase,
 ]
 
+
+def resolve_tools(*, mode: str = "general", domain_packs: tuple[str, ...] = ()):
+    """Resolve the model-visible tool schema for one execution mode and pack set."""
+    from agent.domain.selection import append_domain_tools
+
+    if mode == "focused":
+        base = FOCUSED_BENCHMARK_TOOLS
+    elif mode == "read_only":
+        return list(READ_ONLY_TOOLS)
+    elif mode == "general":
+        base = ALL_TOOLS
+    else:
+        raise ValueError(f"Unknown tool mode: {mode}")
+    return append_domain_tools(base, domain_packs)
+
+
+def all_registered_tools():
+    """Return every executable tool known to the graph's dispatch node."""
+    from agent.domain.registry import get_domain_registry
+
+    pack_ids = tuple(pack.id for pack in get_domain_registry().all_packs())
+    return resolve_tools(mode="general", domain_packs=pack_ids)
+
 __all__ = [
     "ALL_TOOLS",
     "FOCUSED_BENCHMARK_TOOLS",
     "READ_ONLY_TOOLS",
+    "all_registered_tools",
     "execute_python",
     "grep_codebase",
     "list_dir",
     "read_file_chunk",
+    "resolve_tools",
     "search_code_knowledge",
     "write_patch",
 ]

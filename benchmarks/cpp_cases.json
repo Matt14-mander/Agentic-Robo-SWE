@@ -1,0 +1,21 @@
+{
+  "schema_version": 2,
+  "cases": [
+    {
+      "id": "cpp_reference_output",
+      "title": "C++ 模板机器人状态更新输出等价性",
+      "category": "build",
+      "difficulty": "medium",
+      "template": "benchmarks/fixtures/cpp_reference_model.hpp",
+      "workspace": "benchmarks/workspaces/cpp_reference_model.hpp",
+      "validator": "cpp_reference.output_equivalence",
+      "prompt": "模板化 robot_step 的第二个状态方程使用了错误的控制方向。修复源模型，使固定 C++ harness 的输出等价性检查通过。只能修改目标头文件，不得修改 CMake harness、Validator 或生成工件。",
+      "tags": ["cpp", "cmake", "domain-pack", "output-equivalence"],
+      "domain_pack": "cpp_reference",
+      "required_capabilities": ["cmake", "cxx_compiler"],
+      "validator_timeout": 180,
+      "artifact_policy": "preserve_on_failure",
+      "execution_environment": "local"
+    }
+  ]
+}

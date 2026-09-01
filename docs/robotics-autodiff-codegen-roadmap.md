@@ -73,6 +73,10 @@ Benchmark 契约，使不同领域包能够独立安装、测试和演进。
 
 ### Phase 6.0：Domain Pack 基础契约
 
+状态：✅ 已完成基础实现。当前内置 `cpp_reference` Pack 已覆盖 manifest、动态工具与 Prompt、
+命名空间 Validator、Benchmark schema v2、工具链指纹、受限 CMake 工件目录和独立 CI Job。
+真实 CppAD/CppADCodeGen 依赖仍按计划留在 Phase 6.1。
+
 目标：证明专有能力可以接入而不污染通用 Harness。
 
 - 定义 Domain Pack manifest、工具注册、Validator 注册和可选依赖契约；
@@ -202,4 +206,3 @@ Validator 同时检查：
 Phase 5.3 先完成 MuJoCo 失败轨迹时序落盘与诊断可视化，为后续领域 Validator 的报告格式建立
 基础。随后进入 Phase 6.0 Domain Pack 契约，再按 6.1–6.4 推进 CppADCodeGen、Pinocchio 和
 Crocoddyl。M2 Benchmark 与 Phase 6 同步积累题目，在专业工具和 Validator 稳定后执行正式消融。
-

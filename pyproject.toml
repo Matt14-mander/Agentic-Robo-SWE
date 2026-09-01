@@ -35,6 +35,12 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/agent"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/agent/domain_packs/cpp_reference/pack.toml" = "agent/domain_packs/cpp_reference/pack.toml"
+"src/agent/domain_packs/cpp_reference/prompt.md" = "agent/domain_packs/cpp_reference/prompt.md"
+"src/agent/domain_packs/cpp_reference/harness/CMakeLists.txt" = "agent/domain_packs/cpp_reference/harness/CMakeLists.txt"
+"src/agent/domain_packs/cpp_reference/harness/main.cpp" = "agent/domain_packs/cpp_reference/harness/main.cpp"
+
 [tool.hatch.build.targets.wheel.sources]
 "src/agent" = "agent"
 
@@ -48,6 +54,7 @@ asyncio_mode = "auto"
 markers = [
     "e2e: end-to-end test requiring live LLM or sandbox API access",
     "simulation: test requiring the optional MuJoCo dependency",
+    "cpp: test requiring a local CMake and C++ compiler toolchain",
 ]
 
 [tool.ruff]

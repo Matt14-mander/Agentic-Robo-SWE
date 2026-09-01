@@ -21,4 +21,22 @@ jobs:
       - name: Type check
         run: uv run mypy src
       - name: Test offline suite
-        run: uv run pytest -q -m "not e2e"
+        run: uv run pytest -q -m "not e2e and not cpp"
+
+  cpp-domain-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Install C++ toolchain
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build g++
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install core and test dependencies
+        run: uv sync --frozen --extra dev
+      - name: Test Domain Pack contracts and CMake reference integration
+        run: uv run pytest -q tests/test_domain_packs.py
+      - name: Verify C++ benchmark fixture fails as designed
+        run: uv run python scripts/run_benchmark.py --manifest benchmarks/cpp_cases.json --validate-fixtures

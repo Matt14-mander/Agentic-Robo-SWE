@@ -1,0 +1,8 @@
+schema_version = 1
+id = "cpp_reference"
+version = "0.1.0"
+description = "Phase 6.0 reference pack for restricted CMake/C++ workflows"
+required_executables = ["cmake", "cxx_compiler"]
+optional_executables = ["ninja"]
+local_only = true
+

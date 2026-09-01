@@ -13,7 +13,8 @@ from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, System
 from agent.config import get_chat_model, get_model_identity
 from agent.semantic_cache import get_semantic_cache, semantic_cache_scope
 from agent.state import AgentState
-from agent.tools import ALL_TOOLS, FOCUSED_BENCHMARK_TOOLS, READ_ONLY_TOOLS
+from agent.domain.selection import domain_prompt_fragment
+from agent.tools import resolve_tools
 
 _DEFAULT_MAX_LOOP_STEPS = 15
 
@@ -77,6 +78,7 @@ def build_system_prompt(state: AgentState) -> str:
         prompt += _BENCHMARK_FOCUSED + f"\nTool-call budget: {budget}.\n"
     elif state.get("read_only_mode"):
         prompt += _READ_ONLY
+    prompt += domain_prompt_fragment(state.get("domain_packs") or ())
     return prompt
 
 
@@ -117,7 +119,8 @@ def planner(state: AgentState) -> dict:
         and state.get("benchmark_strategy", "focused") == "focused"
     )
     read_only = bool(state.get("read_only_mode") and not state.get("benchmark_mode"))
-    tools = FOCUSED_BENCHMARK_TOOLS if focused else READ_ONLY_TOOLS if read_only else ALL_TOOLS
+    mode = "focused" if focused else "read_only" if read_only else "general"
+    tools = resolve_tools(mode=mode, domain_packs=state.get("domain_packs") or ())
 
     system = SystemMessage(content=build_system_prompt(state))
     task = state.get("task", "")

@@ -6,7 +6,14 @@ import argparse
 import json
 import sys
 
-from agent.benchmark import load_cases, prepare_workspace, run_suite, select_cases, validate_case
+from agent.benchmark import (
+    domain_case_metadata,
+    load_cases,
+    prepare_workspace,
+    run_suite,
+    select_cases,
+    validate_case,
+)
 
 
 def _timeout_value(value: str) -> float | None:
@@ -131,12 +138,21 @@ def main() -> int:
     if args.list:
         for case in cases:
             tags = ", ".join(case.tags)
-            print(f"{case.id:28} {case.difficulty:6} {case.category:12} {case.title} [{tags}]")
+            pack = f" pack={case.domain_pack}" if case.domain_pack else ""
+            print(
+                f"{case.id:28} {case.difficulty:6} {case.category:12} "
+                f"{case.title} [{tags}]{pack}"
+            )
         return 0
 
     if args.validate_fixtures:
         healthy = True
         for case in cases:
+            _, capabilities, _ = domain_case_metadata(case)
+            missing = sorted(name for name, available in capabilities.items() if not available)
+            if missing:
+                print(f"{case.id}: SKIPPED (missing capabilities: {', '.join(missing)})")
+                continue
             prepare_workspace(case)
             result = validate_case(case)
             fixture_is_buggy = not result.passed and result.error is None
@@ -146,6 +162,18 @@ def main() -> int:
             if result.error:
                 print(f"  error: {result.error}")
         return 0 if healthy else 1
+
+    blocked: list[str] = []
+    for case in cases:
+        _, capabilities, _ = domain_case_metadata(case)
+        missing = sorted(name for name, available in capabilities.items() if not available)
+        if missing:
+            blocked.append(f"{case.id}: {', '.join(missing)}")
+    if blocked:
+        print("ERROR: required Domain Pack capabilities are unavailable:", file=sys.stderr)
+        for item in blocked:
+            print(f"  {item}", file=sys.stderr)
+        return 2
 
     progress = _ConsoleProgress()
     if args.tool_budget is not None and args.tool_budget < 1:

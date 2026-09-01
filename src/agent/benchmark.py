@@ -45,6 +45,11 @@ class BenchmarkCase:
     prompt: str
     validator: str
     tags: tuple[str, ...] = ()
+    domain_pack: str | None = None
+    required_capabilities: tuple[str, ...] = ()
+    validator_timeout: int = 30
+    artifact_policy: str | None = None
+    execution_environment: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "BenchmarkCase":
@@ -65,6 +70,19 @@ class BenchmarkCase:
             prompt=str(data["prompt"]),
             validator=str(data["validator"]),
             tags=tuple(str(tag) for tag in data.get("tags", [])),
+            domain_pack=str(data["domain_pack"]) if data.get("domain_pack") else None,
+            required_capabilities=tuple(
+                str(item) for item in data.get("required_capabilities", [])
+            ),
+            validator_timeout=int(data.get("validator_timeout", 30)),
+            artifact_policy=(
+                str(data["artifact_policy"]) if data.get("artifact_policy") else None
+            ),
+            execution_environment=(
+                str(data["execution_environment"])
+                if data.get("execution_environment")
+                else None
+            ),
         )
 
 
@@ -101,6 +119,10 @@ class BenchmarkResult:
     workspace: str
     provider: str
     executor_backend: str
+    domain_pack: str | None
+    domain_pack_version: str | None
+    capability_check: dict[str, bool]
+    toolchain_fingerprint: str | None
     final_suggestion: str | None
     attempts: int
     repair_attempts_used: int
@@ -124,7 +146,7 @@ def load_cases(manifest: str | Path = DEFAULT_MANIFEST) -> list[BenchmarkCase]:
     if not path.is_absolute():
         path = resolve_within_root(str(path))
     data = json.loads(path.read_text(encoding="utf-8"))
-    if data.get("schema_version") != 1:
+    if data.get("schema_version") not in {1, 2}:
         raise ValueError(f"Unsupported benchmark schema_version: {data.get('schema_version')!r}")
     cases = [BenchmarkCase.from_dict(item) for item in data.get("cases", [])]
     ids = [case.id for case in cases]
@@ -135,6 +157,12 @@ def load_cases(manifest: str | Path = DEFAULT_MANIFEST) -> list[BenchmarkCase]:
     for case in cases:
         resolve_within_root(case.template)
         resolve_within_root(case.workspace)
+        if case.validator_timeout < 1:
+            raise ValueError(f"Validator timeout must be positive: {case.id}")
+        if case.domain_pack:
+            from agent.domain.registry import get_domain_registry
+
+            get_domain_registry().get(case.domain_pack)
     return cases
 
 
@@ -160,7 +188,7 @@ def prepare_workspace(case: BenchmarkCase) -> Path:
     return workspace
 
 
-def validate_case(case: BenchmarkCase, timeout: int = 30) -> ValidationResult:
+def validate_case(case: BenchmarkCase, timeout: int | None = None) -> ValidationResult:
     started = time.perf_counter()
     command = [
         sys.executable,
@@ -177,7 +205,7 @@ def validate_case(case: BenchmarkCase, timeout: int = 30) -> ValidationResult:
             text=True,
             encoding="utf-8",
             errors="replace",
-            timeout=timeout,
+            timeout=timeout or case.validator_timeout,
             check=False,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -212,8 +240,10 @@ def build_task(case: BenchmarkCase, tool_budget: int | None = None) -> str:
         f"print(validate({case.validator!r}, {case.workspace!r}))"
     )
     budget_line = f"本任务工具调用预算为 {tool_budget} 次。\n" if tool_budget is not None else ""
+    domain_line = f"领域能力包：{case.domain_pack}\n" if case.domain_pack else ""
     return (
         f"机器人代码评测任务 [{case.id}]：{case.title}\n\n"
+        f"{domain_line}"
         f"目标文件：{case.workspace}\n"
         f"问题描述：{case.prompt}\n\n"
         "只修改目标文件。直接读取目标并实施最小修复，不要单独编写复现脚本。修复后必须使用 execute_python "
@@ -388,6 +418,7 @@ def run_case(
     suggestion: str | None = None
     errors: list[str] = []
     task = build_task(case, resolved_tool_budget)
+    domain_version, capability_check, toolchain_fingerprint = domain_case_metadata(case)
 
     for attempt in range(1, repair_attempts + 2):
         _emit_progress(
@@ -415,6 +446,9 @@ def run_case(
             "benchmark_validation_passed": False,
             "benchmark_tool_budget": resolved_tool_budget,
             "benchmark_context_rounds": 3,
+            "domain_packs": (case.domain_pack,) if case.domain_pack else (),
+            "domain_capabilities": capability_check,
+            "domain_toolchain_fingerprint": toolchain_fingerprint,
         }
         config = {"recursion_limit": max(50, max_loop_steps * 4)}
         try:
@@ -519,6 +553,10 @@ def run_case(
         workspace=relpath_for_display(workspace),
         provider=os.getenv("MODEL_PROVIDER", "anthropic"),
         executor_backend=os.getenv("EXECUTOR_BACKEND", "local"),
+        domain_pack=case.domain_pack,
+        domain_pack_version=domain_version,
+        capability_check=capability_check,
+        toolchain_fingerprint=toolchain_fingerprint,
         final_suggestion=suggestion,
         attempts=attempts,
         repair_attempts_used=max(0, attempts - 1),
@@ -533,6 +571,32 @@ def run_case(
         attempt_history=attempt_history,
         error="; ".join(errors) if errors else None,
     )
+
+
+def domain_case_metadata(
+    case: BenchmarkCase,
+) -> tuple[str | None, dict[str, bool], str | None]:
+    if not case.domain_pack:
+        return None, {}, None
+    from agent.domain.registry import get_domain_registry
+
+    pack = get_domain_registry().get(case.domain_pack)
+    payload = dict(pack.capability_probe()) if pack.capability_probe else {}
+    missing_value = payload.get("missing", ())
+    missing = (
+        {str(item) for item in missing_value}
+        if isinstance(missing_value, (list, tuple, set))
+        else set()
+    )
+    capabilities = {
+        capability: capability not in missing for capability in case.required_capabilities
+    }
+    if case.execution_environment:
+        capabilities["execution_environment"] = (
+            os.getenv("EXECUTOR_BACKEND", "local") == case.execution_environment
+        )
+    fingerprint = payload.get("fingerprint")
+    return pack.version, capabilities, str(fingerprint) if fingerprint else None
 
 
 def _write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
@@ -574,6 +638,8 @@ def _build_report(
         case_passed = sum(result.success for result in case_results)
         case_attempts = sum(result.attempts for result in case_results)
         per_case[case.id] = {
+            "domain_pack": case.domain_pack,
+            "required_capabilities": list(case.required_capabilities),
             "runs": len(case_results),
             "passed": case_passed,
             "success_rate": round(case_passed / len(case_results), 4),
@@ -603,6 +669,7 @@ def _build_report(
         "updated_at": datetime.now(UTC).isoformat(),
         "provider": os.getenv("MODEL_PROVIDER", "anthropic"),
         "executor_backend": os.getenv("EXECUTOR_BACKEND", "local"),
+        "domain_packs": sorted({case.domain_pack for case in cases if case.domain_pack}),
         "max_loop_steps": max_loop_steps,
         "repair_attempts": repair_attempts,
         "repeats": repeats,

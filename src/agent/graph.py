@@ -40,7 +40,7 @@ from agent.nodes import (
     requires_write_approval,
 )
 from agent.state import AgentState
-from agent.tools import ALL_TOOLS
+from agent.tools import all_registered_tools
 
 _DEFAULT_MAX_LOOP_STEPS = 15
 
@@ -134,7 +134,7 @@ def build_graph(*, checkpointer: Any | None = None):
 
     workflow.add_node("planner", planner)
     workflow.add_node("approval", request_write_approval)
-    workflow.add_node("tools", ToolNode(ALL_TOOLS))
+    workflow.add_node("tools", ToolNode(all_registered_tools()))
     workflow.add_node("reject_tools", reject_pending_tools)
     workflow.add_node("benchmark_validate", benchmark_validate)
     workflow.add_node("finalize", finalize)

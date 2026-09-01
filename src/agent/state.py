@@ -37,6 +37,9 @@ class AgentState(TypedDict, total=False):
     benchmark_validation_passed: bool
     benchmark_tool_budget: int
     benchmark_context_rounds: int
+    domain_packs: tuple[str, ...]
+    domain_capabilities: dict[str, bool]
+    domain_toolchain_fingerprint: str | None
 
     # —— Phase 1 兼容字段 (节点不再主动写, 但 Studio/旧测试仍可读) ——
     current_file: str | None

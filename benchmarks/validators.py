@@ -291,9 +291,20 @@ _VALIDATORS: dict[str, Callable[[ModuleType], ValidatorOutput]] = {
 
 def validate(validator: str, workspace: str) -> dict[str, object]:
     """Validate one workspace and return a JSON-serializable result."""
-    try:
-        check = _VALIDATORS[validator]
-    except KeyError:
+    check = _VALIDATORS.get(validator)
+    if check is None:
+        from agent.domain.registry import get_domain_registry
+
+        domain_validator = get_domain_registry().validator(validator)
+        if domain_validator is not None:
+            try:
+                return domain_validator(workspace)
+            except Exception as exc:
+                return {
+                    "passed": False,
+                    "details": [],
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
         return {
             "passed": False,
             "details": [],

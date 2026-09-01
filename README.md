@@ -454,6 +454,41 @@ uv run python scripts/run_robustness.py --no-trace
 时序采集是可选诊断能力：官方 Validator 默认关闭 trace，不改变 Phase 5.2 的判分结果和运行成本。
 报告 schema 已升级到版本 2；相同源码、seed、扰动参数与 `trace_stride` 会生成确定性一致的轨迹。
 
+### 16. Phase 6.0 Robotics Domain Pack
+
+领域能力不再硬编码到 Agent Loop。Core 现在通过严格的 `pack.toml` manifest 注册领域工具、Prompt、
+Validator、能力要求和工件策略，并根据 Benchmark case 中的 `domain_pack` 字段按需绑定工具。
+未启用 Pack 时，原有工具 schema 和工作流保持不变。
+
+首个内置 Pack 是 `cpp_reference`，用于验证 Phase 6 基础契约，不依赖 CppADCodeGen：
+
+- `inspect_cpp_toolchain`：记录 OS、架构、CMake、编译器、Ninja 和稳定指纹；
+- `build_cpp_project`：通过参数数组运行受限 CMake target，不使用 Shell；
+- `run_cpp_target`：只运行 `.agent_state/domain_artifacts/` 内已构建的目标；
+- `cpp_reference.output_equivalence`：从干净构建目录编译并验证 C++ 模板源模型。
+
+查看已安装 Pack 和本地能力：
+
+```bash
+uv run python scripts/inspect_domain_packs.py
+uv run python scripts/inspect_domain_packs.py --json
+```
+
+运行 Phase 6.0 的 C++ 参考题需要本机同时存在 CMake 和 C++17 编译器：
+
+```bash
+uv run python scripts/run_benchmark.py --manifest benchmarks/cpp_cases.json --list
+uv run python scripts/run_benchmark.py \
+  --manifest benchmarks/cpp_cases.json \
+  --case cpp_reference_output \
+  --strategy focused --repair-attempts 1 \
+  --max-loops 10 --task-timeout 240
+```
+
+缺少能力时，清单和 Pack 检查仍可运行；正式 Benchmark 会在调用 LLM 前快速失败，避免浪费 Token。
+GitHub CI 使用独立 `cpp-domain-checks` Job 安装 CMake、Ninja 和 G++，强制执行真实构建集成测试。
+当前 Pack 只支持 local executor；固定 CppAD/CppADCodeGen 工具链将在 Phase 6.1 接入。
+
 ---
 
 ## 项目结构
@@ -466,6 +501,8 @@ src/agent/
   persistence.py  # Phase 4 SQLite Checkpointer 生命周期
   semantic_cache.py # Phase 4.1 工作区隔离的只读回答缓存
   simulation/     # Phase 5 MuJoCo 闭环、鲁棒性、时序诊断与 HTML 报告
+  domain/         # Phase 6 Domain Pack 契约、注册、选择和受限 CMake 工具链
+  domain_packs/   # 内置领域能力包（Phase 6.0: cpp_reference）
   config.py       # get_chat_model() 模型工厂
   nodes/          # planner / reader / suggester (状态→状态的纯函数)
   tools/          # read_file (Phase 2 扩展为 chunk/search/execute_python)
@@ -481,10 +518,12 @@ scripts/
   run_agent.py    # Phase 4 持久会话、状态查看和 HITL 恢复 CLI
   run_simulation.py # Phase 5 单独运行控制器闭环并输出指标
   run_robustness.py # Phase 5.2/5.3 固定 seed 扰动、时序与诊断报告
+  inspect_domain_packs.py # Phase 6 Pack、工具、Validator 与能力检查
 benchmarks/
   cases.json      # 评测任务清单
   rag_cases.json  # RAG 固定查询与相关路径/符号标注
   sim_cases.json  # MuJoCo 闭环修复任务清单
+  cpp_cases.json  # Phase 6 C++/Domain Pack 修复任务清单
   fixtures/       # 永不修改的带 bug 题面
   validators.py   # 独立确定性判分器
 langgraph.json    # Studio 入口
@@ -510,8 +549,8 @@ langgraph.json    # Studio 入口
 | 5.1 | 多关节闭环 — 2-DOF 轨迹跟踪、碰撞与约束评测 | ✅ 完成 |
 | 5.2 | 仿真评测扩展 — 固定种子矩阵、扰动鲁棒性与聚合评分 | ✅ 完成 |
 | 5.3 | 仿真诊断 — 失败轨迹时序落盘、首个事件定位与可视化报告 | ✅ 完成 |
-| 6.0 | Robotics Domain Pack — 可插拔领域工具、环境与 Validator 契约 | ⏳ 下一阶段 |
-| 6.1 | Autodiff CodeGen MVP — AD 兼容检查、CppAD tape 与 Jacobian 验证 | 📋 规划中 |
+| 6.0 | Robotics Domain Pack — 可插拔领域工具、环境与 Validator 契约 | ✅ 完成 |
+| 6.1 | Autodiff CodeGen MVP — AD 兼容检查、CppAD tape 与 Jacobian 验证 | ⏳ 下一阶段 |
 | 6.2 | 数值正确性门禁 — FD/AD/CodeGen 等价性与固定 seed 验证 | 📋 规划中 |
 | 6.3 | Pinocchio 集成 — 机器人动力学 CodeGen 与解析导数性能决策 | 📋 规划中 |
 | 6.4 | Crocoddyl/MPC — `calcDiff()` 瓶颈定位与端到端吞吐验证 | 📋 规划中 |
