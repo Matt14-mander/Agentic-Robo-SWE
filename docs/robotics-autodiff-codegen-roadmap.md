@@ -129,6 +129,12 @@ Agent 不允许通过修改 Validator 或生成文件绕过检查。
 
 ### Phase 6.2：导数与生成代码一致性 Validator
 
+状态：🚧 Phase 6.2a Dense 正确性门禁已实现。默认验证集包含 3 个回归点、5 个边界点和
+32 个固定随机点；有限差分步长按输入尺度自适应。门禁对原始模型、CppAD、CodeGen、有限差分
+及隐藏解析参考执行输出和 Dense Jacobian 交叉比较，同时检查逐元素混合误差、Frobenius 相对
+误差、维度与 NaN/Inf。每次验证将规格指纹、全部输入、最差失败元素、构建和运行信息写入
+`.agent_state/domain_artifacts/autodiff_codegen/`。Sparse Jacobian 与 Hessian 尚未进入本阶段。
+
 目标：让“导数正确”成为独立于 Agent 自述的官方门禁。
 
 对多组固定随机输入和边界状态自动比较：

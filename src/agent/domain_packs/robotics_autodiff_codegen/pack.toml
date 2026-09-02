@@ -1,7 +1,7 @@
 schema_version = 1
 id = "robotics_autodiff_codegen"
-version = "0.1.0"
-description = "Phase 6.1 CppAD/CppADCodeGen source repair and derivative validation"
+version = "0.2.0"
+description = "Phase 6.2a dense CppAD/CppADCodeGen correctness and diagnostics gate"
 required_executables = ["cmake", "cxx_compiler"]
 optional_executables = ["ninja", "git"]
 local_only = true

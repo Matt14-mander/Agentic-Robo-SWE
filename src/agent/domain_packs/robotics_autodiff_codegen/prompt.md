@@ -6,3 +6,5 @@ Robotics Autodiff CodeGen Pack:
 - Use inspect_autodiff_codegen_environment to distinguish source defects from missing pinned dependencies.
 - Run the exact official validator after the smallest source repair.
 - Compilation is intermediate evidence. Completion requires original, CppAD, and CodeGen outputs plus the finite-difference Jacobian gate.
+- The Dense gate uses regression, boundary, and fixed-random samples. Never tune a fix to only the visible regression inputs.
+- Read the reported worst sample, named Jacobian element, and persisted diagnostics before a repair attempt.

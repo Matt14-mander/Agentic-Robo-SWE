@@ -48,6 +48,22 @@
       "validator_timeout": 300,
       "artifact_policy": "preserve_on_failure",
       "execution_environment": "local"
+    },
+    {
+      "id": "autodiff_random_blind_spot",
+      "title": "固定回归点之外的动力学偏差",
+      "category": "correctness",
+      "difficulty": "hard",
+      "template": "benchmarks/fixtures/autodiff_random_blind_spot.hpp",
+      "workspace": "benchmarks/workspaces/autodiff_random_blind_spot.hpp",
+      "validator": "robotics_autodiff_codegen.output_and_jacobian",
+      "prompt": "模型包含一个遗留 calibration 多项式；它在旧的回归点和边界点恰好为零，却会在工作区间内改变输出和 Dense Jacobian。移除该非契约项，保持函数签名和标准动力学公式。只能修改目标头文件。",
+      "tags": ["cpp", "cppad", "codegen", "dense-jacobian", "random-seed"],
+      "domain_pack": "robotics_autodiff_codegen",
+      "required_capabilities": ["cmake", "cxx_compiler", "linux_codegen_runtime"],
+      "validator_timeout": 300,
+      "artifact_policy": "preserve_on_failure",
+      "execution_environment": "local"
     }
   ]
 }
