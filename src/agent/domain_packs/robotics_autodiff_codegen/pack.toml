@@ -1,7 +1,7 @@
 schema_version = 1
 id = "robotics_autodiff_codegen"
-version = "0.2.0"
-description = "Phase 6.2a dense CppAD/CppADCodeGen correctness and diagnostics gate"
+version = "0.3.0"
+description = "Phase 6.2b Dense and Sparse Jacobian correctness and diagnostics gates"
 required_executables = ["cmake", "cxx_compiler"]
 optional_executables = ["ninja", "git"]
 local_only = true

@@ -1,4 +1,4 @@
-"""Official multi-sample Dense Jacobian gate for the Phase 6.2a Domain Pack."""
+"""Official multi-sample Dense and Sparse Jacobian gates for Phase 6.2."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from agent.domain_packs.robotics_autodiff_codegen.dependencies import (
     INSTALL_PREFIX,
     inspect_dependencies,
 )
+from agent.domain_packs.robotics_autodiff_codegen.sparse_validation import evaluate_sparse_report
 from agent.tools._paths import PROJECT_ROOT, relpath_for_display, resolve_within_root
 
 
@@ -31,6 +32,15 @@ _DENSE_REPORT_NAME = "dense-validation.json"
 
 
 def validate_autodiff_codegen(workspace: str) -> dict[str, object]:
+    return _validate_autodiff_codegen(workspace, contract="coupled")
+
+
+def validate_sparse_codegen(workspace: str) -> dict[str, object]:
+    """Triangular source-model contract with a real structural zero at J[0, 1]."""
+    return _validate_autodiff_codegen(workspace, contract="triangular")
+
+
+def _validate_autodiff_codegen(workspace: str, *, contract: str) -> dict[str, object]:
     try:
         source = resolve_within_root(workspace)
     except ValueError as exc:
@@ -40,12 +50,13 @@ def validate_autodiff_codegen(workspace: str) -> dict[str, object]:
 
     source_digest = hashlib.sha256(source.read_bytes()).hexdigest()
     dependencies = inspect_dependencies()
-    artifact_dir = _artifact_directory(source_digest, str(dependencies["fingerprint"]))
+    artifact_dir = _artifact_directory(source_digest, str(dependencies["fingerprint"]), contract)
     context: dict[str, object] = {
         "schema_version": 1,
         "source": relpath_for_display(source),
         "source_sha256": source_digest,
         "pack_version": PACK_VERSION,
+        "model_contract": contract,
         "dependency_fingerprint": dependencies["fingerprint"],
         "validation_spec": DEFAULT_DENSE_SPEC.to_dict(),
     }
@@ -96,6 +107,7 @@ def validate_autodiff_codegen(workspace: str) -> dict[str, object]:
             "AUTODIFF_DEPENDENCY_FINGERPRINT": str(dependencies["fingerprint"]),
             "DENSE_VALIDATION_SPEC": spec.fingerprint,
             "DOMAIN_PACK_VERSION": PACK_VERSION,
+            "SPARSE_MODEL_CONTRACT": "1" if contract == "triangular" else "0",
             "OUTPUT_ATOL": format(spec.output_atol, ".17g"),
             "OUTPUT_RTOL": format(spec.output_rtol, ".17g"),
             "JACOBIAN_ATOL": format(spec.jacobian_atol, ".17g"),
@@ -144,6 +156,7 @@ def validate_autodiff_codegen(workspace: str) -> dict[str, object]:
         )
     try:
         dense_report = load_dense_report(report_path, spec)
+        sparse_report = evaluate_sparse_report(dense_report, spec=spec, contract=contract)
     except ValueError as exc:
         return _finalize(
             artifact_dir,
@@ -156,12 +169,13 @@ def validate_autodiff_codegen(workspace: str) -> dict[str, object]:
 
     artifact_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(report_path, artifact_dir / _DENSE_REPORT_NAME)
+    _write_json_atomic(artifact_dir / "sparse-validation.json", sparse_report)
     _write_json_atomic(artifact_dir / "samples.json", {
         "schema_version": 1,
         "spec_fingerprint": spec.fingerprint,
         "samples": deterministic_samples(spec),
     })
-    worst = dense_report.get("worst_failure")
+    worst = dense_report.get("worst_failure") or sparse_report.get("worst_failure")
     if worst is not None:
         _write_json_atomic(artifact_dir / "failing-input.json", {
             "schema_version": 1,
@@ -171,28 +185,38 @@ def validate_autodiff_codegen(workspace: str) -> dict[str, object]:
     else:
         (artifact_dir / "failing-input.json").unlink(missing_ok=True)
 
-    passed = bool(dense_report["passed"]) and bool(execution["passed"])
+    passed = bool(dense_report["passed"]) and sparse_report["passed"] and bool(execution["passed"])
     metrics = cast(dict[str, Any], dense_report["metrics"])
     details = [_metrics_summary(metrics, spec.sample_count)]
+    details.append(
+        f"Sparse gate: samples={sparse_report['sample_count']}; "
+        f"expected_nnz={sparse_report['expected_nnz']}; "
+        f"failures={sparse_report['failure_count']}; "
+        f"structure_failures={sparse_report['structure_failures']}; "
+        f"max_relative_error={sparse_report['max_frobenius_relative_error']}"
+    )
     if not passed and isinstance(worst, dict):
         details.append(_failure_summary(worst, spec.input_names, spec.output_names))
     return _finalize(
         artifact_dir,
         context,
         passed=passed,
-        stage="complete" if passed else "dense_correctness",
+        stage=("complete" if passed else (
+            "dense_correctness" if not dense_report["passed"] else "sparse_correctness"
+        )),
         details=details,
         error=None,
-        extra={"dense_report": dense_report},
+        extra={"dense_report": dense_report, "sparse_report": sparse_report},
     )
 
 
-def _artifact_directory(source_digest: str, dependency_fingerprint: str) -> Path:
+def _artifact_directory(source_digest: str, dependency_fingerprint: str, contract: str) -> Path:
     identity = json.dumps({
         "source": source_digest,
         "dependency": dependency_fingerprint,
         "spec": DEFAULT_DENSE_SPEC.fingerprint,
         "pack": PACK_VERSION,
+        "contract": contract,
     }, sort_keys=True)
     fingerprint = hashlib.sha256(identity.encode()).hexdigest()
     return _ARTIFACT_ROOT / fingerprint[:20]
@@ -228,7 +252,8 @@ def _failure_summary(
         else f"{output_name}/{input_name}"
     )
     return (
-        f"Worst failure: {failure.get('comparison')} sample={failure.get('sample_index')} "
+        f"Worst failure: {failure.get('comparison', failure.get('kind'))} "
+        f"sample={failure.get('sample_index')} "
         f"kind={failure.get('sample_kind')} input={failure.get('input')} "
         f"element={element} expected={failure.get('expected')} "
         f"actual={failure.get('actual')} normalized_error={failure.get('normalized_error')}"
@@ -258,6 +283,11 @@ def _finalize(
     _write_json_atomic(report_path, payload)
     dense_payload = (extra or {}).get("dense_report")
     metrics = dense_payload.get("metrics", {}) if isinstance(dense_payload, dict) else {}
+    sparse_artifacts = {}
+    if extra and "sparse_report" in extra:
+        sparse_artifacts["sparse_validation"] = relpath_for_display(
+            artifact_dir / "sparse-validation.json"
+        )
     return {
         "passed": passed,
         "details": [*details, f"diagnostics={relpath_for_display(report_path)}"],
@@ -266,8 +296,10 @@ def _finalize(
         "artifacts": {
             "directory": relpath_for_display(artifact_dir),
             "validation": relpath_for_display(report_path),
+            **sparse_artifacts,
         },
         "metrics": metrics,
+        "sparse_metrics": (extra or {}).get("sparse_report", {}),
     }
 
 

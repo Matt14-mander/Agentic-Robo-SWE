@@ -45,6 +45,7 @@ packages = ["src/agent"]
 "src/agent/domain_packs/robotics_autodiff_codegen/dependencies.lock.json" = "agent/domain_packs/robotics_autodiff_codegen/dependencies.lock.json"
 "src/agent/domain_packs/robotics_autodiff_codegen/harness/CMakeLists.txt" = "agent/domain_packs/robotics_autodiff_codegen/harness/CMakeLists.txt"
 "src/agent/domain_packs/robotics_autodiff_codegen/harness/main.cpp" = "agent/domain_packs/robotics_autodiff_codegen/harness/main.cpp"
+"src/agent/domain_packs/robotics_autodiff_codegen/harness/cppad_sparse_smoke.cpp" = "agent/domain_packs/robotics_autodiff_codegen/harness/cppad_sparse_smoke.cpp"
 
 [tool.hatch.build.targets.wheel.sources]
 "src/agent" = "agent"

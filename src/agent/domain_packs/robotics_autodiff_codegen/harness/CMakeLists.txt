@@ -20,3 +20,11 @@ target_compile_definitions(
     JACOBIAN_RTOL=${JACOBIAN_RTOL}
 )
 target_link_libraries(autodiff_codegen_validator PRIVATE ${CMAKE_DL_LIBS})
+if(SPARSE_MODEL_CONTRACT)
+  target_compile_definitions(autodiff_codegen_validator PRIVATE SPARSE_MODEL_CONTRACT=1)
+endif()
+
+# Optional diagnostic target, usable without CppADCodeGen on Windows too.
+add_executable(cppad_sparse_smoke cppad_sparse_smoke.cpp)
+target_compile_features(cppad_sparse_smoke PRIVATE cxx_std_17)
+target_include_directories(cppad_sparse_smoke SYSTEM PRIVATE "${AUTODIFF_PREFIX}/include")

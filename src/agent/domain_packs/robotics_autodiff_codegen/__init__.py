@@ -7,7 +7,10 @@ from agent.domain.models import DomainPack
 from agent.domain_packs.robotics_autodiff_codegen.constants import PACK_ID, PACK_VERSION
 from agent.domain_packs.robotics_autodiff_codegen.dependencies import inspect_dependencies
 from agent.domain_packs.robotics_autodiff_codegen.tools import AUTODIFF_CODEGEN_TOOLS
-from agent.domain_packs.robotics_autodiff_codegen.validators import validate_autodiff_codegen
+from agent.domain_packs.robotics_autodiff_codegen.validators import (
+    validate_autodiff_codegen,
+    validate_sparse_codegen,
+)
 
 
 _PACK_ROOT = Path(__file__).resolve().parent
@@ -22,6 +25,7 @@ def create_pack() -> DomainPack:
         tools=AUTODIFF_CODEGEN_TOOLS,
         validators={
             "robotics_autodiff_codegen.output_and_jacobian": validate_autodiff_codegen,
+            "robotics_autodiff_codegen.sparse_output_and_jacobian": validate_sparse_codegen,
         },
         prompt_fragment=(_PACK_ROOT / "prompt.md").read_text(encoding="utf-8"),
         capability_probe=inspect_dependencies,

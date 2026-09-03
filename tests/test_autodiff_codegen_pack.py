@@ -21,12 +21,13 @@ from agent.domain_packs.robotics_autodiff_codegen.dense_validation import (
 from agent.domain_packs.robotics_autodiff_codegen.dependencies import inspect_dependencies
 from benchmarks.validators import validate
 from scripts.bootstrap_autodiff_codegen import _matching_c_compiler, bootstrap
+from tests.test_sparse_codegen import sparse_observations
 
 
 def test_autodiff_pack_is_discoverable_and_dependency_probe_is_offline():
     pack = get_domain_registry().get("robotics_autodiff_codegen")
 
-    assert pack.version == "0.2.0"
+    assert pack.version == "0.3.0"
     assert {tool.name for tool in pack.tools} == {
         "inspect_ad_compatibility",
         "inspect_autodiff_codegen_environment",
@@ -143,9 +144,9 @@ def test_static_failure_also_writes_reproducible_diagnostic_artifact():
     assert payload["source_sha256"]
 
 
-@pytest.mark.parametrize("passed", [True, False])
+@pytest.mark.parametrize("passed,sparse_fault", [(True, False), (False, False), (True, True)])
 def test_dense_validator_persists_success_and_element_level_failure(
-    monkeypatch, passed, tmp_path
+    monkeypatch, passed, sparse_fault, tmp_path
 ):
     validator_module = importlib.import_module(
         "agent.domain_packs.robotics_autodiff_codegen.validators"
@@ -193,7 +194,10 @@ def test_dense_validator_persists_success_and_element_level_failure(
         },
         "worst_failure": worst,
         "samples": deterministic_samples(),
+        "sparse_samples": sparse_observations(),
     }
+    if sparse_fault:
+        report["sparse_samples"][8]["codegen"]["values"].reverse()
     monkeypatch.setattr(validator_module, "_artifact_directory", lambda *_: artifact_dir)
     monkeypatch.setattr(validator_module, "inspect_dependencies", lambda: {
         "available": True,
@@ -232,12 +236,16 @@ def test_dense_validator_persists_success_and_element_level_failure(
     finally:
         workspace.unlink(missing_ok=True)
 
-    assert result["passed"] is passed
-    assert result["stage"] == ("complete" if passed else "dense_correctness")
+    expected_pass = passed and not sparse_fault
+    assert result["passed"] is expected_pass
+    assert result["stage"] == (
+        "sparse_correctness" if sparse_fault else ("complete" if passed else "dense_correctness")
+    )
     assert (artifact_dir / "validation.json").is_file()
     assert (artifact_dir / "dense-validation.json").is_file()
     assert (artifact_dir / "samples.json").is_file()
-    assert (artifact_dir / "failing-input.json").is_file() is (not passed)
+    assert (artifact_dir / "sparse-validation.json").is_file()
+    assert (artifact_dir / "failing-input.json").is_file() is (not expected_pass)
     if not passed:
         assert any("coupled_velocity_term/joint_position" in item for item in result["details"])
 

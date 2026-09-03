@@ -133,7 +133,33 @@ Agent 不允许通过修改 Validator 或生成文件绕过检查。
 32 个固定随机点；有限差分步长按输入尺度自适应。门禁对原始模型、CppAD、CodeGen、有限差分
 及隐藏解析参考执行输出和 Dense Jacobian 交叉比较，同时检查逐元素混合误差、Frobenius 相对
 误差、维度与 NaN/Inf。每次验证将规格指纹、全部输入、最差失败元素、构建和运行信息写入
-`.agent_state/domain_artifacts/autodiff_codegen/`。Sparse Jacobian 与 Hessian 尚未进入本阶段。
+`.agent_state/domain_artifacts/autodiff_codegen/`。
+
+Phase 6.2b Sparse Jacobian：代码实现已接入，Linux CodeGen 动态链路需独立 CI 验收。
+Pack 版本升级为 0.3.0；原有 40 点 Dense 检查继续保留，额外调用 CppAD `ForSparseJac`、
+`SparseJacobian` 和 CodeGen COO API。Python 独立检查坐标/数值长度、整数索引、越界、重复、
+缺项、意外依赖及 NaN/Inf；重建矩阵与 Dense、有限差分、解析参考及 CppAD Sparse 比较。
+允许坐标和值一起重排，不允许只重排数值；在零状态上仍保留结构非零项。
+
+新增 `benchmarks/sparse_codegen_cases.json` 两道源模型修复题：多余速度依赖和遗漏耦合项。
+两题使用真实结构稀疏的三角模型 `y=[q*q, q*v+v*v]`，Jacobian 的结构 nnz=3，
+`J[0,1]` 恒为零。原有耦合模型结构 nnz=4，不能为了展示“稀疏率”删除数值为零的项。
+坐标/值错配、重复、越界等由 Validator 对抗单元测试覆盖，不冒充 Agent 源码修复成功率。
+
+验证产物增加 `sparse-validation.json`，保留结构失败、最差元素、40 点原始 COO 和对照矩阵
+（原始观察值位于 `dense-validation.json` 的 `sparse_samples`）。缺少 Sparse 报告不能退回
+Dense-only 成功。Linux CI 将上传领域诊断工件，便于查看编译及数值失败原因。
+
+```bash
+# Linux / WSL，依赖安装后运行真实双门禁
+uv run pytest -q tests/test_autodiff_codegen_pack.py tests/test_sparse_codegen.py -m autodiff_codegen
+uv run python scripts/run_benchmark.py --manifest benchmarks/sparse_codegen_cases.json --validate-fixtures
+uv run python scripts/run_benchmark.py --manifest benchmarks/sparse_codegen_cases.json --max-loops 12
+```
+
+Windows 可以运行 Python 稀疏规则测试；已安装 CppAD 头文件时可额外运行
+`test_native_cppad_sparse_preserves_structural_zero_contract`，这只是 CppAD-only 诊断，
+不替代 Linux CodeGen 动态库测试。本阶段不包含 Hessian、Pinocchio 或性能加速结论。
 
 目标：让“导数正确”成为独立于 Agent 自述的官方门禁。
 

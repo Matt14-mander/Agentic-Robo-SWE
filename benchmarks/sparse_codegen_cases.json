@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "cases": [
+    {
+      "id": "sparse_unexpected_dependency",
+      "title": "稀疏动力学模型引入意外依赖",
+      "category": "correctness",
+      "difficulty": "medium",
+      "template": "benchmarks/fixtures/sparse_unexpected_dependency.hpp",
+      "workspace": "benchmarks/workspaces/sparse_unexpected_dependency.hpp",
+      "validator": "robotics_autodiff_codegen.sparse_output_and_jacobian",
+      "prompt": "三角模型的契约为 y=[q*q, q*v+v*v]。第一个方程不应依赖速度 v；修复多余项，恢复 J[0,1] 结构零。只修改目标源模型，不修改 Validator 或生成代码。",
+      "tags": ["cppad", "sparse-jacobian", "unexpected-dependency"],
+      "domain_pack": "robotics_autodiff_codegen",
+      "required_capabilities": ["cmake", "cxx_compiler", "linux_codegen_runtime"],
+      "validator_timeout": 300,
+      "execution_environment": "local",
+      "artifact_policy": "preserve_on_failure"
+    },
+    {
+      "id": "sparse_missing_dependency",
+      "title": "稀疏动力学模型遗漏耦合项",
+      "category": "correctness",
+      "difficulty": "medium",
+      "template": "benchmarks/fixtures/sparse_missing_dependency.hpp",
+      "workspace": "benchmarks/workspaces/sparse_missing_dependency.hpp",
+      "validator": "robotics_autodiff_codegen.sparse_output_and_jacobian",
+      "prompt": "三角模型的契约为 y=[q*q, q*v+v*v]。第二个方程遗漏 q*v 耦合项，导致稀疏结构少了 J[1,0]。恢复源模型；即使 v=0 时该导数数值为零，也不能删除其结构位置。只修改目标源模型。",
+      "tags": ["cppad", "sparse-jacobian", "missing-dependency"],
+      "domain_pack": "robotics_autodiff_codegen",
+      "required_capabilities": ["cmake", "cxx_compiler", "linux_codegen_runtime"],
+      "validator_timeout": 300,
+      "execution_environment": "local",
+      "artifact_policy": "preserve_on_failure"
+    }
+  ]
+}

@@ -69,11 +69,19 @@ struct Metrics {
 
 template <class Scalar>
 std::array<Scalar, kOutputSize> expected_model(const std::array<Scalar, kInputSize>& x) {
+#ifdef SPARSE_MODEL_CONTRACT
+  return {x[0] * x[0], x[0] * x[1] + x[1] * x[1]};
+#else
   return {x[0] * x[0] + Scalar(0.5) * x[1], x[0] * x[1] + x[1] * x[1]};
+#endif
 }
 
 std::vector<double> expected_jacobian(const std::array<double, kInputSize>& x) {
+#ifdef SPARSE_MODEL_CONTRACT
+  return {2.0 * x[0], 0.0, x[1], x[0] + 2.0 * x[1]};
+#else
   return {2.0 * x[0], 0.5, x[1], x[0] + 2.0 * x[1]};
+#endif
 }
 
 double next_unit(std::uint64_t& state) {
@@ -200,6 +208,7 @@ std::unique_ptr<CppAD::cg::DynamicLib<double>> compile_codegen() {
   CppAD::cg::ModelCSourceGen<double> source(function, "robot_model");
   source.setCreateForwardZero(true);
   source.setCreateJacobian(true);
+  source.setCreateSparseJacobian(true);
   CppAD::cg::ModelLibraryCSourceGen<double> library(source);
   CppAD::cg::DynamicModelLibraryProcessor<double> processor(library, "robot_model_library");
   CppAD::cg::GccCompiler<double> compiler;
@@ -213,8 +222,28 @@ std::string json_number(double value) {
   return output.str();
 }
 
+template <class Number>
+std::string json_array(const std::vector<Number>& values) {
+  std::ostringstream out;
+  out << '[';
+  for (std::size_t i = 0; i < values.size(); ++i) {
+    if (i != 0) out << ',';
+    out << json_number(static_cast<double>(values[i]));
+  }
+  out << ']';
+  return out.str();
+}
+
+std::string coo_json(const std::vector<double>& values,
+                     const std::vector<std::size_t>& rows,
+                     const std::vector<std::size_t>& columns) {
+  return "{\"rows\":" + json_array(rows) + ",\"columns\":" + json_array(columns) +
+         ",\"values\":" + json_array(values) + "}";
+}
+
 std::string make_report(bool passed, std::uint64_t seed, std::size_t random_samples,
-                        const std::vector<Sample>& samples, const Metrics& metrics) {
+                        const std::vector<Sample>& samples, const Metrics& metrics,
+                        const std::vector<std::string>& sparse_samples) {
   std::ostringstream output;
   output << std::setprecision(17)
          << "{\"schema_version\":1,\"passed\":" << (passed ? "true" : "false")
@@ -259,6 +288,11 @@ std::string make_report(bool passed, std::uint64_t seed, std::size_t random_samp
            << "\",\"input\":[" << samples[index].input[0] << ','
            << samples[index].input[1] << "]}";
   }
+  output << "],\"sparse_samples\":[";
+  for (std::size_t index = 0; index < sparse_samples.size(); ++index) {
+    if (index != 0) output << ',';
+    output << sparse_samples[index];
+  }
   output << "]}";
   return output.str();
 }
@@ -290,7 +324,15 @@ int main(int argc, char** argv) {
     auto cppad = record_cppad();
     auto library = compile_codegen();
     auto generated = library->model("robot_model");
+    if (!generated->isSparseJacobianAvailable()) {
+      throw std::runtime_error("generated model has no SparseJacobian implementation");
+    }
+    // Identity seed yields structural sparsity; do not drop entries with zero values.
+    std::vector<bool> identity(kInputSize * kInputSize, false);
+    for (std::size_t i = 0; i < kInputSize; ++i) identity[i * kInputSize + i] = true;
+    const auto pattern = cppad.ForSparseJac(kInputSize, identity);
     const auto samples = make_samples(seed, random_samples);
+    std::vector<std::string> sparse_samples;
     Metrics metrics;
     for (std::size_t sample_index = 0; sample_index < samples.size(); ++sample_index) {
       const auto& sample = samples[sample_index];
@@ -314,6 +356,26 @@ int main(int argc, char** argv) {
       const auto finite_difference_jacobian = finite_difference(sample.input);
       const auto ad_jacobian = cppad.Jacobian(input);
       const auto codegen_jacobian = generated->Jacobian(input);
+      const auto ad_sparse = cppad.SparseJacobian(input);
+      std::vector<std::size_t> ad_rows, ad_columns, cg_rows, cg_columns;
+      std::vector<double> ad_values, cg_values;
+      for (std::size_t row = 0; row < kOutputSize; ++row) {
+        for (std::size_t column = 0; column < kInputSize; ++column) {
+          if (pattern[row * kInputSize + column]) {
+            ad_rows.push_back(row);
+            ad_columns.push_back(column);
+            ad_values.push_back(ad_sparse[row * kInputSize + column]);
+          }
+        }
+      }
+      generated->SparseJacobian(input, cg_values, cg_rows, cg_columns);
+      sparse_samples.push_back(
+          "{\"index\":" + std::to_string(sample_index) +
+          ",\"cppad\":" + coo_json(ad_values, ad_rows, ad_columns) +
+          ",\"codegen\":" + coo_json(cg_values, cg_rows, cg_columns) +
+          ",\"cppad_dense\":" + json_array(ad_jacobian) +
+          ",\"codegen_dense\":" + json_array(codegen_jacobian) +
+          ",\"finite_difference\":" + json_array(finite_difference_jacobian) + "}");
       const std::array<std::pair<const char*, const std::vector<double>*>, 6> comparisons{{
           {"finite_difference_vs_reference", &finite_difference_jacobian},
           {"cppad_vs_finite_difference", &ad_jacobian},
@@ -342,7 +404,9 @@ int main(int argc, char** argv) {
     const bool passed = metrics.failures == 0 && metrics.non_finite == 0 &&
                         metrics.dimension_failures == 0 &&
                         metrics.max_jacobian_frobenius_relative_error <= JACOBIAN_RTOL;
-    emit_report(make_report(passed, seed, random_samples, samples, metrics), report_path);
+    // Python independently verifies sparse structure and numbers before official success.
+    emit_report(make_report(passed, seed, random_samples, samples, metrics, sparse_samples),
+                report_path);
     return passed ? 0 : 1;
   } catch (const std::exception& error) {
     std::cerr << "CodeGen runtime error: " << error.what() << '\n';
