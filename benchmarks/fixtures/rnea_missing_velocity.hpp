@@ -1,0 +1,11 @@
+#pragma once
+#include <pinocchio/algorithm/rnea.hpp>
+template<class Scalar>
+Eigen::Matrix<Scalar, Eigen::Dynamic, 1> candidate_rnea(
+    const pinocchio::ModelTpl<Scalar>& model, pinocchio::DataTpl<Scalar>& data,
+    const Eigen::Matrix<Scalar, Eigen::Dynamic, 1>& x) {
+  Eigen::Matrix<Scalar, Eigen::Dynamic, 1> q = x.segment(0, 2);
+  Eigen::Matrix<Scalar, Eigen::Dynamic, 1> v = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>::Zero(2);
+  Eigen::Matrix<Scalar, Eigen::Dynamic, 1> a = x.segment(4, 2);
+  return pinocchio::rnea(model, data, q, v, a);
+}

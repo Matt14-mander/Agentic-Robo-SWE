@@ -1,0 +1,6 @@
+schema_version = 1
+id = "pinocchio_rnea"
+version = "0.1.0"
+description = "Phase 6.3 fixed-URDF RNEA correctness and measured CodeGen adoption decisions"
+required_executables = ["cmake", "cxx_compiler"]
+local_only = true

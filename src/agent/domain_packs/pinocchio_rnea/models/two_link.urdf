@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<!-- Project-owned fixed-base test robot. SI units; revolute joints, nq=nv=2. -->
+<robot name="robo_swe_two_link">
+  <link name="base"/>
+  <link name="upper">
+    <inertial><origin xyz="0.5 0 0"/><mass value="1.2"/>
+      <inertia ixx="0.002" ixy="0" ixz="0" iyy="0.101" iyz="0" izz="0.101"/>
+    </inertial>
+  </link>
+  <link name="forearm">
+    <inertial><origin xyz="0.35 0 0"/><mass value="0.8"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.033" iyz="0" izz="0.033"/>
+    </inertial>
+  </link>
+  <joint name="shoulder" type="revolute">
+    <parent link="base"/><child link="upper"/><axis xyz="0 1 0"/>
+    <limit lower="-2.5" upper="2.5" effort="100" velocity="4"/>
+  </joint>
+  <joint name="elbow" type="revolute">
+    <parent link="upper"/><child link="forearm"/><origin xyz="1 0 0"/>
+    <axis xyz="0 1 0"/><limit lower="-2.5" upper="2.5" effort="100" velocity="4"/>
+  </joint>
+</robot>

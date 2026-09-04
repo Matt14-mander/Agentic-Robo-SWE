@@ -1,0 +1,27 @@
+{
+  "schema_version": 2,
+  "cases": [
+    {
+      "id": "rnea_acceleration_slice", "title": "RNEA 加速度输入分片错误",
+      "category": "correctness", "difficulty": "medium",
+      "template": "benchmarks/fixtures/rnea_acceleration_slice.hpp",
+      "workspace": "benchmarks/workspaces/rnea_acceleration_slice.hpp",
+      "validator": "pinocchio_rnea.correctness", "domain_pack": "pinocchio_rnea",
+      "prompt": "修复 candidate_rnea：固定双关节机器人输入是 [q(2),v(2),a(2)]，当前错误地把速度作为加速度传入 RNEA。保留 Scalar 泛型、函数签名和源模型重生成流程。不得修改 URDF、Validator 或生成文件。",
+      "required_capabilities": ["pinocchio_rnea_runtime"], "validator_timeout": 900,
+      "execution_environment": "local", "artifact_policy": "preserve_on_failure",
+      "tags": ["pinocchio", "rnea", "input-layout", "codegen"]
+    },
+    {
+      "id": "rnea_missing_velocity", "title": "RNEA 忽略速度导致动力学项丢失",
+      "category": "correctness", "difficulty": "medium",
+      "template": "benchmarks/fixtures/rnea_missing_velocity.hpp",
+      "workspace": "benchmarks/workspaces/rnea_missing_velocity.hpp",
+      "validator": "pinocchio_rnea.correctness", "domain_pack": "pinocchio_rnea",
+      "prompt": "修复 candidate_rnea：输入 [q(2),v(2),a(2)] 中速度没有传递到 Pinocchio RNEA，导致运动状态的力矩与导数错误。恢复真实速度输入，保持 double/CppAD/CodeGen Scalar 兼容；只修改目标源文件。",
+      "required_capabilities": ["pinocchio_rnea_runtime"], "validator_timeout": 900,
+      "execution_environment": "local", "artifact_policy": "preserve_on_failure",
+      "tags": ["pinocchio", "rnea", "velocity", "codegen"]
+    }
+  ]
+}

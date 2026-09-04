@@ -46,6 +46,12 @@ packages = ["src/agent"]
 "src/agent/domain_packs/robotics_autodiff_codegen/harness/CMakeLists.txt" = "agent/domain_packs/robotics_autodiff_codegen/harness/CMakeLists.txt"
 "src/agent/domain_packs/robotics_autodiff_codegen/harness/main.cpp" = "agent/domain_packs/robotics_autodiff_codegen/harness/main.cpp"
 "src/agent/domain_packs/robotics_autodiff_codegen/harness/cppad_sparse_smoke.cpp" = "agent/domain_packs/robotics_autodiff_codegen/harness/cppad_sparse_smoke.cpp"
+"src/agent/domain_packs/pinocchio_rnea/pack.toml" = "agent/domain_packs/pinocchio_rnea/pack.toml"
+"src/agent/domain_packs/pinocchio_rnea/prompt.md" = "agent/domain_packs/pinocchio_rnea/prompt.md"
+"src/agent/domain_packs/pinocchio_rnea/models/two_link.urdf" = "agent/domain_packs/pinocchio_rnea/models/two_link.urdf"
+"src/agent/domain_packs/pinocchio_rnea/harness/CMakeLists.txt" = "agent/domain_packs/pinocchio_rnea/harness/CMakeLists.txt"
+"src/agent/domain_packs/pinocchio_rnea/harness/main.cpp" = "agent/domain_packs/pinocchio_rnea/harness/main.cpp"
+"src/agent/domain_packs/pinocchio_rnea/harness/reference.hpp" = "agent/domain_packs/pinocchio_rnea/harness/reference.hpp"
 
 [tool.hatch.build.targets.wheel.sources]
 "src/agent" = "agent"
@@ -62,6 +68,7 @@ markers = [
     "simulation: test requiring the optional MuJoCo dependency",
     "cpp: test requiring a local CMake and C++ compiler toolchain",
     "autodiff_codegen: test requiring pinned CppAD/CppADCodeGen and Linux runtime compilation",
+    "pinocchio: test requiring pinned Pinocchio, CppAD/CppADCodeGen and Linux runtime",
 ]
 
 [tool.ruff]

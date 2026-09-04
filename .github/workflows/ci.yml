@@ -74,3 +74,32 @@ jobs:
           name: autodiff-correctness-diagnostics
           path: .agent_state/domain_artifacts/
           if-no-files-found: ignore
+
+  pinocchio-rnea-checks:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install native RNEA build dependencies
+        run: >-
+          sudo apt-get update && sudo apt-get install -y
+          cmake ninja-build g++ git pkg-config libeigen3-dev liburdfdom-dev
+          libboost-filesystem-dev libboost-serialization-dev libboost-system-dev
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Install core and tests
+        run: uv sync --frozen --extra dev
+      - name: Bootstrap pinned automatic differentiation dependencies
+        run: uv run python scripts/bootstrap_autodiff_codegen.py
+      - name: Bootstrap pinned Pinocchio without Python/collision bindings
+        run: uv run python scripts/bootstrap_pinocchio.py
+      - name: Validate real RNEA, derivatives, CodeGen and source repairs
+        run: uv run pytest -q tests/test_pinocchio_rnea.py -m pinocchio
+      - name: Preserve RNEA evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pinocchio-rnea-diagnostics
+          path: .agent_state/domain_artifacts/
+          if-no-files-found: ignore
