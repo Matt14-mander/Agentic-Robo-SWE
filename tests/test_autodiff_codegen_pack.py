@@ -281,6 +281,29 @@ def test_bootstrap_refuses_non_linux_before_writing(monkeypatch):
         bootstrap(force=True)
 
 
+def test_bootstrap_requires_local_googletest_before_network_or_cache_mutation(
+    monkeypatch, tmp_path
+):
+    bootstrap_module = importlib.import_module("scripts.bootstrap_autodiff_codegen")
+    monkeypatch.setattr(bootstrap_module.platform, "system", lambda: "Linux")
+    monkeypatch.setattr(bootstrap_module, "SYSTEM_GOOGLETEST_SOURCE", tmp_path / "missing")
+    monkeypatch.setattr(
+        bootstrap_module, "inspect_toolchain",
+        lambda: type("Toolchain", (), {
+            "available": True, "cmake_path": "/usr/bin/cmake",
+            "compiler_path": "/usr/bin/c++", "ninja_path": None, "missing": (),
+        })(),
+    )
+    monkeypatch.setattr(bootstrap_module.shutil, "which", lambda _: "/usr/bin/git")
+    monkeypatch.setattr(
+        bootstrap_module.shutil, "rmtree",
+        lambda _: pytest.fail("preflight failure must preserve the existing dependency cache"),
+    )
+
+    with pytest.raises(RuntimeError, match="libgtest-dev"):
+        bootstrap(force=True)
+
+
 @pytest.mark.autodiff_codegen
 @pytest.mark.cpp
 def test_all_autodiff_fixtures_fail_then_minimal_fixes_pass_real_codegen():

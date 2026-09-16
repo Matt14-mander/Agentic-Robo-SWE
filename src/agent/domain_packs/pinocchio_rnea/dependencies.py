@@ -25,8 +25,10 @@ def inspect_dependencies() -> dict[str, Any]:
     except (OSError, ValueError):
         pass
     headers = ("multibody/model.hpp", "parsers/urdf.hpp", "codegen/cppadcg.hpp")
+    # The AD fingerprint also contains CMake/Ninja discovery. Those tools affect
+    # cache keys, but installing Ninja later does not make an installed Pinocchio
+    # ABI-incompatible. The AD probe already verifies its pinned commits/headers.
     if (not isinstance(marker, dict) or marker.get("commit") != PINOCCHIO_COMMIT
-            or marker.get("ad_fingerprint") != ad["fingerprint"]
             or not all((PREFIX / "include/pinocchio" / name).is_file() for name in headers)):
         missing.append("pinned_pinocchio")
     if missing:

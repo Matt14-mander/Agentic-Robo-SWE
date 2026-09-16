@@ -55,6 +55,32 @@ def test_pinocchio_pack_manifest_and_fixed_robot_contract():
     assert inspect_dependencies() == inspect_dependencies()
 
 
+def test_pinocchio_install_is_not_invalidated_by_ad_build_tool_cache_drift(
+    monkeypatch, tmp_path
+):
+    dependencies = importlib.import_module("agent.domain_packs.pinocchio_rnea.dependencies")
+    prefix = tmp_path / "install"
+    for header in ("multibody/model.hpp", "parsers/urdf.hpp", "codegen/cppadcg.hpp"):
+        path = prefix / "include/pinocchio" / header
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+    (tmp_path / "installed.json").write_text(json.dumps({
+        "commit": dependencies.PINOCCHIO_COMMIT,
+        "version": dependencies.PINOCCHIO_VERSION,
+        "ad_fingerprint": "fingerprint-before-ninja-was-discovered",
+    }), encoding="utf-8")
+    monkeypatch.setattr(dependencies, "ROOT", tmp_path)
+    monkeypatch.setattr(dependencies, "PREFIX", prefix)
+    monkeypatch.setattr(dependencies, "inspect_ad", lambda: {
+        "available": True, "missing": [], "fingerprint": "new-build-tool-cache-key",
+        "platform": "Linux",
+    })
+
+    result = dependencies.inspect_dependencies()
+    assert result["available"]
+    assert result["missing"] == []
+
+
 def test_official_gate_recomputes_verdict_instead_of_trusting_pass_flag():
     raw = observations()
     assert evaluate_correctness(raw)["passed"]

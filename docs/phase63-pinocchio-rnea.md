@@ -47,7 +47,7 @@ Windows 上通过报告规则测试不代表 Pinocchio/CodeGen 实测通过。
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y cmake ninja-build g++ git pkg-config libeigen3-dev liburdfdom-dev \
+sudo apt-get install -y cmake ninja-build g++ git pkg-config libgtest-dev libeigen3-dev liburdfdom-dev \
   libboost-filesystem-dev libboost-serialization-dev libboost-system-dev
 uv sync --frozen --extra dev
 uv run python scripts/bootstrap_autodiff_codegen.py

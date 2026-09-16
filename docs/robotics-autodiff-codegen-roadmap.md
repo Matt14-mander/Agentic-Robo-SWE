@@ -100,6 +100,7 @@ Phase 6.2。
 Linux/WSL 参考执行顺序：
 
 ```bash
+sudo apt-get install -y cmake ninja-build g++ git libgtest-dev
 uv run python scripts/bootstrap_autodiff_codegen.py
 uv run pytest -q tests/test_autodiff_codegen_pack.py -m autodiff_codegen
 uv run python scripts/run_benchmark.py \

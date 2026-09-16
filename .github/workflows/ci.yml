@@ -49,7 +49,7 @@ jobs:
         with:
           enable-cache: true
       - name: Install C++ toolchain
-        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build g++ git
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build g++ git libgtest-dev
       - name: Set up Python
         run: uv python install 3.12
       - name: Install core and test dependencies
@@ -84,7 +84,7 @@ jobs:
       - name: Install native RNEA build dependencies
         run: >-
           sudo apt-get update && sudo apt-get install -y
-          cmake ninja-build g++ git pkg-config libeigen3-dev liburdfdom-dev
+          cmake ninja-build g++ git pkg-config libgtest-dev libeigen3-dev liburdfdom-dev
           libboost-filesystem-dev libboost-serialization-dev libboost-system-dev
       - name: Set up Python
         run: uv python install 3.12

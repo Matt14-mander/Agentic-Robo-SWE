@@ -33,6 +33,7 @@ REPOSITORIES = (
         CPPAD_CODEGEN_COMMIT,
     ),
 )
+SYSTEM_GOOGLETEST_SOURCE = Path("/usr/src/googletest")
 
 
 def _run(command: list[str], *, cwd: Path | None = None) -> None:
@@ -59,13 +60,19 @@ def bootstrap(*, force: bool = False) -> dict[str, object]:
             "CppADCodeGen runtime compilation is supported only on Linux; "
             "run this bootstrap in WSL/Linux or rely on the autodiff-codegen CI job"
         )
-    if force and DEPENDENCY_ROOT.is_dir():
-        shutil.rmtree(DEPENDENCY_ROOT)
     toolchain = inspect_toolchain()
     if not toolchain.available or not toolchain.cmake_path:
         raise RuntimeError(f"Missing C++ toolchain: {', '.join(toolchain.missing)}")
     if not shutil.which("git"):
         raise RuntimeError("git is required for the explicit dependency bootstrap")
+    if not (SYSTEM_GOOGLETEST_SOURCE / "CMakeLists.txt").is_file():
+        raise RuntimeError(
+            "CppADCodeGen v2.5.0 configures its test tree even for the install target. "
+            "Install Ubuntu's local GoogleTest source with: "
+            "sudo apt-get install -y libgtest-dev"
+        )
+    if force and DEPENDENCY_ROOT.is_dir():
+        shutil.rmtree(DEPENDENCY_ROOT)
 
     sources = {
         name: _checkout(name, repository, tag, commit)
@@ -90,7 +97,8 @@ def bootstrap(*, force: bool = False) -> dict[str, object]:
     _run([
         cmake, "-S", str(sources["CppADCodeGen"]), "-B", str(codegen_build),
         f"-DCMAKE_INSTALL_PREFIX={INSTALL_PREFIX}", f"-DCMAKE_PREFIX_PATH={INSTALL_PREFIX}",
-        "-DENABLE_THREAD_POOL_TESTS=OFF", *common,
+        "-DENABLE_THREAD_POOL_TESTS=OFF",
+        f"-DFETCHCONTENT_SOURCE_DIR_GOOGLETEST={SYSTEM_GOOGLETEST_SOURCE}", *common,
     ])
     _run([
         cmake, "--build", str(codegen_build), "--target", "install", "--config", "Release",
