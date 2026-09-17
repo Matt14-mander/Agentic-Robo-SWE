@@ -3,6 +3,7 @@
 #include <pinocchio/parsers/urdf.hpp>
 #include <pinocchio/algorithm/rnea.hpp>
 #include <pinocchio/algorithm/rnea-derivatives.hpp>
+#include <pinocchio/algorithm/aba.hpp>
 #include WORKSPACE_HEADER
 #include <algorithm>
 #include <array>
@@ -78,9 +79,63 @@ std::vector<double> finite_difference(const pinocchio::Model& model, pinocchio::
   return jac;
 }
 
+struct LoopResult {
+  Vector state;
+  double checksum = 0;
+  std::vector<double> checkpoints;
+};
+
+LoopResult control_loop(const pinocchio::Model& model,
+                        CppAD::cg::GenericModel<double>& generated,
+                        bool use_codegen, int steps, bool keep_checkpoints) {
+  pinocchio::Data dynamics_data(model), plant_data(model);
+  Vector q(2), v(2);
+  q << 0.35, -0.55;
+  v << 0.15, -0.1;
+  LoopResult result;
+  for (int step = 0; step < steps; ++step) {
+    const double time = step * 0.001;
+    Vector q_desired(2), v_desired(2), a_feedforward(2);
+    q_desired << 0.6 * std::sin(1.2 * time), -0.45 * std::cos(0.8 * time);
+    v_desired << 0.72 * std::cos(1.2 * time), 0.36 * std::sin(0.8 * time);
+    a_feedforward << -0.864 * std::sin(1.2 * time), 0.288 * std::cos(0.8 * time);
+    const Vector acceleration = a_feedforward + 35.0 * (q_desired - q) + 8.0 * (v_desired - v);
+    Vector x(6);
+    x << q, v, acceleration;
+    Vector torque(2);
+    std::vector<double> jacobian;
+    if (use_codegen) {
+      std::vector<double> input(x.data(), x.data() + x.size());
+      const auto output = generated.ForwardZero(input);
+      jacobian = generated.Jacobian(input);
+      torque << output[0], output[1];
+    } else {
+      jacobian = analytic(model, dynamics_data, x);
+      torque = dynamics_data.tau;
+    }
+    const Vector realized = pinocchio::aba(model, plant_data, q, v, torque);
+    v.noalias() += 0.001 * realized;
+    q.noalias() += 0.001 * v;
+    result.checksum += torque.sum() + realized.sum()
+        + std::accumulate(jacobian.begin(), jacobian.end(), 0.0);
+    if (keep_checkpoints && (step % 64 == 63 || step == steps - 1)) {
+      result.checkpoints.insert(result.checkpoints.end(), q.data(), q.data() + q.size());
+      result.checkpoints.insert(result.checkpoints.end(), v.data(), v.data() + v.size());
+      result.checkpoints.insert(result.checkpoints.end(), torque.data(), torque.data() + torque.size());
+    }
+  }
+  result.state.resize(4);
+  result.state << q, v;
+  return result;
+}
+
 int main(int argc, char** argv) {
   try {
-    if (argc != 3) throw std::runtime_error("usage: validator samples.txt report.json");
+    if (argc != 3 && argc != 4)
+      throw std::runtime_error("usage: validator samples.txt report.json [--reuse-library]");
+    if (argc == 4 && std::string(argv[3]) != "--reuse-library")
+      throw std::runtime_error("usage: validator samples.txt report.json [--reuse-library]");
+    const bool reuse_library = argc == 4;
     pinocchio::Model model;
     pinocchio::urdf::buildModel(ROBOT_URDF, model);
     model.gravity.linear() << 0, 0, -9.81;
@@ -97,16 +152,23 @@ int main(int argc, char** argv) {
     }
     auto ad = record<double>(model);
     const auto compile_start = Clock::now();
-    auto cg_tape = record<CppAD::cg::CG<double>>(model);
-    CppAD::cg::ModelCSourceGen<double> source(cg_tape, "rnea_model");
-    source.setCreateForwardZero(true); source.setCreateJacobian(true);
-    CppAD::cg::ModelLibraryCSourceGen<double> library_source(source);
-    CppAD::cg::DynamicModelLibraryProcessor<double> processor(library_source, "rnea_library");
-    CppAD::cg::GccCompiler<double> compiler;
-    compiler.setCompileFlags({"-O3", "-DNDEBUG"});
-    auto library = processor.createDynamicLibrary(compiler);
+    std::unique_ptr<CppAD::cg::DynamicLib<double>> library;
+    if (reuse_library) {
+      library.reset(new CppAD::cg::LinuxDynamicLib<double>("rnea_library.so"));
+    } else {
+      auto cg_tape = record<CppAD::cg::CG<double>>(model);
+      CppAD::cg::ModelCSourceGen<double> source(cg_tape, "rnea_model");
+      source.setCreateForwardZero(true); source.setCreateJacobian(true);
+      CppAD::cg::ModelLibraryCSourceGen<double> library_source(source);
+      CppAD::cg::DynamicModelLibraryProcessor<double> processor(library_source, "rnea_library");
+      CppAD::cg::GccCompiler<double> compiler;
+      compiler.setCompileFlags({"-O3", "-DNDEBUG"});
+      library = processor.createDynamicLibrary(compiler);
+    }
     auto generated = library->model("rnea_model");
-    const double compile_seconds = std::chrono::duration<double>(Clock::now() - compile_start).count();
+    const double setup_seconds = std::chrono::duration<double>(Clock::now() - compile_start).count();
+    const double compile_seconds = reuse_library ? 0.0 : setup_seconds;
+    const double library_load_seconds = reuse_library ? setup_seconds : 0.0;
     std::ostringstream report;
     report << std::setprecision(17) << "{\"schema_version\":1,\"nq\":2,\"nv\":2,\"urdf_sha256\":\""
            << URDF_SHA256 << "\",\"samples\":[";
@@ -151,7 +213,36 @@ int main(int argc, char** argv) {
       if (i) report << ',';
       report << '\"' << names[i] << "\":" << array_json(timings[i]);
     }
-    report << "},\"codegen_compile_seconds\":" << compile_seconds << '}';
+    // A small closed-loop workload: both backends share controller, ABA plant and integrator.
+    // This measures Amdahl-diluted benefit, not an MPC/Crocoddyl solver.
+    for (int warmup = 0; warmup < 4; ++warmup) {
+      checksum += control_loop(model, *generated, false, 512, false).checksum;
+      checksum += control_loop(model, *generated, true, 512, false).checksum;
+    }
+    std::array<std::vector<double>, 2> loop_timings;
+    for (int repeat = 0; repeat < 30; ++repeat) for (int slot = 0; slot < 2; ++slot) {
+      const int backend = (repeat + slot) % 2;
+      const auto start = Clock::now();
+      const auto loop = control_loop(model, *generated, backend == 1, 512, false);
+      loop_timings[backend].push_back(
+          std::chrono::duration<double, std::nano>(Clock::now() - start).count() / 512);
+      checksum += loop.checksum;
+    }
+    const auto analytic_loop = control_loop(model, *generated, false, 512, true);
+    const auto codegen_loop = control_loop(model, *generated, true, 512, true);
+    report << "},\"codegen_compile_seconds\":" << compile_seconds
+      << ",\"library_load_seconds\":" << library_load_seconds
+      << ",\"library_reused\":" << (reuse_library ? "true" : "false")
+      << ",\"control_loop\":{\"spec\":{\"warmup\":4,\"repeats\":30,"
+         "\"steps\":512,\"dt\":0.001,\"deadline_ns\":1000000},\"timings_ns\":{"
+      << "\"pinocchio\":" << array_json(loop_timings[0])
+      << ",\"codegen\":" << array_json(loop_timings[1]) << "},\"pinocchio\":{"
+      << "\"final_state\":" << array_json(analytic_loop.state)
+      << ",\"checkpoints\":" << array_json(analytic_loop.checkpoints)
+      << ",\"checksum\":" << analytic_loop.checksum << "},\"codegen\":{"
+      << "\"final_state\":" << array_json(codegen_loop.state)
+      << ",\"checkpoints\":" << array_json(codegen_loop.checkpoints)
+      << ",\"checksum\":" << codegen_loop.checksum << "}}}";
     if (!std::isfinite(checksum)) throw std::runtime_error("nonfinite benchmark checksum");
     std::ofstream out(argv[2]); out << report.str() << '\n';
     if (!out) throw std::runtime_error("could not write structured report");

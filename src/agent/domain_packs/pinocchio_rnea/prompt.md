@@ -10,4 +10,7 @@ Compile success or self-reported success is not sufficient. Inspect failure arti
 Performance is output + full Jacobian, measured after warm-up with batched P50/P95 samples.
 "keep_pinocchio_analytic" is a valid conclusion for a correct implementation with no CodeGen benefit.
 Never claim MPC or end-to-end speedup from these microbenchmarks; that measurement is not available.
+The Phase 6.3b control-loop benchmark includes PD, RNEA+Jacobian, ABA, and state integration.
+Treat only a repeated-process `validated_end_to_end_candidate` as evidence for that limited loop.
+Its break-even result includes one CodeGen compilation but still does not measure MPC/Crocoddyl.
 Missing native dependencies are capability errors, not successful validation; do not auto-install them.

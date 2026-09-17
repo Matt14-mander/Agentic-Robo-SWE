@@ -6,6 +6,7 @@ from langchain_core.tools import tool
 
 from agent.domain.loader import load_domain_manifest
 from agent.domain.models import DomainPack
+from agent.domain_packs.pinocchio_rnea.control_benchmark import run_control_loop_benchmark
 from agent.domain_packs.pinocchio_rnea.dependencies import inspect_dependencies
 from agent.domain_packs.pinocchio_rnea.spec import PACK_ROOT, model_contract
 from agent.domain_packs.pinocchio_rnea.validators import validate_codegen_benefit, validate_rnea
@@ -23,10 +24,17 @@ def validate_pinocchio_rnea_model(source_path: str) -> str:
     return json.dumps(validate_rnea(source_path), ensure_ascii=False, indent=2)
 
 
+@tool
+def benchmark_pinocchio_rnea_control_loop(processes: int = 3) -> str:
+    """Run 3-9 sequential fresh-process RNEA closed-loop measurements and break-even analysis."""
+    return json.dumps(run_control_loop_benchmark(processes), ensure_ascii=False, indent=2)
+
+
 def create_pack() -> DomainPack:
     return DomainPack(
         manifest=load_domain_manifest(PACK_ROOT / "pack.toml"),
-        tools=(inspect_pinocchio_rnea_environment, validate_pinocchio_rnea_model),
+        tools=(inspect_pinocchio_rnea_environment, validate_pinocchio_rnea_model,
+               benchmark_pinocchio_rnea_control_loop),
         validators={"pinocchio_rnea.correctness": validate_rnea,
                     "pinocchio_rnea.codegen_benefit": validate_codegen_benefit},
         prompt_fragment=(PACK_ROOT / "prompt.md").read_text(encoding="utf-8"),

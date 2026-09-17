@@ -13,9 +13,13 @@ from agent.benchmark import domain_case_metadata, load_cases, prepare_workspace
 from agent.domain import get_domain_registry
 from agent.domain.toolchain import BuildResult
 from agent.domain_packs.pinocchio_rnea.dependencies import inspect_dependencies
-from agent.domain_packs.pinocchio_rnea.report import evaluate_correctness, evaluate_performance
+from agent.domain_packs.pinocchio_rnea.report import (
+    aggregate_control_processes, evaluate_control_loop, evaluate_correctness,
+    evaluate_performance,
+)
 from agent.domain_packs.pinocchio_rnea.spec import (
-    BATCH_SIZE, MODEL_PATH, PACK_ROOT, REPEATS, WARMUP, model_contract, samples,
+    BATCH_SIZE, CONTROL_DEADLINE_NS, CONTROL_DT, CONTROL_REPEATS, CONTROL_STEPS,
+    CONTROL_WARMUP, MODEL_PATH, PACK_ROOT, REPEATS, WARMUP, model_contract, samples,
 )
 from agent.domain_packs.pinocchio_rnea.validators import validate_rnea
 from scripts.bootstrap_pinocchio import bootstrap
@@ -35,16 +39,30 @@ def observations():
     return {"schema_version": 1, "nq": 2, "nv": 2,
             "urdf_sha256": model_contract()["urdf_sha256"], "samples": records,
             "codegen_compile_seconds": 1.0,
+            "library_load_seconds": 0.01,
             "timing_spec": {"warmup": WARMUP, "repeats": REPEATS, "batch_size": BATCH_SIZE},
             "timings_ns": {"pinocchio": [1000.0] * REPEATS, "cppad": [2000.0] * REPEATS,
-                           "codegen": [500.0] * REPEATS, "finite_difference": [3000.0] * REPEATS}}
+                           "codegen": [500.0] * REPEATS, "finite_difference": [3000.0] * REPEATS},
+            "control_loop": {
+                "spec": {"warmup": CONTROL_WARMUP, "repeats": CONTROL_REPEATS,
+                         "steps": CONTROL_STEPS, "dt": CONTROL_DT,
+                         "deadline_ns": CONTROL_DEADLINE_NS},
+                "timings_ns": {"pinocchio": [10000.0] * CONTROL_REPEATS,
+                               "codegen": [8000.0] * CONTROL_REPEATS},
+                "pinocchio": {"final_state": [0.1, 0.2, 0.3, 0.4],
+                              "checkpoints": [float(i) for i in range(48)],
+                              "checksum": 1234.5},
+                "codegen": {"final_state": [0.1, 0.2, 0.3, 0.4],
+                            "checkpoints": [float(i) for i in range(48)],
+                            "checksum": 1234.5}},
+            "library_reused": False}
 
 
 def test_pinocchio_pack_manifest_and_fixed_robot_contract():
     pack = get_domain_registry().get("pinocchio_rnea")
-    assert pack.version == "0.1.0"
+    assert pack.version == "0.2.0"
     assert set(pack.validators) == {"pinocchio_rnea.correctness", "pinocchio_rnea.codegen_benefit"}
-    assert len(pack.tools) == 2
+    assert len(pack.tools) == 3
     assert samples() == samples() and len(samples()) == 24
     assert all(len(row) == 6 for row in samples())
     robot = ET.parse(MODEL_PATH).getroot()
@@ -126,6 +144,109 @@ def test_fast_but_incorrect_never_receives_adoption_recommendation():
     result = evaluate_performance(observations(), correctness_passed=False)
     assert result["recommendation"] == "blocked_by_correctness"
     assert not result["measured_codegen_benefit"]
+
+
+def test_control_loop_checks_full_trajectory_and_limited_scope():
+    raw = observations()
+    result = evaluate_control_loop(raw)
+    assert result["passed"]
+    assert result["recommendation"] == "candidate_for_repeated_process_validation"
+    assert "MPC/Crocoddyl" in result["not_measured"]
+
+    raw["control_loop"]["codegen"]["checkpoints"][17] += 0.01
+    failed = evaluate_control_loop(raw)
+    assert not failed["passed"]
+    assert failed["failures"][0]["kind"] == "trajectory_mismatch"
+
+
+@pytest.mark.parametrize("fault", ["spec", "count", "zero", "nan", "state", "checksum"])
+def test_control_loop_malformed_evidence_fails_closed(fault):
+    raw = observations()
+    if fault == "spec":
+        raw["control_loop"]["spec"]["steps"] = 1
+    elif fault == "count":
+        raw["control_loop"]["timings_ns"]["codegen"].pop()
+    elif fault == "zero":
+        raw["control_loop"]["timings_ns"]["pinocchio"][0] = 0
+    elif fault == "nan":
+        raw["control_loop"]["timings_ns"]["codegen"][0] = float("nan")
+    elif fault == "state":
+        raw["control_loop"]["codegen"]["final_state"] = []
+    else:
+        raw["control_loop"]["codegen"]["checksum"] += 10
+    if fault in {"spec", "count", "zero", "nan"}:
+        with pytest.raises(ValueError):
+            evaluate_control_loop(raw)
+    else:
+        assert not evaluate_control_loop(raw)["passed"]
+
+
+def test_three_process_aggregation_computes_break_even_and_requires_consistency():
+    reports = [observations() for _ in range(3)]
+    for report in reports:
+        report["library_reused"] = True
+    result = aggregate_control_processes(reports, compile_seconds=2.0)
+    assert result["passed"]
+    assert result["recommendation"] == "validated_end_to_end_candidate"
+    assert result["process_count"] == 3
+    assert result["samples_per_backend"] == 3 * CONTROL_REPEATS
+    assert result["break_even_calls"] == 1_000_000
+    assert result["break_even_seconds_at_1khz"] == 1000
+
+    reports[1]["control_loop"]["codegen"]["final_state"][0] += 1
+    blocked = aggregate_control_processes(reports, compile_seconds=2.0)
+    assert not blocked["passed"]
+    assert blocked["recommendation"] == "blocked_by_correctness"
+
+
+def test_control_aggregation_rejects_too_few_processes_or_cross_process_noise():
+    with pytest.raises(ValueError, match="three"):
+        aggregate_control_processes([observations(), observations()], compile_seconds=1)
+    reports = [observations() for _ in range(3)]
+    for report in reports:
+        report["library_reused"] = True
+    reports[2]["control_loop"]["timings_ns"]["codegen"] = [40000.0] * CONTROL_REPEATS
+    result = aggregate_control_processes(reports, compile_seconds=1)
+    assert result["passed"]
+    assert result["recommendation"] == "inconclusive_cross_process_variance"
+
+
+def test_control_orchestrator_reuses_hashed_library_across_fresh_processes(
+    monkeypatch, tmp_path
+):
+    module = importlib.import_module("agent.domain_packs.pinocchio_rnea.control_benchmark")
+    build = tmp_path / "build"
+    artifact = tmp_path / "run"
+    build.mkdir()
+    artifact.mkdir()
+    (build / "rnea_library.so").write_bytes(b"fixed-generated-library")
+    (artifact / "samples.txt").write_text("inputs", encoding="ascii")
+    (artifact / "raw.json").write_text(json.dumps(observations()), encoding="utf-8")
+    (artifact / "validation.json").write_text(json.dumps({
+        "build": {"build_dir": str(build)},
+    }), encoding="utf-8")
+    monkeypatch.setattr(module, "resolve_within_root", lambda value: Path(value))
+    monkeypatch.setattr(module, "relpath_for_display", str)
+    monkeypatch.setattr(module, "validate_rnea", lambda _: {
+        "passed": True, "artifacts": {"directory": str(artifact)},
+        "control_loop": {"recommendation": "candidate_for_repeated_process_validation"},
+    })
+    calls = []
+
+    def run(*_, args, **__):
+        calls.append(args)
+        raw = observations()
+        raw["library_reused"] = True
+        Path(args[1]).write_text(json.dumps(raw), encoding="utf-8")
+        return {"passed": True, "stderr": ""}
+
+    monkeypatch.setattr(module, "run_built_executable", run)
+    result = module.run_control_loop_benchmark(3)
+    assert result["passed"]
+    assert result["recommendation"] == "validated_end_to_end_candidate"
+    assert all(call[2] == "--reuse-library" for call in calls)
+    assert len(calls) == 3
+    assert (artifact / "control-loop-aggregate.json").is_file()
 
 
 @pytest.mark.parametrize("latency,recommendation", [
@@ -226,6 +347,7 @@ def test_real_pinocchio_source_repairs_and_codegen_equivalence():
     assert result["passed"], result
     assert result["metrics"]["sample_count"] == 24
     assert "backends" in result["performance"], result
+    assert result["control_loop"]["passed"], result
     for case in load_cases("benchmarks/pinocchio_cases.json"):
         workspace = prepare_workspace(case)
         try:

@@ -96,6 +96,8 @@ jobs:
         run: uv run python scripts/bootstrap_pinocchio.py
       - name: Validate real RNEA, derivatives, CodeGen and source repairs
         run: uv run pytest -q tests/test_pinocchio_rnea.py -m pinocchio
+      - name: Run sequential fresh-process RNEA control-loop benchmark
+        run: uv run python scripts/run_pinocchio_control_loop.py --processes 3
       - name: Preserve RNEA evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4

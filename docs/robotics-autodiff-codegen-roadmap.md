@@ -189,9 +189,9 @@ Validator 同时检查：
 
 ### Phase 6.3：Pinocchio 集成与性能决策
 
-状态：🚧 首版 `pinocchio_rnea` Pack 已实现：固定双连杆 URDF、RNEA 源函数→CppAD→CodeGen、
-24 点输出/完整 Jacobian 门禁、带预热和重复采样的性能决策，以及 2 道源代码修复题。
-原生 Linux 数值与性能验收、Agent 成功率评测仍需独立运行；没有宣称端到端控制收益。
+状态：🚧 Phase 6.3a 的 Linux 原生正确性与微基准已通过。Phase 6.3b 已实现固定 PD 轨迹、
+RNEA+Jacobian、ABA plant 和状态积分组成的最小控制循环，并增加顺序新进程复测、动态库哈希、
+跨进程方差与编译成本 break-even。该结果仍不代表 MPC/Crocoddyl 或部署机器人吞吐。
 参见 [Phase 6.3 使用与验收说明](phase63-pinocchio-rnea.md)。
 
 目标：验证 CodeGen 在真实机器人动力学函数上的正确性和收益。

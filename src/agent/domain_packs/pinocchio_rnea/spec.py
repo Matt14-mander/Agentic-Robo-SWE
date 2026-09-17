@@ -15,6 +15,11 @@ INPUT_NAMES = ("q_shoulder", "q_elbow", "v_shoulder", "v_elbow", "a_shoulder", "
 WARMUP = 32
 REPEATS = 50
 BATCH_SIZE = 16
+CONTROL_WARMUP = 4
+CONTROL_REPEATS = 30
+CONTROL_STEPS = 512
+CONTROL_DT = 0.001
+CONTROL_DEADLINE_NS = 1_000_000
 
 
 def samples() -> list[list[float]]:
@@ -46,4 +51,10 @@ def model_contract() -> dict[str, Any]:
         "output_atol": 1e-9, "output_rtol": 1e-8,
         "jacobian_atol": 1e-7, "jacobian_rtol": 1e-5,
         "warmup": WARMUP, "repeats": REPEATS, "batch_size": BATCH_SIZE,
+        "control_loop": {
+            "warmup": CONTROL_WARMUP, "repeats": CONTROL_REPEATS,
+            "steps": CONTROL_STEPS, "dt": CONTROL_DT,
+            "deadline_ns": CONTROL_DEADLINE_NS,
+            "pipeline": "PD trajectory -> RNEA+Jacobian -> ABA -> semi-implicit Euler",
+        },
     }

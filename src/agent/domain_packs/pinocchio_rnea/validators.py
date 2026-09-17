@@ -12,7 +12,9 @@ from typing import Any
 
 from agent.domain.toolchain import configure_and_build, inspect_toolchain, run_built_executable
 from agent.domain_packs.pinocchio_rnea.dependencies import PREFIX, inspect_dependencies
-from agent.domain_packs.pinocchio_rnea.report import evaluate_correctness, evaluate_performance
+from agent.domain_packs.pinocchio_rnea.report import (
+    evaluate_control_loop, evaluate_correctness, evaluate_performance,
+)
 from agent.domain_packs.pinocchio_rnea.spec import MODEL_PATH, PACK_ROOT, model_contract, samples
 from agent.domain_packs.robotics_autodiff_codegen.dependencies import INSTALL_PREFIX
 from agent.tools._paths import PROJECT_ROOT, relpath_for_display, resolve_within_root
@@ -39,7 +41,7 @@ def validate_rnea(workspace: str, *, require_benefit: bool = False) -> dict[str,
     directory.mkdir(parents=True, exist_ok=True)
     spec = model_contract()
     context: dict[str, Any] = {
-        "schema_version": 1, "pack_version": "0.1.0", "source": relpath_for_display(source),
+        "schema_version": 1, "pack_version": "0.2.0", "source": relpath_for_display(source),
         "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(), "model": spec,
         "dependencies": deps, "require_codegen_benefit": require_benefit,
         "environment": {"platform": platform.platform(), "machine": platform.machine(),
@@ -55,7 +57,8 @@ def validate_rnea(workspace: str, *, require_benefit: bool = False) -> dict[str,
                 "artifacts": {"directory": relpath_for_display(directory),
                               "validation": relpath_for_display(directory / "validation.json")},
                 "metrics": context.get("correctness", {}),
-                "performance": context.get("performance", {})}
+                "performance": context.get("performance", {}),
+                "control_loop": context.get("control_loop", {})}
 
     _save(directory / "samples.json", {"contract": spec, "inputs": samples()})
     if not deps["available"]:
@@ -93,13 +96,18 @@ def validate_rnea(workspace: str, *, require_benefit: bool = False) -> dict[str,
         raw = json.loads(raw_path.read_text(encoding="utf-8"))
         correctness = evaluate_correctness(raw)
         performance = evaluate_performance(raw, correctness_passed=correctness["passed"])
-        context.update(correctness=correctness, performance=performance)
+        control_loop = evaluate_control_loop(raw)
+        context.update(correctness=correctness, performance=performance,
+                       control_loop=control_loop)
         _save(directory / "correctness.json", correctness)
         _save(directory / "performance.json", performance)
+        _save(directory / "control-loop.json", control_loop)
         if correctness["first_failure"]:
             _save(directory / "failing-input.json", correctness["first_failure"])
         if not correctness["passed"]:
             return finish(False, "correctness")
+        if not control_loop["passed"]:
+            return finish(False, "control_loop_correctness")
         if require_benefit and not performance["measured_codegen_benefit"]:
             return finish(False, "performance", "Measured CodeGen benefit was not established")
         return finish(True, "complete")

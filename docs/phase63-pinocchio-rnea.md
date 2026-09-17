@@ -1,7 +1,8 @@
 # Phase 6.3：Pinocchio RNEA 集成与性能决策
 
-状态：首版实现；原生 Linux 编译、动力学数值与速度结果需在固定依赖环境验收。
-Windows 上通过报告规则测试不代表 Pinocchio/CodeGen 实测通过。
+状态：Phase 6.3a 已在 WSL2 完成原生正确性、故障夹具与微基准验收；微基准建议为
+`candidate_for_end_to_end_trial`。Phase 6.3b 的可复现最小控制循环基准已实现，仍需在同一
+Linux 环境执行并保存报告。Windows 上通过报告规则测试不代表 Pinocchio/CodeGen 实测通过。
 
 ## 实现范围
 
@@ -38,7 +39,24 @@ Windows 上通过报告规则测试不代表 Pinocchio/CodeGen 实测通过。
 `pinocchio_rnea.correctness` 接受“代码正确，但不建议使用 CodeGen”的结果。
 可选严格门禁 `pinocchio_rnea.codegen_benefit` 要求正确性和上述性能收益同时成立，
 用于明确承诺加速的任务，不应被当作所有机器必须通过的 CI 门禁。
-端到端速度字段始终为 null；当前没有 MPC solve/rollout 测量，不能推导系统吞吐提升。
+6.3a 微基准中的端到端速度字段始终为 null；6.3b 另行报告固定最小控制循环结果。当前仍没有
+MPC solve/rollout 测量，不能由任一结果推导完整系统吞吐提升。
+
+## Phase 6.3b：可复现 RNEA 控制循环
+
+控制循环固定为：正弦参考轨迹 → PD 期望加速度 → RNEA 力矩与完整 Jacobian → Pinocchio ABA
+plant → 1 ms 半隐式积分。初始状态、增益、轨迹、步长和 512 步 horizon 固定。解析后端和 CodeGen
+后端分别从相同初态执行；Python 独立比较终态、每 64 步检查点和全链路 checksum。
+
+每个进程先预热 4 个 episode，再轮换后端执行 30 个 episode，保存每个 episode 的平均
+ns/step。正式结论按顺序启动至少 3 个新进程；新进程只加载首次生成并按 SHA-256 校验的 `.so`，
+不把重复代码生成混入 steady-state 延迟。报告同时保留首次 CodeGen 编译秒数、各进程动态库加载
+耗时、跨进程中位数变异系数以及按实测每步节省时间计算的 break-even 调用次数。
+
+`validated_end_to_end_candidate` 需要：轨迹一致、至少 3 个进程、完整延迟样本、跨进程 CV 不超过
+15%、整体 CV 不超过 25%、P50 至少提升 3%、CodeGen P95 不超过解析后端 102%，且批均值
+deadline miss 不增加。这里的 “end-to-end” 仅指上述最小控制循环，不包括进程启动、ROS 2、I/O、
+网络、真实执行器或 MPC/Crocoddyl solve。
 
 ## Linux / WSL 执行
 
@@ -54,6 +72,7 @@ uv run python scripts/bootstrap_autodiff_codegen.py
 uv run python scripts/bootstrap_pinocchio.py
 uv run python scripts/run_pinocchio_probe.py
 uv run pytest -q tests/test_pinocchio_rnea.py -m pinocchio
+uv run python scripts/run_pinocchio_control_loop.py --processes 3
 ```
 
 Pinocchio 固定为 v3.4.0 / `187afafcfe22d7ac16a26241c0b13a76d04d82c1`，
@@ -69,6 +88,9 @@ Pinocchio 固定为 v3.4.0 / `187afafcfe22d7ac16a26241c0b13a76d04d82c1`，
 - `raw.json`：原始输出、导数、计时数据；
 - `correctness.json` / `failing-input.json`：逐项错误与首个失败输入；
 - `performance.json`：统计和采用建议。
+- `control-loop.json`：单进程控制轨迹正确性与延迟；
+- `control-process-*.json`：顺序新进程的原始观察；
+- `control-loop-aggregate.json`：跨进程统计、动态库哈希和 break-even。
 
 ## SWE 任务
 
@@ -88,9 +110,10 @@ CI 增加独立 `pinocchio-rnea-checks`，不要求机器一定得到 CodeGen �
 
 ## 后续验收与扩展
 
-先完成 Linux 原生链路验收，保留真实数值误差和时间报告；再跑 Agent 两题及重复实验。
-后续引入更高自由度模型、流形配置空间和端到端控制工作量，才评估进入 Phase 6.4。
-本次不实现 ABA、多种动力学目标、任意 URDF、Hessian 或 Crocoddyl/MPC。
+先执行 Phase 6.3b 并检查跨进程结论；只有 `validated_end_to_end_candidate` 才进入更大链路试验。
+随后引入更高自由度模型、流形配置空间和 MPC/Crocoddyl profiling，才评估进入 Phase 6.4。
+本次只把 ABA 用作固定被控对象，不实现 ABA 的 CodeGen 替换，也不覆盖多种动力学目标、任意
+URDF、Hessian 或 Crocoddyl/MPC。
 
 接口依据：固定版本的 [Pinocchio 源码](https://github.com/stack-of-tasks/pinocchio/tree/v3.4.0)，
 其中 `include/pinocchio/algorithm/rnea-derivatives.hpp` 定义解析导数与上三角约定，
