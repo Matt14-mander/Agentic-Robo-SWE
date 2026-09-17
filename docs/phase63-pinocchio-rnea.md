@@ -75,6 +75,10 @@ uv run pytest -q tests/test_pinocchio_rnea.py -m pinocchio
 uv run python scripts/run_pinocchio_control_loop.py --processes 3
 ```
 
+命令会实时打印 seed 构建、逐进程执行和聚合阶段。Pinocchio/CppADCodeGen 的 Release 模板编译
+在较慢的 WSL 机器上可能超过 5 分钟，因此配置仍限制为 300 秒，而该 Pack 的构建阶段允许
+最多 900 秒；后续相同指纹的成功构建直接命中缓存。
+
 Pinocchio 固定为 v3.4.0 / `187afafcfe22d7ac16a26241c0b13a76d04d82c1`，
 复用已有 CppAD/CppADCodeGen 固定提交；只初始化构建系统子模块，不下载 example-robot-data。
 系统 Eigen/Boost/URDFDOM 由 Linux 包管理器提供，尚未宣称整个 OS 镜像按哈希锁定。

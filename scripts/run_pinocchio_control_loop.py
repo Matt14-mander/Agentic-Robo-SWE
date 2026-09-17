@@ -12,8 +12,11 @@ def main() -> int:
                         help="Sequential fresh processes (3-9, default: 3)")
     parser.add_argument("--require-benefit", action="store_true",
                         help="Exit nonzero unless the repeated-process benefit is validated")
+    parser.add_argument("--quiet", action="store_true",
+                        help="Suppress stage progress and print only the final JSON")
     args = parser.parse_args()
-    result = run_control_loop_benchmark(args.processes)
+    progress = None if args.quiet else lambda message: print(f"[phase6.3b] {message}", flush=True)
+    result = run_control_loop_benchmark(args.processes, progress=progress)
     print(json.dumps(result, ensure_ascii=False, indent=2))
     passed = result.get("passed") is True
     if args.require_benefit:

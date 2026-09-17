@@ -6,7 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from agent.domain.toolchain import run_built_executable
 from agent.domain_packs.pinocchio_rnea.report import aggregate_control_processes
@@ -22,12 +22,18 @@ def _save(path: Path, payload: Any) -> None:
     os.replace(temporary, path)
 
 
-def run_control_loop_benchmark(processes: int = 3) -> dict[str, Any]:
+def run_control_loop_benchmark(
+    processes: int = 3, *, progress: Callable[[str], None] | None = None
+) -> dict[str, Any]:
     if not 3 <= processes <= 9:
         raise ValueError("processes must be between 3 and 9")
+    emit = progress or (lambda _message: None)
+    emit("seed: configure, build, generate CodeGen library, and validate")
     seed = validate_rnea(str(PACK_ROOT / "harness/reference.hpp"))
     if not seed["passed"]:
+        emit(f"seed: failed at {seed.get('stage', 'unknown')}")
         return {"passed": False, "stage": "seed_validation", "seed": seed}
+    emit("seed: passed; generated library will be reused by fresh processes")
     directory = resolve_within_root(seed["artifacts"]["directory"])
     envelope = json.loads((directory / "validation.json").read_text(encoding="utf-8"))
     raw_seed = json.loads((directory / "raw.json").read_text(encoding="utf-8"))
@@ -40,6 +46,7 @@ def run_control_loop_benchmark(processes: int = 3) -> dict[str, Any]:
     reports = []
     executions = []
     for process_index in range(processes):
+        emit(f"process {process_index + 1}/{processes}: start")
         path = directory / f"control-process-{process_index + 1:02d}.json"
         execution = run_built_executable(
             build_dir, TARGET,
@@ -47,6 +54,7 @@ def run_control_loop_benchmark(processes: int = 3) -> dict[str, Any]:
         )
         executions.append(execution)
         if not execution["passed"] or not path.is_file():
+            emit(f"process {process_index + 1}/{processes}: failed")
             result = {"passed": False, "stage": "fresh_process_runtime",
                       "failed_process": process_index + 1, "execution": execution,
                       "seed": seed}
@@ -55,6 +63,8 @@ def run_control_loop_benchmark(processes: int = 3) -> dict[str, Any]:
         if hashlib.sha256(libraries[0].read_bytes()).hexdigest() != library_hash:
             raise RuntimeError("Generated library changed during measurement")
         reports.append(json.loads(path.read_text(encoding="utf-8")))
+        emit(f"process {process_index + 1}/{processes}: passed")
+    emit("aggregate: validate trajectories, variance, latency, and break-even")
     aggregate = aggregate_control_processes(
         reports, compile_seconds=float(raw_seed["codegen_compile_seconds"])
     )
@@ -66,4 +76,5 @@ def run_control_loop_benchmark(processes: int = 3) -> dict[str, Any]:
         "seed_recommendation": seed["control_loop"]["recommendation"],
     }
     _save(directory / "control-loop-aggregate.json", result)
+    emit(f"complete: {result['recommendation']}")
     return result

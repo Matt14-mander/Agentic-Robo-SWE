@@ -65,7 +65,7 @@ def validate_rnea(workspace: str, *, require_benefit: bool = False) -> dict[str,
         return finish(False, "capability", "Missing: " + ", ".join(deps["missing"]))
     try:
         build = configure_and_build(
-            str(PACK_ROOT / "harness"), TARGET, timeout=300,
+            str(PACK_ROOT / "harness"), TARGET, timeout=300, build_timeout=900,
             cmake_definitions={
                 "CMAKE_PREFIX_PATH": f"{PREFIX.as_posix()};{INSTALL_PREFIX.as_posix()}",
                 "AUTODIFF_PREFIX": INSTALL_PREFIX.as_posix(),

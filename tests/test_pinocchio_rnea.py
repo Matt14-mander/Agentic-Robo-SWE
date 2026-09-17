@@ -241,12 +241,15 @@ def test_control_orchestrator_reuses_hashed_library_across_fresh_processes(
         return {"passed": True, "stderr": ""}
 
     monkeypatch.setattr(module, "run_built_executable", run)
-    result = module.run_control_loop_benchmark(3)
+    progress = []
+    result = module.run_control_loop_benchmark(3, progress=progress.append)
     assert result["passed"]
     assert result["recommendation"] == "validated_end_to_end_candidate"
     assert all(call[2] == "--reuse-library" for call in calls)
     assert len(calls) == 3
     assert (artifact / "control-loop-aggregate.json").is_file()
+    assert progress[0].startswith("seed:")
+    assert progress[-1].startswith("complete:")
 
 
 @pytest.mark.parametrize("latency,recommendation", [
@@ -312,10 +315,17 @@ def test_validator_persists_evidence_and_distinguishes_adoption_policy(monkeypat
     monkeypatch.setattr(module, "inspect_dependencies", lambda: {
         "available": True, "missing": [], "fingerprint": "test",
     })
-    monkeypatch.setattr(module, "configure_and_build", lambda *a, **kw: BuildResult(
-        passed=True, source_dir="source", build_dir="build", target="target", fingerprint="test",
-        cache_hit=False, configure_seconds=0, build_seconds=0, stdout="", stderr="",
-    ))
+    build_options = {}
+
+    def build(*a, **kw):
+        build_options.update(kw)
+        return BuildResult(
+            passed=True, source_dir="source", build_dir="build", target="target",
+            fingerprint="test", cache_hit=False, configure_seconds=0, build_seconds=0,
+            stdout="", stderr="",
+        )
+
+    monkeypatch.setattr(module, "configure_and_build", build)
 
     def run(*a, args, **kw):
         raw = observations()
@@ -329,6 +339,8 @@ def test_validator_persists_evidence_and_distinguishes_adoption_policy(monkeypat
 
     monkeypatch.setattr(module, "run_built_executable", run)
     result = validate_rnea(str(PACK_ROOT / "harness/reference.hpp"), require_benefit=strict)
+    assert build_options["timeout"] == 300
+    assert build_options["build_timeout"] == 900
     assert result["stage"] == stage
     assert result["passed"] == (stage == "complete")
     saved = next(tmp_path.glob("*/validation.json"))

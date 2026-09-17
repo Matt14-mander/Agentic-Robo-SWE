@@ -99,6 +99,8 @@ def configure_and_build(
     *,
     build_type: str = "Release",
     timeout: int = 120,
+    configure_timeout: int | None = None,
+    build_timeout: int | None = None,
     cmake_definitions: dict[str, str] | None = None,
 ) -> BuildResult:
     if not _TARGET_RE.fullmatch(target):
@@ -106,6 +108,14 @@ def configure_and_build(
     if build_type not in _BUILD_TYPES:
         raise ValueError(f"Unsupported build_type: {build_type!r}")
     timeout = min(max(int(timeout), 1), 300)
+    configure_timeout = min(
+        max(int(configure_timeout if configure_timeout is not None else timeout), 1), 300
+    )
+    # Template-heavy robotics targets can legitimately need more than five minutes,
+    # while CMake configuration should still fail fast instead of hiding a deadlock.
+    build_timeout = min(
+        max(int(build_timeout if build_timeout is not None else timeout), 1), 900
+    )
     source = resolve_within_root(source_dir)
     if not source.is_dir() or not (source / "CMakeLists.txt").is_file():
         raise ValueError(f"CMake source directory is invalid: {source_dir}")
@@ -178,7 +188,7 @@ def configure_and_build(
         env["CXX"] = toolchain.compiler_path
     if toolchain.ninja_path:
         env["PATH"] = str(Path(toolchain.ninja_path).parent) + os.pathsep + env.get("PATH", "")
-    configured = _run(configure_command, cwd=source, env=env, timeout=timeout)
+    configured = _run(configure_command, cwd=source, env=env, timeout=configure_timeout)
     if configured[0] != 0:
         return _result_from_failure(
             source,
@@ -192,7 +202,7 @@ def configure_and_build(
         [toolchain.cmake_path, "--build", str(build_dir), "--target", target, "--config", build_type],
         cwd=source,
         env=env,
-        timeout=timeout,
+        timeout=build_timeout,
     )
     stdout = _truncate(configured[1] + built[1])
     stderr = _truncate(configured[2] + built[2])
