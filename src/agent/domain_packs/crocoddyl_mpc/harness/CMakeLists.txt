@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.18)
+project(robo_swe_crocoddyl_mpc LANGUAGES CXX)
+find_package(crocoddyl 3.0.1 EXACT REQUIRED CONFIG)
+add_executable(crocoddyl_mpc_profile main.cpp)
+target_compile_features(crocoddyl_mpc_profile PRIVATE cxx_std_17)
+target_link_libraries(crocoddyl_mpc_profile PRIVATE crocoddyl::crocoddyl)

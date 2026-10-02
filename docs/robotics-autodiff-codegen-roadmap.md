@@ -208,6 +208,12 @@ RNEA+Jacobian、ABA plant 和状态积分组成的最小控制循环，并增加
 
 ### Phase 6.4：Crocoddyl/MPC 链路诊断
 
+状态：🚧 Phase 6.4a 已实现固定 LQR/FDDP 正确性门禁与阶段级 profile，等待 Linux/WSL 原生
+验收。当前对照为解析 `ActionModelLQR` 与 `ActionModelNumDiff` 的一阶导数成本，不包含生成动作
+模型，因此报告中的 CodeGen 端到端加速字段固定为 null。Phase 6.4b 才会替换一个受控的
+Pinocchio/Crocoddyl 动作模块并执行 MPC rollout 对照。参见
+[Phase 6.4 使用与验收说明](phase64-crocoddyl-mpc.md)。
+
 目标：从单函数优化升级为完整求解链路的工程判断。
 
 - profile `calc()`、`calcDiff()`、FDDP backward pass 和 line search；

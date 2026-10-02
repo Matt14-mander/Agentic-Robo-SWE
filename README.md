@@ -550,10 +550,10 @@ langgraph.json    # Studio 入口
 | 5.2 | 仿真评测扩展 — 固定种子矩阵、扰动鲁棒性与聚合评分 | ✅ 完成 |
 | 5.3 | 仿真诊断 — 失败轨迹时序落盘、首个事件定位与可视化报告 | ✅ 完成 |
 | 6.0 | Robotics Domain Pack — 可插拔领域工具、环境与 Validator 契约 | ✅ 完成 |
-| 6.1 | Autodiff CodeGen MVP — AD 兼容检查、CppAD tape 与 Jacobian 验证 | ⏳ 下一阶段 |
-| 6.2 | 数值正确性门禁 — FD/AD/CodeGen 等价性与固定 seed 验证 | 📋 规划中 |
-| 6.3 | Pinocchio 集成 — 机器人动力学 CodeGen 与解析导数性能决策 | 📋 规划中 |
-| 6.4 | Crocoddyl/MPC — `calcDiff()` 瓶颈定位与端到端吞吐验证 | 📋 规划中 |
+| 6.1 | Autodiff CodeGen MVP — AD 兼容检查、CppAD tape 与 Jacobian 验证 | ✅ 完成 |
+| 6.2 | 数值正确性门禁 — Dense/Sparse FD/AD/CodeGen 等价性与固定 seed | ✅ 完成 |
+| 6.3 | Pinocchio 集成 — RNEA CodeGen、解析导数与可复现控制循环 | ✅ 完成 |
+| 6.4 | Crocoddyl/MPC — `calcDiff()`、FDDP 与 rollout 链路诊断 | 🚧 6.4a 已实现，待 Linux 验收 |
 | M2 | Robo-SWE 专业 Benchmark — 20–30 题与 Harness/RAG/Tools/Validator 消融 | 📋 规划中 |
 
 CppADCodeGen 作为首个机器人优化专业能力包，而不是项目的全部。领域逻辑保持可插拔，建设顺序为

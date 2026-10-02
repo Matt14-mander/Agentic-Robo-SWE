@@ -114,8 +114,9 @@ CI 增加独立 `pinocchio-rnea-checks`，不要求机器一定得到 CodeGen �
 
 ## 后续验收与扩展
 
-先执行 Phase 6.3b 并检查跨进程结论；只有 `validated_end_to_end_candidate` 才进入更大链路试验。
-随后引入更高自由度模型、流形配置空间和 MPC/Crocoddyl profiling，才评估进入 Phase 6.4。
+Phase 6.3b 的跨进程结论用于决定是否进入更大链路试验。Phase 6.4a 已先建立与 CodeGen
+替换解耦的 Crocoddyl solver-chain 基线；只有基线显示导数阶段占主导，才在 6.4b 引入受控动作
+模型替换和 MPC rollout 对照。
 本次只把 ABA 用作固定被控对象，不实现 ABA 的 CodeGen 替换，也不覆盖多种动力学目标、任意
 URDF、Hessian 或 Crocoddyl/MPC。
 

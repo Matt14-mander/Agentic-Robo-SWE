@@ -1,0 +1,6 @@
+schema_version = 1
+id = "crocoddyl_mpc"
+version = "0.1.0"
+description = "Phase 6.4a deterministic Crocoddyl LQR/FDDP solver-chain diagnostics"
+required_executables = ["cmake", "cxx_compiler"]
+local_only = true
