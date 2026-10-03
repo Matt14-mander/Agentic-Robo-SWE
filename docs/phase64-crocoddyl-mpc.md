@@ -71,6 +71,9 @@ uv run python scripts/run_crocoddyl_mpc.py --robot
 
 ## 后续 CodeGen 动作模型替换的条件
 
+受控替换现已作为 6.4c 单独实现，使用 `--codegen`；设计、门禁、计时范围与限制见
+[受控 CodeGen 试验说明](phase64c-controlled-codegen.md)。本节保留触发该试验的 6.4b 基线证据。
+
 本机首次原生测量（单进程，10 次重复，不代表跨机器收益）：
 
 | 指标 | 结果 |

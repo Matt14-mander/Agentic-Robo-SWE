@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import platform
 import uuid
@@ -17,7 +18,10 @@ from agent.domain_packs.crocoddyl_mpc.robot_report import (
     evaluate_robot_correctness, evaluate_robot_profile,
 )
 from agent.domain_packs.crocoddyl_mpc.spec import (
-    PACK_ROOT, PACK_VERSION, benchmark_contract, robot_contract,
+    PACK_ROOT, PACK_VERSION, benchmark_contract, robot_contract, trial_contract,
+)
+from agent.domain_packs.crocoddyl_mpc.trial_report import (
+    evaluate_trial_correctness, evaluate_trial_profile,
 )
 from agent.domain_packs.pinocchio_rnea.spec import MODEL_PATH
 from agent.domain_packs.pinocchio_rnea.dependencies import PREFIX as PINOCCHIO_PREFIX
@@ -39,15 +43,18 @@ def _save(path: Path, data: Any) -> None:
 
 
 def validate_crocoddyl_mpc(
-    _: str = "", *, robot: bool = False, progress: Callable[[str], None] | None = None,
+    _: str = "", *, robot: bool = False, codegen: bool = False,
+    progress: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
+    if robot and codegen:
+        raise ValueError("Choose robot baseline or controlled CodeGen trial, not both")
     dependencies = inspect_dependencies()
     directory = ARTIFACT_ROOT / uuid.uuid4().hex
     directory.mkdir(parents=True, exist_ok=True)
     context: dict[str, Any] = {
-        "schema_version": 2 if robot else 1,
+        "schema_version": 3 if codegen else 2 if robot else 1,
         "pack_version": PACK_VERSION,
-        "contract": robot_contract() if robot else benchmark_contract(),
+        "contract": trial_contract() if codegen else robot_contract() if robot else benchmark_contract(),
         "dependencies": dependencies,
         "environment": {
             "platform": platform.platform(),
@@ -79,7 +86,7 @@ def validate_crocoddyl_mpc(
     if not dependencies["available"]:
         return finish(False, "capability", "Missing: " + ", ".join(dependencies["missing"]))
     try:
-        target = "crocoddyl_robot_mpc" if robot else TARGET
+        target = "crocoddyl_codegen_trial" if codegen else "crocoddyl_robot_mpc" if robot else TARGET
         if progress:
             progress(f"build {target}: configure <=300s, build <=900s")
         build = configure_and_build(
@@ -92,7 +99,9 @@ def validate_crocoddyl_mpc(
                     (PREFIX.as_posix(), PINOCCHIO_PREFIX.as_posix(), INSTALL_PREFIX.as_posix())
                 ),
                 "ROBOT_URDF": MODEL_PATH.as_posix(),
+                **({"AUTODIFF_PREFIX": INSTALL_PREFIX.as_posix()} if codegen else {}),
             },
+            build_jobs=1 if codegen else None,
         )
         context["build"] = build.to_dict()
         if not build.passed or not build.build_dir:
@@ -104,7 +113,9 @@ def validate_crocoddyl_mpc(
             progress(f"run {target}: warmup + repeated measurements, timeout <=120s")
         execution = run_built_executable(
             build.build_dir, target,
-            args=(str(raw_path), str(contract_path)) if robot else (str(raw_path),), timeout=120
+            args=(str(raw_path), str(contract_path), str(directory / "aba_library")) if codegen
+                else (str(raw_path), str(contract_path)) if robot else (str(raw_path),),
+            timeout=120,
         )
         context["execution"] = execution
         if not execution["passed"]:
@@ -112,8 +123,23 @@ def validate_crocoddyl_mpc(
         if not raw_path.is_file():
             return finish(False, "report", "Executable produced no raw profile")
         raw = json.loads(raw_path.read_text(encoding="utf-8"))
-        correctness = evaluate_robot_correctness(raw) if robot else evaluate_correctness(raw)
-        profile = (evaluate_robot_profile if robot else evaluate_profile)(
+        if codegen:
+            libraries = sorted(directory.glob("aba_library*.so"))
+            if len(libraries) != 1:
+                return finish(False, "report", "Expected one uniquely generated shared library")
+            context["generated_library"] = {"path": relpath_for_display(libraries[0]),
+                "sha256": hashlib.sha256(libraries[0].read_bytes()).hexdigest()}
+            sources = sorted((directory / "aba_library_sources").glob("*.c"))
+            if not sources:
+                return finish(False, "report", "Generated C sources were not preserved")
+            context["generated_sources"] = [
+                {"path": relpath_for_display(path),
+                 "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+                for path in sources
+            ]
+        correctness = (evaluate_trial_correctness if codegen else
+                       evaluate_robot_correctness if robot else evaluate_correctness)(raw)
+        profile = (evaluate_trial_profile if codegen else evaluate_robot_profile if robot else evaluate_profile)(
             raw, correctness_passed=correctness["passed"]
         )
         context.update(correctness=correctness, profile=profile)
@@ -132,3 +158,7 @@ def validate_crocoddyl_mpc(
 
 def validate_robot_mpc(workspace: str = "") -> dict[str, Any]:
     return validate_crocoddyl_mpc(workspace, robot=True)
+
+
+def validate_codegen_trial(workspace: str = "") -> dict[str, Any]:
+    return validate_crocoddyl_mpc(workspace, codegen=True)

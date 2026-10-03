@@ -156,6 +156,9 @@ def test_toolchain_probe_is_deterministic_and_build_paths_are_restricted():
         )
     with pytest.raises(ValueError, match="outside project root"):
         configure_and_build("../../outside", "target")
+    for jobs in (0, 33, True, 1.5):
+        with pytest.raises(ValueError, match="build_jobs"):
+            configure_and_build("src/agent/domain_packs/cpp_reference/harness", "target", build_jobs=jobs)
 
 
 def test_cpp_pack_tools_refuse_non_local_executor(monkeypatch):

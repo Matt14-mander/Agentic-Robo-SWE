@@ -57,6 +57,10 @@ packages = ["src/agent"]
 "src/agent/domain_packs/crocoddyl_mpc/harness/CMakeLists.txt" = "agent/domain_packs/crocoddyl_mpc/harness/CMakeLists.txt"
 "src/agent/domain_packs/crocoddyl_mpc/harness/main.cpp" = "agent/domain_packs/crocoddyl_mpc/harness/main.cpp"
 "src/agent/domain_packs/crocoddyl_mpc/harness/robot.cpp" = "agent/domain_packs/crocoddyl_mpc/harness/robot.cpp"
+"src/agent/domain_packs/crocoddyl_mpc/harness/aba_codegen.cpp" = "agent/domain_packs/crocoddyl_mpc/harness/aba_codegen.cpp"
+"src/agent/domain_packs/crocoddyl_mpc/harness/aba_codegen.hpp" = "agent/domain_packs/crocoddyl_mpc/harness/aba_codegen.hpp"
+"src/agent/domain_packs/crocoddyl_mpc/harness/aba_action.hpp" = "agent/domain_packs/crocoddyl_mpc/harness/aba_action.hpp"
+"src/agent/domain_packs/crocoddyl_mpc/harness/trial_main.hpp" = "agent/domain_packs/crocoddyl_mpc/harness/trial_main.hpp"
 
 [tool.hatch.build.targets.wheel.sources]
 "src/agent" = "agent"

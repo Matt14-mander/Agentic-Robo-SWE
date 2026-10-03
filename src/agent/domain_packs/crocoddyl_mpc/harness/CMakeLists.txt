@@ -8,3 +8,17 @@ add_executable(crocoddyl_robot_mpc robot.cpp)
 target_compile_features(crocoddyl_robot_mpc PRIVATE cxx_std_17)
 target_link_libraries(crocoddyl_robot_mpc PRIVATE crocoddyl::crocoddyl pinocchio::pinocchio)
 target_compile_definitions(crocoddyl_robot_mpc PRIVATE ROBOT_URDF="${ROBOT_URDF}")
+if(AUTODIFF_PREFIX)
+  add_executable(crocoddyl_codegen_trial robot.cpp aba_codegen.cpp)
+  target_compile_features(crocoddyl_codegen_trial PRIVATE cxx_std_17)
+  target_link_libraries(crocoddyl_codegen_trial PRIVATE
+    crocoddyl::crocoddyl pinocchio::pinocchio ${CMAKE_DL_LIBS})
+  find_library(CPPAD_RUNTIME NAMES cppad_lib HINTS
+    "${AUTODIFF_PREFIX}/lib" "${AUTODIFF_PREFIX}/lib64" REQUIRED)
+  target_link_libraries(crocoddyl_codegen_trial PRIVATE "${CPPAD_RUNTIME}")
+  target_include_directories(crocoddyl_codegen_trial SYSTEM PRIVATE "${AUTODIFF_PREFIX}/include")
+  target_compile_definitions(crocoddyl_codegen_trial PRIVATE
+    ROBO_SWE_CODEGEN_TRIAL CPPAD_DEBUG_AND_RELEASE ROBOT_URDF="${ROBOT_URDF}")
+  set_property(GLOBAL PROPERTY JOB_POOLS trial_compile=1)
+  set_property(TARGET crocoddyl_codegen_trial PROPERTY JOB_POOL_COMPILE trial_compile)
+endif()

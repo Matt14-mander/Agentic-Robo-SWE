@@ -132,6 +132,8 @@ jobs:
         run: uv run python scripts/run_crocoddyl_mpc.py
       - name: Run real Pinocchio MPC cold/warm comparison
         run: uv run python scripts/run_crocoddyl_mpc.py --robot
+      - name: Validate controlled CodeGen action replacement
+        run: uv run pytest -q tests/test_crocoddyl_codegen_trial.py -m crocoddyl
       - name: Preserve Crocoddyl evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4

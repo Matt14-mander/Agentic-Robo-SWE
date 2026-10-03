@@ -101,12 +101,15 @@ def configure_and_build(
     timeout: int = 120,
     configure_timeout: int | None = None,
     build_timeout: int | None = None,
+    build_jobs: int | None = None,
     cmake_definitions: dict[str, str] | None = None,
 ) -> BuildResult:
     if not _TARGET_RE.fullmatch(target):
         raise ValueError(f"Invalid CMake target: {target!r}")
     if build_type not in _BUILD_TYPES:
         raise ValueError(f"Unsupported build_type: {build_type!r}")
+    if build_jobs is not None and (type(build_jobs) is not int or not 1 <= build_jobs <= 32):
+        raise ValueError("build_jobs must be an integer in [1, 32]")
     timeout = min(max(int(timeout), 1), 300)
     configure_timeout = min(
         max(int(configure_timeout if configure_timeout is not None else timeout), 1), 300
@@ -184,6 +187,8 @@ def configure_and_build(
         configure_command.extend(("-G", "Ninja"))
     configure_command.extend(f"-D{key}={value}" for key, value in sorted(definitions.items()))
     env = _build_environment()
+    if build_jobs is not None:
+        env["CMAKE_BUILD_PARALLEL_LEVEL"] = str(build_jobs)
     if toolchain.compiler_path and Path(toolchain.compiler_path).stem.lower() != "cl":
         env["CXX"] = toolchain.compiler_path
     if toolchain.ninja_path:

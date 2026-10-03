@@ -553,7 +553,7 @@ langgraph.json    # Studio 入口
 | 6.1 | Autodiff CodeGen MVP — AD 兼容检查、CppAD tape 与 Jacobian 验证 | ✅ 完成 |
 | 6.2 | 数值正确性门禁 — Dense/Sparse FD/AD/CodeGen 等价性与固定 seed | ✅ 完成 |
 | 6.3 | Pinocchio 集成 — RNEA CodeGen、解析导数与可复现控制循环 | ✅ 完成 |
-| 6.4 | Crocoddyl/MPC — LQR 与真实 Pinocchio MPC、冷/热启动对照 | ✅ 6.4a/6.4b 已原生验收；CodeGen 替换待下一步 |
+| 6.4 | Crocoddyl/MPC — LQR、真实 MPC 与受控 ABA 导数替换 | ✅ 6.4a/6.4b 已原生验收；6.4c 三路 CodeGen 试验已实现 |
 | M2 | Robo-SWE 专业 Benchmark — 20–30 题与 Harness/RAG/Tools/Validator 消融 | 📋 规划中 |
 
 CppADCodeGen 作为首个机器人优化专业能力包，而不是项目的全部。领域逻辑保持可插拔，建设顺序为

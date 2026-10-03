@@ -8,7 +8,7 @@ from typing import Any
 
 PACK_ROOT = Path(__file__).resolve().parent
 SCHEMA_VERSION = 1
-PACK_VERSION = "0.2.0"
+PACK_VERSION = "0.3.0"
 CROCODDYL_VERSION = "3.0.1"
 CROCODDYL_COMMIT = "420daeab516e56583c03a96a3b2846510119d740"
 STATE_DIM = 4
@@ -64,3 +64,25 @@ def robot_contract() -> dict[str, Any]:
         "timing_keys": list(MPC_TIMING_KEYS), "codegen_replacement": False,
         "plant": "independent Pinocchio ABA + symplectic Euler",
     }
+
+
+TRIAL_BACKENDS = ("native", "cppad", "codegen")
+
+
+def trial_samples() -> list[list[float]]:
+    import math
+    return [[0.6 * math.sin((i + 1) * (j + 1) * 0.7) for j in range(6)]
+            for i in range(24)] + [[0., 0., 0., 0., -16.4808, -2.7468]]
+
+
+def trial_contract() -> dict[str, Any]:
+    return {"name": "phase64c_controlled_aba_jacobian_replacement",
+            "baseline": robot_contract(), "backends": list(TRIAL_BACKENDS),
+            "input_order": ["q1", "q2", "v1", "v2", "tau1", "tau2"],
+            "jacobian_layout": "row_major_2_by_6", "samples": trial_samples(),
+            "replacement": "ABA Jacobian only in running action calcDiff",
+            "unchanged": ["ABA values", "costs", "terminal", "Euler integrator",
+                          "FDDP", "shifted warm start", "independent ABA plant"],
+            "repeats": MPC_REPEATS, "warmup": MPC_WARMUP,
+            "processes": 1, "minimum_speedup": 1.05, "maximum_cv": 0.3,
+            "scope": "fixed fully actuated two-link; no contacts or armature"}

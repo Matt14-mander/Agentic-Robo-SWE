@@ -7,8 +7,8 @@ from langchain_core.tools import tool
 from agent.domain.loader import load_domain_manifest
 from agent.domain.models import DomainPack
 from agent.domain_packs.crocoddyl_mpc.dependencies import inspect_dependencies
-from agent.domain_packs.crocoddyl_mpc.spec import PACK_ROOT, benchmark_contract, robot_contract
-from agent.domain_packs.crocoddyl_mpc.validators import validate_crocoddyl_mpc, validate_robot_mpc
+from agent.domain_packs.crocoddyl_mpc.spec import PACK_ROOT, benchmark_contract, robot_contract, trial_contract
+from agent.domain_packs.crocoddyl_mpc.validators import validate_crocoddyl_mpc, validate_robot_mpc, validate_codegen_trial
 
 
 @tool
@@ -16,7 +16,7 @@ def inspect_crocoddyl_mpc_environment() -> str:
     """Inspect pinned Crocoddyl capabilities and the fixed Phase 6.4a profile contract."""
     return json.dumps(
         {"environment": inspect_dependencies(), "contract": benchmark_contract(),
-         "robot_contract": robot_contract()}, indent=2
+         "robot_contract": robot_contract(), "trial_contract": trial_contract()}, indent=2
     )
 
 
@@ -32,13 +32,20 @@ def benchmark_crocoddyl_robot_mpc() -> str:
     return json.dumps(validate_robot_mpc(), ensure_ascii=False, indent=2)
 
 
+@tool
+def benchmark_crocoddyl_codegen_trial() -> str:
+    """Compare native, CppAD and CodeGen ABA Jacobians in identical shifted-warm MPC."""
+    return json.dumps(validate_codegen_trial(), ensure_ascii=False, indent=2)
+
+
 def create_pack() -> DomainPack:
     return DomainPack(
         manifest=load_domain_manifest(PACK_ROOT / "pack.toml"),
         tools=(inspect_crocoddyl_mpc_environment, profile_crocoddyl_mpc_solver_chain,
-               benchmark_crocoddyl_robot_mpc),
+               benchmark_crocoddyl_robot_mpc, benchmark_crocoddyl_codegen_trial),
         validators={"crocoddyl_mpc.solver_chain": validate_crocoddyl_mpc,
-                    "crocoddyl_mpc.robot_mpc": validate_robot_mpc},
+                    "crocoddyl_mpc.robot_mpc": validate_robot_mpc,
+                    "crocoddyl_mpc.codegen_trial": validate_codegen_trial},
         prompt_fragment=(PACK_ROOT / "prompt.md").read_text(encoding="utf-8"),
         capability_probe=inspect_dependencies,
         source=PACK_ROOT,

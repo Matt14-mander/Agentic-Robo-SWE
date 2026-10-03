@@ -12,3 +12,9 @@ and 32 receding-horizon MPC steps. Compare cold and shifted warm start with ever
 states/controls, convergence, shooting feasibility, and plant-equation checks. Warm-start speedup
 is a solver initialization result and must not be attributed to CodeGen. Use the robot profile to
 decide whether a generated dynamics action model is worth a subsequent controlled trial.
+The controlled trial substitutes ONLY the running-action ABA acceleration Jacobian inside calcDiff.
+Compare native analytic, CppAD and CodeGen with identical shifted warm start. calc values, costs,
+terminal, integrator, solver and independent plant remain native. Gate 25 action/terminal samples
+and all repetitions before performance. Report paired end-to-end speedups and generation/compile/load
+amortization. A keep-native or noisy-profile result is valid; never promote a single-process trial
+to production adoption, hard-real-time safety, or arbitrary robot/contact support.

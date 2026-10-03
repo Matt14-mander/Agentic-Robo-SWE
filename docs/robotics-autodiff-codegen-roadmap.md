@@ -213,7 +213,9 @@ RNEA+Jacobian、ABA plant 和状态积分组成的最小控制循环，并增加
 与移位 warm-start 对照，以及独立两连杆 plant 方程门禁，已在 WSL 原生编译并通过轨迹验收。
 首次单进程测量显示 calcDiff 占 direction kernel 77.3%，warm-start 的 32 步闭环 P50 收益约
 1.34 倍。该阶段先定位真实动力学瓶颈，
-报告中的 CodeGen 端到端加速字段仍为 null；生成动作模型替换由真实机器人 profile 决定。参见
+6.4a/6.4b 报告中的 CodeGen 端到端加速字段仍为 null。6.4c 已增加受控 ABA Jacobian 替换，
+以相同 warm-start 比较原生解析、CppAD、CodeGen，先过动作/闭环门禁，再记录配对收益、
+生成编译成本和摊销次数；单进程结果最多推荐跨进程复测，不直接升级默认控制后端。参见
 [Phase 6.4 使用与验收说明](phase64-crocoddyl-mpc.md)。
 
 目标：从单函数优化升级为完整求解链路的工程判断。

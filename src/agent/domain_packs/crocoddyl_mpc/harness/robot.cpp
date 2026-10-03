@@ -19,6 +19,10 @@
 #include <functional>
 #include <map>
 #include <algorithm>
+#include "aba_codegen.hpp"
+#ifdef ROBO_SWE_CODEGEN_TRIAL
+#include "aba_action.hpp"
+#endif
 
 namespace {
 using V = Eigen::VectorXd;
@@ -34,7 +38,8 @@ struct Bundle {
   V gravity;
 };
 
-Bundle make_problem(const pinocchio::Model& model) {
+Bundle make_problem(const pinocchio::Model& model,
+                    std::shared_ptr<AbaBackend> backend={},bool generated=false) {
   auto state = std::make_shared<crocoddyl::StateMultibody>(
       std::make_shared<pinocchio::Model>(model));
   auto actuation = std::make_shared<crocoddyl::ActuationModelFull>(state);
@@ -50,8 +55,13 @@ Bundle make_problem(const pinocchio::Model& model) {
         terminal ? 20. : 1.);
     if (!terminal) costs->addCost("effort", std::make_shared<crocoddyl::CostModelResidual>(
         state, std::make_shared<crocoddyl::ResidualModelControl>(state, gravity)), 0.001);
-    auto dam = std::make_shared<crocoddyl::DifferentialActionModelFreeFwdDynamics>(
+    std::shared_ptr<crocoddyl::DifferentialActionModelAbstract> dam =
+        std::make_shared<crocoddyl::DifferentialActionModelFreeFwdDynamics>(
         state, actuation, costs);
+#ifdef ROBO_SWE_CODEGEN_TRIAL
+    if(backend && !terminal)
+      dam=std::make_shared<AbaDerivativeAction>(state,actuation,costs,backend,generated);
+#endif
     return std::make_shared<crocoddyl::IntegratedActionModelEuler>(dam, terminal ? 0. : DT);
   };
   auto running = make_action(false);
@@ -82,8 +92,9 @@ struct Run {
   std::vector<int> iterations;
   bool all_solved = true;
 };
-Run run_mpc(const pinocchio::Model& model, bool warm) {
-  auto bundle = make_problem(model);
+Run run_mpc(const pinocchio::Model& model, bool warm,
+            std::shared_ptr<AbaBackend> backend={},bool generated=false) {
+  auto bundle = make_problem(model,backend,generated);
   crocoddyl::SolverFDDP solver(bundle.problem);
   solver.set_th_stop(1e-6);
   pinocchio::Data plant(model);
@@ -131,6 +142,9 @@ void run_json(std::ostream& out,const Run& r) {
 }
 }
 
+#ifdef ROBO_SWE_CODEGEN_TRIAL
+#include "trial_main.hpp"
+#else
 int main(int argc,char** argv) {
   if(argc!=3) { std::cerr << "usage: robot OUTPUT CONTRACT\n"; return 2; }
   try {
@@ -197,3 +211,4 @@ int main(int argc,char** argv) {
     return 0;
   } catch(const std::exception& e) {std::cerr << e.what() << '\n';return 1;}
 }
+#endif
