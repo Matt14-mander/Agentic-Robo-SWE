@@ -1,6 +1,6 @@
 schema_version = 1
 id = "crocoddyl_mpc"
-version = "0.1.0"
-description = "Phase 6.4a deterministic Crocoddyl LQR/FDDP solver-chain diagnostics"
+version = "0.2.0"
+description = "Phase 6.4b real Pinocchio MPC and cold/warm-start solver-chain diagnostics"
 required_executables = ["cmake", "cxx_compiler"]
 local_only = true
