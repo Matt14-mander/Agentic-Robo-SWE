@@ -1,6 +1,6 @@
 schema_version = 1
 id = "crocoddyl_mpc"
-version = "0.3.0"
+version = "0.4.0"
 description = "Real Pinocchio MPC and controlled native/CppAD/CodeGen ABA derivative trial"
 required_executables = ["cmake", "cxx_compiler"]
 local_only = true

@@ -18,3 +18,8 @@ terminal, integrator, solver and independent plant remain native. Gate 25 action
 and all repetitions before performance. Report paired end-to-end speedups and generation/compile/load
 amortization. A keep-native or noisy-profile result is valid; never promote a single-process trial
 to production adoption, hard-real-time safety, or arbitrary robot/contact support.
+Use the process trial for 3-20 sequential fresh native processes. Reuse only the compiled harness;
+each process rebuilds its own generated library, tape and measurement state. Require unique native
+PIDs and consistent dependency/toolchain/executable identities. Judge every raw trace again and
+require benefit in EVERY process, not a pooled median. Stable results are only opt-in pilot
+candidates on the measured machine/workload; the default native backend remains unchanged.

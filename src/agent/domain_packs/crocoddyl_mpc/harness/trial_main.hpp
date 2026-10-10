@@ -1,4 +1,5 @@
 #include <pinocchio/algorithm/aba-derivatives.hpp>
+#include <unistd.h>
 
 namespace {
 template<class Matrix> void flat_json(std::ostream& out,const Matrix& m) {
@@ -31,7 +32,8 @@ int main(int argc,char** argv) {
     std::ifstream cf(argv[2]); std::string contract((std::istreambuf_iterator<char>(cf)),{});
     if(contract.empty()) throw std::runtime_error("missing contract");
     std::ofstream out(argv[1]);if(!out) throw std::runtime_error("cannot open output");
-    out << std::setprecision(17) << "{\"schema_version\":3,\"contract\":" << contract
+    out << std::setprecision(17) << "{\"schema_version\":3,\"process_id\":" << getpid()
+        << ",\"contract\":" << contract
         << ",\"generation_compile_load_seconds\":" << backend->compile_seconds()
         << ",\"samples\":[";
     std::cerr << "[trial] 25 fixed action and derivative checks\n";

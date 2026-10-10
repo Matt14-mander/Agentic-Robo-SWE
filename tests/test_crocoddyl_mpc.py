@@ -45,10 +45,10 @@ def observations() -> dict:
 
 def test_pack_manifest_and_fixed_contract():
     pack = get_domain_registry().get("crocoddyl_mpc")
-    assert pack.version == "0.3.0"
+    assert pack.version == "0.4.0"
     assert set(pack.validators) == {"crocoddyl_mpc.solver_chain", "crocoddyl_mpc.robot_mpc",
-                                    "crocoddyl_mpc.codegen_trial"}
-    assert len(pack.tools) == 4
+                                    "crocoddyl_mpc.codegen_trial", "crocoddyl_mpc.codegen_processes"}
+    assert len(pack.tools) == 5
     contract = benchmark_contract()
     assert contract["horizon"] == 40
     assert contract["codegen_replacement"] is False

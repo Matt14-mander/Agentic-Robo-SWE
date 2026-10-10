@@ -8,7 +8,7 @@ from typing import Any
 
 PACK_ROOT = Path(__file__).resolve().parent
 SCHEMA_VERSION = 1
-PACK_VERSION = "0.3.0"
+PACK_VERSION = "0.4.0"
 CROCODDYL_VERSION = "3.0.1"
 CROCODDYL_COMMIT = "420daeab516e56583c03a96a3b2846510119d740"
 STATE_DIM = 4

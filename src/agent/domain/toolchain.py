@@ -255,6 +255,7 @@ def run_built_executable(
     timeout: int = 30,
 ) -> dict[str, object]:
     executable = find_built_executable(build_dir, target)
+    executable_sha256 = hashlib.sha256(executable.read_bytes()).hexdigest()
     if any("\0" in argument for argument in args):
         raise ValueError("Executable arguments may not contain NUL bytes")
     completed = _run(
@@ -270,6 +271,7 @@ def run_built_executable(
         "stderr": _truncate(completed[2]),
         "duration_seconds": completed[3],
         "executable": relpath_for_display(executable),
+        "executable_sha256": executable_sha256,
     }
 
 
