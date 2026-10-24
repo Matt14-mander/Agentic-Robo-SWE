@@ -208,7 +208,7 @@ RNEA+Jacobian、ABA plant 和状态积分组成的最小控制循环，并增加
 
 ### Phase 6.4：Crocoddyl/MPC 链路诊断
 
-状态：🚧 Phase 6.4a 的 LQR/FDDP 原生门禁已在 WSL 通过，解析 calcDiff 占 direction kernel
+状态：试验框架与收尾功能已实现，新增扩样路径的 Linux 原生复验待完成。Phase 6.4a 的 LQR/FDDP 原生门禁已在 WSL 通过，解析 calcDiff 占 direction kernel
 25.6%。Phase 6.4b 已实现真实 Pinocchio 两关节动作模型、32 步 receding-horizon MPC、冷启动
 与移位 warm-start 对照，以及独立两连杆 plant 方程门禁，已在 WSL 原生编译并通过轨迹验收。
 首次单进程测量显示 calcDiff 占 direction kernel 77.3%，warm-start 的 32 步闭环 P50 收益约
@@ -217,9 +217,11 @@ RNEA+Jacobian、ABA plant 和状态积分组成的最小控制循环，并增加
 以相同 warm-start 比较原生解析、CppAD、CodeGen，先过动作/闭环门禁，再记录配对收益、
 生成编译成本和摊销次数；单进程结果最多推荐跨进程复测，不直接升级默认控制后端。
 跨进程复测已接入 `--codegen --processes 3`：顺序启动全新原生进程，逐进程重验 raw，
-并以全部进程达标及跨进程波动门禁决定是否进入显式 opt-in pilot。本机 3 进程原生门禁已通过，
-加速比中位数 1.302 倍、跨进程加速比 CV 1.55%，建议为 opt-in pilot 候选。
-默认后端仍保持原生，其他初始状态/负载和跨机器验证尚未完成。参见
+并以全部进程达标及跨进程波动门禁决定是否进入显式 opt-in pilot。历史本机观测曾全部达标；
+用户最新 3 进程复测正确性全部通过，中位数加速 1.290 倍，但第一个进程 P95 回退 23.274 μs，
+只有 2/3 进程通过性能门禁，因此当前结论为 `keep_native_inconsistent_process_benefit`。
+收尾新增 `--repeats 50`（范围 10–200、默认仍为 10）和逐进程拒绝原因；配对达标仍要求
+至少 ceil(0.8×repeats)，P50/P95/CV 门禁不放宽。默认保持原生，扩样、其他初始状态/负载和跨机器验证尚未完成。参见
 [Phase 6.4 使用与验收说明](phase64-crocoddyl-mpc.md)。
 
 目标：从单函数优化升级为完整求解链路的工程判断。

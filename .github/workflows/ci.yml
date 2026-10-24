@@ -135,7 +135,7 @@ jobs:
       - name: Validate controlled CodeGen action replacement
         run: uv run pytest -q tests/test_crocoddyl_codegen_trial.py -m crocoddyl
       - name: Retest CodeGen across independent native processes
-        run: uv run python scripts/run_crocoddyl_mpc.py --codegen --processes 3
+        run: uv run python scripts/run_crocoddyl_mpc.py --codegen --processes 3 --repeats 50
       - name: Preserve Crocoddyl evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4

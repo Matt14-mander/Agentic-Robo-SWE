@@ -21,8 +21,15 @@ void action_json(std::ostream& out,const std::shared_ptr<crocoddyl::ActionDataAb
 }
 }
 int main(int argc,char** argv) {
-  if(argc!=4) {std::cerr << "usage: trial OUTPUT CONTRACT LIBRARY_BASE\n";return 2;}
+  if(argc!=4 && argc!=5) {std::cerr << "usage: trial OUTPUT CONTRACT LIBRARY_BASE [REPEATS]\n";return 2;}
   try {
+    int repeats=REPEATS;
+    if(argc==5) {
+      std::string argument(argv[4]);std::size_t used=0;
+      repeats=std::stoi(argument,&used);
+      if(used!=argument.size() || repeats<10 || repeats>200)
+        throw std::runtime_error("repeats must be an integer in [10, 200]");
+    }
     pinocchio::Model model;pinocchio::urdf::buildModel(ROBOT_URDF,model);
     std::cerr << "[trial] recording ABA and compiling unique CodeGen library\n";
     auto backend=std::make_shared<AbaBackend>(model,argv[3]);
@@ -69,8 +76,8 @@ int main(int argc,char** argv) {
     }
     std::map<std::string,std::vector<double>> stages,totals;
     std::array<std::vector<Run>,3> runs;
-    for(int repeat=-WARMUP;repeat<REPEATS;++repeat) {
-      std::cerr << "[trial] repetition " << repeat+1 << '/' << REPEATS << " (negative/zero=warmup)\n";
+    for(int repeat=-WARMUP;repeat<repeats;++repeat) {
+      std::cerr << "[trial] repetition " << repeat+1 << '/' << repeats << " (negative/zero=warmup)\n";
       for(int offset=0;offset<3;++offset) {
         int b=((repeat+WARMUP)%3+offset)%3;
         auto& bundle=bundles[b];Trajectory us(H,bundle.gravity);
@@ -86,7 +93,7 @@ int main(int argc,char** argv) {
     }
     out << "],\"runs\":{";
     for(int b=0;b<3;++b) {if(b) out << ',';out << '"' << names[b] << "\":[";
-      for(int i=0;i<REPEATS;++i) {if(i) out << ',';run_json(out,runs[b][i]);}out << ']';}
+      for(int i=0;i<repeats;++i) {if(i) out << ',';run_json(out,runs[b][i]);}out << ']';}
     out << "},\"calc_diff_timings_ns\":{";
     auto timings=[&](const auto& section) {bool first=true;for(const auto& pair:section) {
       if(!first) out << ',';first=false;out << '"' << pair.first << "\":";

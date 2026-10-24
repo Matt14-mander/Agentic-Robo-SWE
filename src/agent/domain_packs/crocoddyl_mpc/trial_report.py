@@ -50,10 +50,10 @@ def expected_cost(input_: list[float], *, terminal: bool) -> dict[str, Any]:
             "Lxu": [0.] * 8, "Luu": [effort, 0., 0., effort]}
 
 
-def evaluate_trial_correctness(raw: dict[str, Any]) -> dict[str, Any]:
+def evaluate_trial_correctness(raw: dict[str, Any], *, repeats: int = MPC_REPEATS) -> dict[str, Any]:
     if not isinstance(raw, dict) or raw.get("schema_version") != 3:
         raise ValueError("Unsupported CodeGen trial schema")
-    if raw.get("contract") != trial_contract():
+    if raw.get("contract") != trial_contract(repeats):
         raise ValueError("Changed controlled CodeGen trial contract")
     samples = raw.get("samples")
     if not isinstance(samples, list) or len(samples) != 25:
@@ -129,7 +129,7 @@ def evaluate_trial_correctness(raw: dict[str, Any]) -> dict[str, Any]:
         # intentionally contain the SAME shifted-warm trace, not a cold comparison.
         judge = evaluate_robot_correctness({"schema_version": 2, "contract": robot_contract(),
             "derivative_max_abs_error": 0.,
-            "runs": {"cold": runs[name], "shifted_warm": runs[name]}})
+            "runs": {"cold": runs[name], "shifted_warm": runs[name]}}, repeats=repeats)
         judges[name] = judge
         failures.extend({**fault, "backend": name} for fault in judge["failures"])
     for name in TRIAL_BACKENDS[1:]:
@@ -144,12 +144,17 @@ def evaluate_trial_correctness(raw: dict[str, Any]) -> dict[str, Any]:
             "max_errors": maxima, "sample_count": 25, "backends": judges}
 
 
-def evaluate_trial_profile(raw: dict[str, Any], *, correctness_passed: bool) -> dict[str, Any]:
+def evaluate_trial_profile(
+    raw: dict[str, Any], *, correctness_passed: bool, repeats: int = MPC_REPEATS,
+) -> dict[str, Any]:
+    contract = trial_contract(repeats)
     result: dict[str, Any] = {"recommendation": "blocked_by_correctness",
         "scope": "single-process paired 32-step shifted-warm MPC; verification workload, not hard real time",
         "codegen_end_to_end_speedup": None}
     if not correctness_passed:
         return result
+    if raw.get("contract") != contract:
+        raise ValueError("Changed controlled CodeGen trial contract")
     summaries: dict[str, dict[str, dict[str, float | int]]] = {}
     for section in ("calc_diff_timings_ns", "mpc_timings_ns"):
         timings = raw.get(section)
@@ -158,7 +163,7 @@ def evaluate_trial_profile(raw: dict[str, Any], *, correctness_passed: bool) -> 
         summaries[section] = {}
         for name in TRIAL_BACKENDS:
             values = timings[name]
-            if not _vector(values, MPC_REPEATS) or any(x <= 0 for x in values):
+            if not _vector(values, repeats) or any(x <= 0 for x in values):
                 raise ValueError("Invalid trial latencies")
             summaries[section][name] = _summary(values)
     setup = raw.get("generation_compile_load_seconds")
@@ -169,12 +174,27 @@ def evaluate_trial_profile(raw: dict[str, Any], *, correctness_passed: bool) -> 
     cv = max(float(mpc[name]["cv"]) for name in ("native", "codegen"))
     paired = [a/b for a, b in zip(raw["mpc_timings_ns"]["native"], raw["mpc_timings_ns"]["codegen"], strict=True)]
     wins = sum(r >= 1.05 for r in paired)
-    benefit = speedup >= 1.05 and wins >= 8 and mpc["codegen"]["p95_ns"] <= mpc["native"]["p95_ns"]
+    minimum_wins = (4 * repeats + 4) // 5
+    p95_delta = mpc["codegen"]["p95_ns"] - mpc["native"]["p95_ns"]
+    gates = {
+        "minimum_p50_speedup": {"actual": speedup, "minimum": 1.05, "passed": speedup >= 1.05},
+        "minimum_paired_wins": {"actual": wins, "minimum": minimum_wins, "passed": wins >= minimum_wins},
+        "p95_non_regression": {"delta_ns": p95_delta, "maximum_delta_ns": 0,
+            "delta_percent": 100 * p95_delta / mpc["native"]["p95_ns"], "passed": p95_delta <= 0},
+        "maximum_mpc_cv": {"actual": cv, "maximum": .3, "passed": cv <= .3},
+    }
+    rejection_reasons = [name for name, gate in gates.items() if not gate["passed"]]
+    benefit = not rejection_reasons
     saved = mpc["native"]["p50_ns"] - mpc["codegen"]["p50_ns"]
     loops = math.ceil(setup * 1e9 / saved) if saved > 0 else None
     result.update(calc_diff=diff, mpc=mpc, codegen_end_to_end_speedup=speedup,
         codegen_calc_diff_speedup=diff["native"]["p50_ns"] / diff["codegen"]["p50_ns"],
-        paired_speedups=paired, paired_wins= wins, max_mpc_cv=cv,
+        paired_speedups=paired, paired_wins=wins, max_mpc_cv=cv,
+        repetitions=repeats, gates=gates, rejection_reasons=rejection_reasons,
+        percentile_method="nearest_rank", p95_order_statistic=math.ceil(.95 * repeats),
+        tail_sample_warning=f"P95 equals the sample maximum at {repeats} repeats; use 50-100 for follow-up"
+            if math.ceil(.95 * repeats) == repeats else None,
+        production_adoption=False, default_backend="native",
         generation_compile_load_seconds=setup, break_even_32_step_rollouts=loops,
         break_even_control_steps=loops * 32 if loops else None,
         amortization_scope="CG tape/source generation + gcc compile + load; excludes baseline build and CppAD baseline tape",

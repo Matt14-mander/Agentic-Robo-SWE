@@ -18,7 +18,8 @@ from agent.domain_packs.crocoddyl_mpc.robot_report import (
     evaluate_robot_correctness, evaluate_robot_profile,
 )
 from agent.domain_packs.crocoddyl_mpc.spec import (
-    PACK_ROOT, PACK_VERSION, benchmark_contract, robot_contract, trial_contract,
+    MPC_REPEATS, PACK_ROOT, PACK_VERSION, benchmark_contract, robot_contract, trial_contract,
+    check_trial_repeats,
 )
 from agent.domain_packs.crocoddyl_mpc.trial_report import (
     evaluate_trial_correctness, evaluate_trial_profile,
@@ -44,17 +45,21 @@ def _save(path: Path, data: Any) -> None:
 
 def validate_crocoddyl_mpc(
     _: str = "", *, robot: bool = False, codegen: bool = False,
+    repeats: int = MPC_REPEATS,
     progress: Callable[[str], None] | None = None,
 ) -> dict[str, Any]:
     if robot and codegen:
         raise ValueError("Choose robot baseline or controlled CodeGen trial, not both")
+    check_trial_repeats(repeats)
+    if not codegen and repeats != MPC_REPEATS:
+        raise ValueError("Custom repeats require the controlled CodeGen trial")
     dependencies = inspect_dependencies()
     directory = ARTIFACT_ROOT / uuid.uuid4().hex
     directory.mkdir(parents=True, exist_ok=True)
     context: dict[str, Any] = {
         "schema_version": 3 if codegen else 2 if robot else 1,
         "pack_version": PACK_VERSION,
-        "contract": trial_contract() if codegen else robot_contract() if robot else benchmark_contract(),
+        "contract": trial_contract(repeats) if codegen else robot_contract() if robot else benchmark_contract(),
         "dependencies": dependencies,
         "environment": {
             "platform": platform.platform(),
@@ -109,13 +114,14 @@ def validate_crocoddyl_mpc(
         raw_path = directory / "raw.json"
         contract_path = directory / "contract.json"
         _save(contract_path, context["contract"])
+        runtime_timeout = 120  # Shared toolchain hard ceiling; sampling never removes the timeout.
         if progress:
-            progress(f"run {target}: warmup + repeated measurements, timeout <=120s")
+            progress(f"run {target}: warmup + {repeats if codegen else 'fixed'} repeats, timeout <={runtime_timeout}s")
         execution = run_built_executable(
             build.build_dir, target,
-            args=(str(raw_path), str(contract_path), str(directory / "aba_library")) if codegen
+            args=(str(raw_path), str(contract_path), str(directory / "aba_library"), str(repeats)) if codegen
                 else (str(raw_path), str(contract_path)) if robot else (str(raw_path),),
-            timeout=120,
+            timeout=runtime_timeout,
         )
         context["execution"] = execution
         if not execution["passed"]:
@@ -137,11 +143,13 @@ def validate_crocoddyl_mpc(
                  "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
                 for path in sources
             ]
-        correctness = (evaluate_trial_correctness if codegen else
-                       evaluate_robot_correctness if robot else evaluate_correctness)(raw)
-        profile = (evaluate_trial_profile if codegen else evaluate_robot_profile if robot else evaluate_profile)(
-            raw, correctness_passed=correctness["passed"]
-        )
+        if codegen:
+            correctness = evaluate_trial_correctness(raw, repeats=repeats)
+            profile = evaluate_trial_profile(raw, correctness_passed=correctness["passed"], repeats=repeats)
+        else:
+            correctness = (evaluate_robot_correctness if robot else evaluate_correctness)(raw)
+            profile = (evaluate_robot_profile if robot else evaluate_profile)(
+                raw, correctness_passed=correctness["passed"])
         context.update(correctness=correctness, profile=profile)
         _save(directory / "correctness.json", correctness)
         _save(directory / "profile.json", profile)
@@ -151,6 +159,8 @@ def validate_crocoddyl_mpc(
             return finish(False, "correctness")
         if progress:
             progress(f"complete: {profile['recommendation']}")
+            if profile.get("rejection_reasons"):
+                progress("performance gates rejected: " + ", ".join(profile["rejection_reasons"]))
         return finish(True, "complete")
     except (OSError, ValueError, KeyError, TypeError) as exc:
         return finish(False, "report_or_build_error", f"{type(exc).__name__}: {exc}")

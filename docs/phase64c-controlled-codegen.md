@@ -3,6 +3,10 @@
 目标是验证已有真实机器人 MPC 中的导数瓶颈能否转化为端到端收益，而不是把 warm-start
 带来的收益算到 CodeGen 上。默认原生后端不变，本模块只是显式选择的试验。
 
+当前状态（2026-10-24）：试验框架与收尾功能已实现，新增扩样路径仍待 Linux 原生复验。
+历史本机结果曾达到 pilot 候选；用户最新复测为正确性 3/3、性能门禁 2/3，当前应保持原生，
+不能把下文历史测量表作为最新性能采用结论。
+
 ## 唯一替换点
 
 运行节点 `DifferentialActionModelFreeFwdDynamics.calcDiff()` 内的 ABA 加速度 Jacobian。
@@ -20,13 +24,13 @@ ABA 加速度求值、全驱动扭矩映射、状态/控制代价、终端代价
 - 24 组固定非零输入和 1 组重力平衡输入；输入、形状、顺序、有限性均严格验证。
 - 独立两连杆方程与中心差分校验三路 ABA 值和 Jacobian；独立校验积分后 xnext、Fx、Fu。
 - 对照运行和终端动作的 cost、Lx/Lu、Lxx/Lxu/Luu，防止替换导致代价/Hessian 变化。
-- 三路各 2 次预热、10 次重复、每次 32 步闭环；全轨迹、控制、代价、收敛、shooting
+- 三路各 2 次预热、默认 10 次重复（可配置 10–200）、每次 32 步闭环；全轨迹、控制、代价、收敛、shooting
   一致性及独立 plant 转移均必须通过，不能只看最终姿态。
 - 每轮轮换三路的执行顺序；所有路线均使用相同 warm-start，不与 cold baseline 混比。
 - 报告 SolverFDDP.calcDiff、逐步 solve、完整 32 步验证 workload 的 P50/P95/方差与配对收益。
 
 若 native/codegen 闭环 CV > 0.3，则 `inconclusive_noisy_profile`。
-否则仅当 P50 至少 1.05 倍、至少 8/10 配对重复达到 1.05 倍、P95 不回退，才输出
+否则仅当 P50 至少 1.05 倍、至少 ceil(0.8×repeats) 个配对重复达到 1.05 倍、P95 不回退，才输出
 `candidate_for_repeated_process_trial`；其他情况输出 `keep_native_no_measured_end_to_end_benefit`。
 正确性通过但没有收益时 CLI 仍成功退出，这是有效的试验结论，不是验收失败。
 
@@ -45,7 +49,7 @@ uv run pytest -q tests/test_crocoddyl_codegen_trial.py -m crocoddyl
 
 `--robot` 保留 6.4b 的 cold/warm baseline；不能同时传 `--robot --codegen`。
 Windows 只跑离线门禁，原生试验要求固定版本的 Linux 依赖。原生 harness 使用单个编译作业，
-配置限时 300s、构建 900s、运行 120s。首次模板编译可能持续数分钟无细粒度输出；入口会
+配置限时 300s、构建 900s、运行 120s。增加采样不取消运行限时；慢机器超时仍必须报告 runtime 失败。首次模板编译可能持续数分钟无细粒度输出；入口会
 提示当前阶段。请勿同时开启 pytest 和 CLI 的首次构建。后续相同源码/配置命中构建缓存。
 
 每次运行生成唯一目录，包含 contract/raw/correctness/profile/validation、首个失败证据、
@@ -82,11 +86,11 @@ uv run python scripts/run_crocoddyl_mpc.py --codegen --processes 3
 ```
 
 `--processes` 支持 3–20 个**顺序启动**的独立原生进程，不是同时运行的并发吞吐测试。
-各进程各自生成库、建 tape、预热 2 次、重复 10 次；只复用已编译的 harness。PID 必须
+各进程各自生成库、建 tape、预热 2 次、按相同 repeats 重复测量；只复用已编译的 harness。PID 必须
 不同，依赖、工具链、构建指纹和可执行文件 SHA-256 必须一致。每个进程保留独立原始
 证据，汇总时重新判断全部 raw，而不信任子报告的 passed/recommendation。
 
-汇总要求每个进程均达到原来的 P50≥1.05 倍、8/10 配对达标、P95 不回退、闭环 CV≤0.3，
+汇总要求每个进程均达到原来的 P50≥1.05 倍、至少 80% 配对达标（向上取整）、P95 不回退、闭环 CV≤0.3，
 且进程间加速比 CV≤0.15，才能得到 `candidate_for_opt_in_codegen_pilot`。任一进程没有
 收益时保留原生后端；高噪声返回 inconclusive；任一正确性或身份门禁失败则试验失败。
 统计独立单位是进程，不将 3×10 次观测解释成 30 个独立进程。
@@ -96,7 +100,7 @@ checkpoint、validation、correctness、profile 和各子进程证据链接。�
 立即更新 checkpoint；中断后已有结果仍保留，但暂不支持断点续跑。
 最小 3 进程只能说明当前机器与固定初始状态上的初步可复现性，不证明跨机器或真实时间约束。
 
-### 本机跨进程原生验收
+### 历史本机跨进程原生验收（不代表最新复测结论）
 
 三个全新原生进程均通过数值门禁，且使用同一个可执行文件 SHA-256、固定依赖和工具链。
 第一轮完成首次构建，后两轮命中构建缓存；三路在每个进程中各自重新预热并测量。
@@ -120,3 +124,33 @@ native 闭环状态跨进程最大差异为 0；每个进程的端到端 P95 和
 单进程收益只是进入多独立进程、不同负载和不同初始状态复测的候选证据。
 先保持原生 fallback 和显式选择，再考虑更一般的动作模型及机器人任务；不自动切换 agent
 或生产控制循环的默认后端，也不声称目前测到了训练吞吐收益。
+
+## 2026-10-24 收尾：扩样与可解释性能门禁
+
+用户最新 3 进程结果中，正确性均通过、加速比中位数为 1.290 倍，但只有 2/3 个进程通过性能门禁。
+第一个进程 native P95=10.385982 ms、CodeGen P95=10.409256 ms，回退 23.274 μs（约 0.224%），
+因此汇总建议为 `keep_native_inconsistent_process_benefit`。不能仅凭报告将其归因为 WSL 调度噪声。
+
+新增 `--repeats` 供显式设置每个进程的配对采样次数，默认 10 保持旧报告兼容，范围 10–200。
+P95 采用 nearest-rank；10 次样本时就是最大值，50 次时为第 48 个顺序统计量。
+更多采样改善尾部观测，但不是置信区间，也不保证会通过门禁；不得反复挑选最好的运行。
+
+建议在空闲 WSL/Linux 中顺序运行以下验收，不同时开启其他编译或基准：
+
+```bash
+uv run pytest -q tests/test_crocoddyl_codegen_trial.py -m crocoddyl
+uv run python scripts/run_crocoddyl_mpc.py --codegen --processes 3 --repeats 50
+```
+
+CI 的跨进程步骤也使用 50 次采样；正确性必须通过，性能不达标仍是有效的实验结果，不作为 CI 失败。
+本次 Windows 离线测试覆盖 10/11/50/100/200 次计数、参数拒绝、预算透传、逐条轨迹校验和汇总重判。
+这些合成证据测试不代替新增路径的 Linux 原生运行，不能据此宣称新的加速收益。
+
+单进程 `profile.gates` 列出 P50、配对次数、P95 差值（ns/百分比）和 CV 的实际值与判定；
+`rejection_reasons` 给出未通过规则。汇总按 process_id 列出拒绝原因，另列 `between_process_cv_gate`。
+采样次数由调用方指定并核对完整 contract，不从未经信任的 raw 自动采用；不同采样配置不能混合汇总。
+默认 Native、production_adoption=false、原有正确性与性能阈值保持不变。
+
+收尾验收边界：框架、采样配置、诊断、回归测试与文档齐备；新增扩样路径的原生复验仍待完成。
+即使复验继续建议 keep_native，也可以以“当前固定负载尚不足以稳定采用 CodeGen”结束本阶段研究；
+生产 opt-in/fallback、更多初始状态/负载、跨机器统计和 Agent 专业修复效果评测属于后续工作。

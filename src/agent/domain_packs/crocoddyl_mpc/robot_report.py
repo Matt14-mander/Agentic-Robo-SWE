@@ -36,7 +36,7 @@ def plant_step(state: list[float], control: list[float]) -> list[float]:
     return [q1 + dt * w1, q2 + dt * w2, w1, w2]
 
 
-def evaluate_robot_correctness(raw: dict[str, Any]) -> dict[str, Any]:
+def evaluate_robot_correctness(raw: dict[str, Any], *, repeats: int = MPC_REPEATS) -> dict[str, Any]:
     contract = robot_contract()
     if not isinstance(raw, dict) or raw.get("schema_version") != 2:
         raise ValueError("Unsupported robot MPC schema")
@@ -56,7 +56,7 @@ def evaluate_robot_correctness(raw: dict[str, Any]) -> dict[str, Any]:
     iterations: dict[str, list[int]] = {}
     for strategy in contract["strategies"]:
         records = runs.get(strategy)
-        if not isinstance(records, list) or len(records) != MPC_REPEATS:
+        if not isinstance(records, list) or len(records) != repeats:
             raise ValueError(f"Incomplete MPC repetitions: {strategy}")
         final_norms[strategy], iterations[strategy] = [], []
         for repeat, run in enumerate(records):

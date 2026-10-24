@@ -1,5 +1,9 @@
 # Phase 6.4：Crocoddyl/MPC 链路诊断
 
+收尾状态（2026-10-24）：6.4a/b/c 和跨进程试验框架已实现；新增可配置采样与逐项性能拒绝诊断，
+不改变默认 Native。最新用户复测数值正确性 3/3、性能门禁 2/3，因此保持原生；新增扩样路径
+仍待 Linux 原生复验。命令、历史证据与结论边界见 [6.4c 收尾说明](phase64c-controlled-codegen.md)。
+
 状态：Phase 6.4a 已在 WSL 原生验收。实测解析 calcDiff 占 direction kernel 25.6%，backward
 pass 占 74.4%；该小型 LQR 建议优先检查求解器。Phase 6.4b 已接入真实两关节 MPC，
 并于 2026-10-02 在当前 WSL Ubuntu-22.04/GCC 11.4 原生编译运行，通过独立 Python 门禁。

@@ -9,8 +9,8 @@ from agent.domain_packs.crocoddyl_mpc import process_trial as module
 from tests.test_crocoddyl_codegen_trial import trial_observations
 
 
-def observations():
-    raws = [trial_observations() for _ in range(3)]
+def observations(repeats=10):
+    raws = [trial_observations(repeats) for _ in range(3)]
     for i, raw in enumerate(raws):
         raw["process_id"] = 100+i
     return raws
@@ -73,16 +73,18 @@ def test_process_bounds(count):
 
 
 @pytest.mark.parametrize("fault", [None, "child", "identity", "raw"])
-def test_orchestration_checkpoints_identity_and_rejudging(monkeypatch, tmp_path, fault):
+@pytest.mark.parametrize("repeats", [10, 50])
+def test_orchestration_checkpoints_identity_and_rejudging(monkeypatch, tmp_path, fault, repeats):
     monkeypatch.setattr(module.validators, "ARTIFACT_ROOT", tmp_path)
     monkeypatch.setattr(module.validators, "PROJECT_ROOT", tmp_path)
     monkeypatch.setattr(module, "relpath_for_display", str)
-    raws = observations()
+    raws = observations(repeats)
     if fault == "raw":
         raws[2]["runs"]["codegen"][0]["all_solved"] = False
     calls = []
     def child(**options):
         assert options["codegen"] is True
+        assert options["repeats"] == repeats
         index = len(calls)
         calls.append(index)
         directory = tmp_path / f"native-{index}"
@@ -98,15 +100,34 @@ def test_orchestration_checkpoints_identity_and_rejudging(monkeypatch, tmp_path,
                 "artifacts": {"directory": str(directory), "validation": str(directory / "validation.json")}}
     monkeypatch.setattr(module.validators, "validate_crocoddyl_mpc", child)
     messages = []
-    result = module.validate_process_trial(processes=3, progress=messages.append)
+    result = module.validate_process_trial(processes=3, repeats=repeats, progress=messages.append)
     if fault:
         assert not result["passed"]
         assert result["stage"] == {"child": "process_failure", "identity": "identity", "raw": "correctness"}[fault]
     else:
         assert result["passed"]
         assert result["profile"]["independent_processes"] == 3
+        assert result["profile"]["repetitions_per_process"] == repeats
     saved = json.loads(Path(result["artifacts"]["validation"]).read_text())
     checkpoint = json.loads((Path(result["artifacts"]["directory"]) / "checkpoint.json").read_text())
     assert len(saved["processes"]) == len(calls)
     assert len(checkpoint["processes"]) == len(calls)
     assert "checkpoint:" in messages[0]
+
+
+def test_aggregate_identifies_process_and_exact_rejected_gate():
+    raws = observations(50)
+    raws[1]["mpc_timings_ns"]["codegen"] = [15000.] * 47 + [21000.] * 3
+    profile = module.evaluate_process_trial(raws, processes=3, repeats=50)["profile"]
+    assert profile["rejection_reasons"] == [{"process_id": 101, "gates": ["p95_non_regression"]}]
+    assert profile["beneficial_processes"] == 2
+    assert profile["recommendation"] == "keep_native_inconsistent_process_benefit"
+    assert profile["between_process_cv_gate"]["passed"]
+
+
+def test_mixed_repeat_contracts_cannot_be_pooled():
+    raws = observations(50)
+    raws[1] = trial_observations()
+    raws[1]["process_id"] = 101
+    with pytest.raises(ValueError, match="contract"):
+        module.evaluate_process_trial(raws, processes=3, repeats=50)

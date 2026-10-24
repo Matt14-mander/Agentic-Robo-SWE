@@ -6,7 +6,7 @@ An autonomous, simulation-in-the-loop software engineering agent for robotics. B
 
 ---
 
-## Phase 2：ReAct 循环（当前阶段）
+## 核心能力：ReAct 循环
 
 ```
                   ┌──────────────────────┐
@@ -538,7 +538,7 @@ langgraph.json    # Studio 入口
 | 1 | 线性骨架 (planner → reader → suggester) | ✅ 完成 |
 | 2 | ReAct + 5 工具集 (本地 sandbox) | ✅ 完成 |
 | 2.5 | E2B Code Interpreter 真沙盒（与 local 并存，env 切换） | ✅ 完成 |
-| M1 | 机器人代码任务评测、确定性验证门禁与成本预算 | 🚧 M1.2 |
+| M1 | 机器人代码任务评测、确定性验证门禁与成本预算 | ✅ 基础框架完成；更大规模修复效果验证待开展 |
 | 3.0 | Agentic RAG — Chroma 源码索引与条件式检索 | ✅ 完成 |
 | 3.1 | RAG 评测 — Recall@K、MRR、文件/符号命中率 | ✅ 完成 |
 | 3.1b | 混合检索 — 语义 + 词法/符号召回与重排 | ✅ 完成 |
@@ -553,7 +553,7 @@ langgraph.json    # Studio 入口
 | 6.1 | Autodiff CodeGen MVP — AD 兼容检查、CppAD tape 与 Jacobian 验证 | ✅ 完成 |
 | 6.2 | 数值正确性门禁 — Dense/Sparse FD/AD/CodeGen 等价性与固定 seed | ✅ 完成 |
 | 6.3 | Pinocchio 集成 — RNEA CodeGen、解析导数与可复现控制循环 | ✅ 完成 |
-| 6.4 | Crocoddyl/MPC — LQR、真实 MPC 与受控 ABA 导数替换 | ✅ 三路 CodeGen 与 3 独立进程复测通过；opt-in pilot 候选，默认仍为原生 |
+| 6.4 | Crocoddyl/MPC — LQR、真实 MPC 与受控 ABA 导数替换 | ✅ 试验框架与收尾功能完成；最新复测正确性通过、性能门禁 2/3，保持原生；扩样原生复验待完成 |
 | M2 | Robo-SWE 专业 Benchmark — 20–30 题与 Harness/RAG/Tools/Validator 消融 | 📋 规划中 |
 
 CppADCodeGen 作为首个机器人优化专业能力包，而不是项目的全部。领域逻辑保持可插拔，建设顺序为

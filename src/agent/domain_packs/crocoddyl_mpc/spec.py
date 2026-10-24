@@ -75,7 +75,13 @@ def trial_samples() -> list[list[float]]:
             for i in range(24)] + [[0., 0., 0., 0., -16.4808, -2.7468]]
 
 
-def trial_contract() -> dict[str, Any]:
+def check_trial_repeats(repeats: int) -> None:
+    if type(repeats) is not int or not 10 <= repeats <= 200:
+        raise ValueError("CodeGen repetitions must be an integer in [10, 200]")
+
+
+def trial_contract(repeats: int = MPC_REPEATS) -> dict[str, Any]:
+    check_trial_repeats(repeats)
     return {"name": "phase64c_controlled_aba_jacobian_replacement",
             "baseline": robot_contract(), "backends": list(TRIAL_BACKENDS),
             "input_order": ["q1", "q2", "v1", "v2", "tau1", "tau2"],
@@ -83,6 +89,6 @@ def trial_contract() -> dict[str, Any]:
             "replacement": "ABA Jacobian only in running action calcDiff",
             "unchanged": ["ABA values", "costs", "terminal", "Euler integrator",
                           "FDDP", "shifted warm start", "independent ABA plant"],
-            "repeats": MPC_REPEATS, "warmup": MPC_WARMUP,
+            "repeats": repeats, "warmup": MPC_WARMUP,
             "processes": 1, "minimum_speedup": 1.05, "maximum_cv": 0.3,
             "scope": "fixed fully actuated two-link; no contacts or armature"}
