@@ -1,0 +1,6 @@
+schema_version = 1
+id = "cpp_robotics"
+version = "0.1.0"
+description = "Controlled C++17 robotics source-repair assessment; no production or real-bug claims"
+required_executables = ["cmake", "cxx_compiler"]
+local_only = true

@@ -1,0 +1,72 @@
+{
+  "schema_version": 2,
+  "suite": "m2_cpp_robotics_v1",
+  "provenance": "synthetic_controlled",
+  "evaluation_split": "public_development_not_held_out",
+  "cases": [
+    {
+      "id": "cpp_scalar_adl", "title": "模板残差的 Scalar 导数传播", "category": "scalar_propagation", "difficulty": "medium",
+      "template": "benchmarks/fixtures/cpp_robotics/scalar_adl.hpp", "workspace": "benchmarks/workspaces/cpp_robotics/scalar_adl.hpp",
+      "validator": "cpp_robotics.scalar_adl", "domain_pack": "cpp_robotics",
+      "prompt": "修复残差头文件，使注释定义的同一公式支持 double 和自动微分 Scalar，并保持导数传播；不能只让数值相等。只修改目标头文件，不修改或复制参考解，不修改 harness 或验证器。",
+      "tags": ["cpp", "synthetic-controlled", "adl", "scalar"], "required_capabilities": ["cmake", "cxx_compiler"],
+      "validator_timeout": 300, "artifact_policy": "preserve_on_failure", "execution_environment": "local"
+    },
+    {
+      "id": "cpp_jacobian_layout", "title": "行主序 Jacobian 与速度映射", "category": "memory_layout", "difficulty": "medium",
+      "template": "benchmarks/fixtures/cpp_robotics/jacobian_layout.hpp", "workspace": "benchmarks/workspaces/cpp_robotics/jacobian_layout.hpp",
+      "validator": "cpp_robotics.jacobian_layout", "domain_pack": "cpp_robotics",
+      "prompt": "驱动接口提供行主序 3×2 Jacobian，输出应为任务空间速度 J*v。按头文件契约定位并修复索引错误，保持接口。只修改目标头文件，不修改或复制参考解，不修改 harness 或验证器。",
+      "tags": ["cpp", "synthetic-controlled", "jacobian", "row-major"], "required_capabilities": ["cmake", "cxx_compiler"],
+      "validator_timeout": 300, "artifact_policy": "preserve_on_failure", "execution_environment": "local"
+    },
+    {
+      "id": "cpp_quaternion_order", "title": "四元数 xyzw 约定与主动旋转", "category": "geometry_convention", "difficulty": "hard",
+      "template": "benchmarks/fixtures/cpp_robotics/quaternion_order.hpp", "workspace": "benchmarks/workspaces/cpp_robotics/quaternion_order.hpp",
+      "validator": "cpp_robotics.quaternion_order", "domain_pack": "cpp_robotics",
+      "prompt": "头文件应接受非零 xyzw 四元数，将向量从 body 主动旋转至 world，非单位四元数也应先归一化。修复约定错误，保持接口。只修改目标头文件，不修改或复制参考解，不修改 harness 或验证器。",
+      "tags": ["cpp", "synthetic-controlled", "quaternion", "frame"], "required_capabilities": ["cmake", "cxx_compiler"],
+      "validator_timeout": 300, "artifact_policy": "preserve_on_failure", "execution_environment": "local"
+    },
+    {
+      "id": "cpp_wrench_frame", "title": "空间力矩参考原点变换", "category": "spatial_dynamics", "difficulty": "hard",
+      "template": "benchmarks/fixtures/cpp_robotics/wrench_frame.hpp", "workspace": "benchmarks/workspaces/cpp_robotics/wrench_frame.hpp",
+      "validator": "cpp_robotics.wrench_frame", "domain_pack": "cpp_robotics",
+      "prompt": "给定 T_world_body，将 body 原点处的力和力矩变换为关于 world 原点的表达，保持 [force,moment] 顺序。修复符号或坐标变换错误。只修改目标头文件，不修改或复制参考解，不修改 harness 或验证器。",
+      "tags": ["cpp", "synthetic-controlled", "wrench", "frame"], "required_capabilities": ["cmake", "cxx_compiler"],
+      "validator_timeout": 300, "artifact_policy": "preserve_on_failure", "execution_environment": "local"
+    },
+    {
+      "id": "cpp_sample_period", "title": "采样频率到周期的 C++ 数值转换", "category": "numeric_conversion", "difficulty": "medium",
+      "template": "benchmarks/fixtures/cpp_robotics/sample_period.hpp", "workspace": "benchmarks/workspaces/cpp_robotics/sample_period.hpp",
+      "validator": "cpp_robotics.sample_period", "domain_pack": "cpp_robotics",
+      "prompt": "恒加速度状态预测器在高于 1Hz 时不更新。按头文件 SI 单位契约修复频率/周期计算，保持积分公式和接口。只修改目标头文件，不修改或复制参考解，不修改 harness 或验证器。",
+      "tags": ["cpp", "synthetic-controlled", "integer-division", "units"], "required_capabilities": ["cmake", "cxx_compiler"],
+      "validator_timeout": 300, "artifact_policy": "preserve_on_failure", "execution_environment": "local"
+    },
+    {
+      "id": "cpp_trajectory_scaling", "title": "最小 jerk 轨迹的物理时间导数", "category": "trajectory", "difficulty": "medium",
+      "template": "benchmarks/fixtures/cpp_robotics/trajectory_scaling.hpp", "workspace": "benchmarks/workspaces/cpp_robotics/trajectory_scaling.hpp",
+      "validator": "cpp_robotics.trajectory_scaling", "domain_pack": "cpp_robotics",
+      "prompt": "最小 jerk 轨迹的位置看似正确，但更改持续时间后加速度不符合物理单位。修复时间尺度，保留零端点导数和夹紧行为。只修改目标头文件，不修改或复制参考解，不修改 harness 或验证器。",
+      "tags": ["cpp", "synthetic-controlled", "trajectory", "chain-rule"], "required_capabilities": ["cmake", "cxx_compiler"],
+      "validator_timeout": 300, "artifact_policy": "preserve_on_failure", "execution_environment": "local"
+    },
+    {
+      "id": "cpp_anti_windup", "title": "饱和后的条件积分与恢复", "category": "control", "difficulty": "hard",
+      "template": "benchmarks/fixtures/cpp_robotics/anti_windup.hpp", "workspace": "benchmarks/workspaces/cpp_robotics/anti_windup.hpp",
+      "validator": "cpp_robotics.anti_windup", "domain_pack": "cpp_robotics",
+      "prompt": "控制器已夹紧力矩，但持续饱和后恢复失败。按注释的条件积分规则修复，正负方向均要正确，不可禁用所有积分。只修改目标头文件，不修改或复制参考解，不修改 harness 或验证器。",
+      "tags": ["cpp", "synthetic-controlled", "control", "saturation"], "required_capabilities": ["cmake", "cxx_compiler"],
+      "validator_timeout": 300, "artifact_policy": "preserve_on_failure", "execution_environment": "local"
+    },
+    {
+      "id": "cpp_joint_wrap", "title": "连续转动关节的最短角位移", "category": "kinematics", "difficulty": "medium",
+      "template": "benchmarks/fixtures/cpp_robotics/joint_wrap.hpp", "workspace": "benchmarks/workspaces/cpp_robotics/joint_wrap.hpp",
+      "validator": "cpp_robotics.joint_wrap", "domain_pack": "cpp_robotics",
+      "prompt": "连续转动关节跨越正负 pi 时误差突变。按注释 atan2 约定返回弧度最短角位移，兼容多圈输入。只修改目标头文件，不修改或复制参考解，不修改 harness 或验证器。",
+      "tags": ["cpp", "synthetic-controlled", "kinematics", "angle-wrap"], "required_capabilities": ["cmake", "cxx_compiler"],
+      "validator_timeout": 300, "artifact_policy": "preserve_on_failure", "execution_environment": "local"
+    }
+  ]
+}

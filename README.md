@@ -553,9 +553,21 @@ langgraph.json    # Studio 入口
 | 6.1 | Autodiff CodeGen MVP — AD 兼容检查、CppAD tape 与 Jacobian 验证 | ✅ 完成 |
 | 6.2 | 数值正确性门禁 — Dense/Sparse FD/AD/CodeGen 等价性与固定 seed | ✅ 完成 |
 | 6.3 | Pinocchio 集成 — RNEA CodeGen、解析导数与可复现控制循环 | ✅ 完成 |
-| 6.4 | Crocoddyl/MPC — LQR、真实 MPC 与受控 ABA 导数替换 | ✅ 试验框架与收尾功能完成；最新复测正确性通过、性能门禁 2/3，保持原生；扩样原生复验待完成 |
-| M2 | Robo-SWE 专业 Benchmark — 20–30 题与 Harness/RAG/Tools/Validator 消融 | 📋 规划中 |
+| 6.4 | Crocoddyl/MPC — LQR、真实 MPC 与受控 ABA 导数替换 | ✅ 50 次采样原生链路跑通；正确性 3/3，性能门禁 2/3（单进程噪声），保持原生 |
+| M2 | Robo-SWE 专业 Benchmark — 20–30 题与 Harness/RAG/Tools/Validator 消融 | 🚧 M2.0：新增 8 个受控 C++17 任务，组合共 17 题；Agent 实测与正式消融待开展 |
 
 CppADCodeGen 作为首个机器人优化专业能力包，而不是项目的全部。领域逻辑保持可插拔，建设顺序为
 专业构建环境与工具 → 数值/性能 Validator → 专业文档 RAG。详细方案见
 [Robotics Autodiff & CodeGen 专业能力路线图](docs/robotics-autodiff-codegen-roadmap.md)。
+
+M2.0 首批专业 C++ 修复评测：
+
+```bash
+# 无 LLM：验证 8 对错误/参考修复，不能解释为 Agent 成功率
+uv run python scripts/check_cpp_robotics_fixtures.py
+# 有 LLM：先单题确认，再扩为重复评测
+uv run python scripts/run_benchmark.py --manifest benchmarks/cpp_robotics_cases.json --case cpp_scalar_adl --strategy focused --repair-attempts 1 --max-loops 8 --tool-budget 12 --task-timeout 300
+```
+
+题目均为公开人工构造任务，尚不是保留集或真实仓库缺陷评测。
+完整 17 题入口、指标和限制见 [M2 专业 C++ 修复评测](docs/m2-professional-cpp-repair.md)。

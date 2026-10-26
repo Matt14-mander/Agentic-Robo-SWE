@@ -208,7 +208,7 @@ RNEA+Jacobian、ABA plant 和状态积分组成的最小控制循环，并增加
 
 ### Phase 6.4：Crocoddyl/MPC 链路诊断
 
-状态：试验框架与收尾功能已实现，新增扩样路径的 Linux 原生复验待完成。Phase 6.4a 的 LQR/FDDP 原生门禁已在 WSL 通过，解析 calcDiff 占 direction kernel
+状态：框架与 50 次采样扩样路径已完成原生运行验证，默认保持 Native。Phase 6.4a 的 LQR/FDDP 原生门禁已在 WSL 通过，解析 calcDiff 占 direction kernel
 25.6%。Phase 6.4b 已实现真实 Pinocchio 两关节动作模型、32 步 receding-horizon MPC、冷启动
 与移位 warm-start 对照，以及独立两连杆 plant 方程门禁，已在 WSL 原生编译并通过轨迹验收。
 首次单进程测量显示 calcDiff 占 direction kernel 77.3%，warm-start 的 32 步闭环 P50 收益约
@@ -218,10 +218,10 @@ RNEA+Jacobian、ABA plant 和状态积分组成的最小控制循环，并增加
 生成编译成本和摊销次数；单进程结果最多推荐跨进程复测，不直接升级默认控制后端。
 跨进程复测已接入 `--codegen --processes 3`：顺序启动全新原生进程，逐进程重验 raw，
 并以全部进程达标及跨进程波动门禁决定是否进入显式 opt-in pilot。历史本机观测曾全部达标；
-用户最新 3 进程复测正确性全部通过，中位数加速 1.290 倍，但第一个进程 P95 回退 23.274 μs，
-只有 2/3 进程通过性能门禁，因此当前结论为 `keep_native_inconsistent_process_benefit`。
+用户最新 3 进程 × 50 次复测正确性全部通过，中位数加速 1.309 倍，三个进程 P95 均改善；
+第一个进程 CV=30.678% 超过 30%，只有 2/3 进程通过性能门禁，当前结论为 `inconclusive_noisy_profile`。
 收尾新增 `--repeats 50`（范围 10–200、默认仍为 10）和逐进程拒绝原因；配对达标仍要求
-至少 ceil(0.8×repeats)，P50/P95/CV 门禁不放宽。默认保持原生，扩样、其他初始状态/负载和跨机器验证尚未完成。参见
+至少 ceil(0.8×repeats)，P50/P95/CV 门禁不放宽。其他初始状态/负载和跨机器验证尚未完成。参见
 [Phase 6.4 使用与验收说明](phase64-crocoddyl-mpc.md)。
 
 目标：从单函数优化升级为完整求解链路的工程判断。
@@ -235,6 +235,12 @@ RNEA+Jacobian、ABA plant 和状态积分组成的最小控制循环，并增加
 完成标准：Agent 的建议由端到端 profile 支撑，并能区分局部加速与系统吞吐提升。
 
 ### M2：Robo-SWE 专业 Benchmark 与消融实验
+
+状态（2026-10-26）：M2.0 起步已实现。新增 8 个受控 C++17 源码修复任务，本机已完成每题
+broken/reference 原生校准；组合现有 C++/AD/Sparse/RNEA 子集共 17 题。新增补丁、源码哈希、
+模型标识、题目目录指纹和按类别/难度/领域包聚合。尚未运行 Agent 批量修复实验，也未完成四组消融。
+全部题目是公开人工构造开发集，不能声称隐藏集或真实仓库缺陷泛化。
+用法与后续验收见 [M2 专业 C++ 修复评测](m2-professional-cpp-repair.md)。
 
 建立 20–30 个小型、可复现任务，覆盖：
 

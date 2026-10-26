@@ -40,6 +40,10 @@ jobs:
         run: uv run pytest -q tests/test_domain_packs.py
       - name: Verify C++ benchmark fixture fails as designed
         run: uv run python scripts/run_benchmark.py --manifest benchmarks/cpp_cases.json --validate-fixtures
+      - name: Check controlled robotics C++ broken/reference pairs
+        run: uv run pytest -q tests/test_cpp_robotics.py -m cpp
+      - name: Verify user-facing robotics fixture calibration
+        run: uv run python scripts/check_cpp_robotics_fixtures.py
 
   autodiff-codegen-checks:
     runs-on: ubuntu-latest

@@ -105,6 +105,9 @@ def test_run_case_collects_metrics_and_passes_after_fake_fix():
 
     assert result.success
     assert not result.baseline_passed
+    assert result.baseline_error is None
+    assert "--- " in result.source_diff and "+++ " in result.source_diff
+    assert result.source_sha256_before != result.source_sha256_after
     assert result.workspace_modified
     assert result.loop_steps == 2
     assert result.tool_calls == 2
@@ -307,6 +310,13 @@ def test_run_suite_aggregates_repeated_runs():
     assert report["official_validator_compliance_rate"] == 1.0
     assert report["tool_budget_compliance_rate"] == 1.0
     assert report["per_case"][case.id]["runs"] == 2
+    assert report["grouped"]["category"][case.category]["passed"] == 2
+    assert report["grouped"]["difficulty"][case.difficulty]["success_rate"] == 1.
+    assert report["grouped"]["domain_pack"]["none"]["runs"] == 2
+    assert report["invalid_baselines"] == 0
+    assert len(report["case_catalog_sha256"]) == 64
+    assert len(report["case_catalog"][0]["template_sha256"]) == 64
+    assert report["model_identity"]
     assert [event["event"] for event in progress_events].count("case_complete") == 2
     assert progress_events[0]["event"] == "suite_start"
     assert progress_events[-1]["event"] == "suite_complete"

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import hashlib
+import difflib
 import json
 import os
 import pickle
@@ -50,6 +51,8 @@ class BenchmarkCase:
     validator_timeout: int = 30
     artifact_policy: str | None = None
     execution_environment: str | None = None
+    suite: str = "unspecified"
+    provenance: str = "unspecified"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "BenchmarkCase":
@@ -69,6 +72,8 @@ class BenchmarkCase:
             workspace=str(data["workspace"]),
             prompt=str(data["prompt"]),
             validator=str(data["validator"]),
+            suite=str(data.get("suite", "unspecified")),
+            provenance=str(data.get("provenance", "unspecified")),
             tags=tuple(str(tag) for tag in data.get("tags", [])),
             domain_pack=str(data["domain_pack"]) if data.get("domain_pack") else None,
             required_capabilities=tuple(
@@ -136,19 +141,35 @@ class BenchmarkResult:
     timeout_attempts: int
     attempt_history: list[dict[str, Any]]
     error: str | None
+    baseline_error: str | None = None
+    source_diff: str = ""
+    source_sha256_before: str = ""
+    source_sha256_after: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 def load_cases(manifest: str | Path = DEFAULT_MANIFEST) -> list[BenchmarkCase]:
+    def read(path: Path, parents: tuple[Path, ...], inherited: dict[str, Any]) -> list[BenchmarkCase]:
+        path = path.resolve()
+        if path in parents:
+            raise ValueError(f"Cyclic benchmark manifest includes: {path}")
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("schema_version") not in {1, 2}:
+            raise ValueError(f"Unsupported benchmark schema_version: {data.get('schema_version')!r}")
+        defaults = {**inherited, **{key: data[key] for key in ("suite", "provenance") if key in data}}
+        includes = data.get("includes", [])
+        if not isinstance(includes, list) or not all(isinstance(item, str) for item in includes):
+            raise ValueError("Manifest includes must be a list of project-relative paths")
+        found = [case for item in includes for case in read(
+            resolve_within_root(item), (*parents, path), defaults)]
+        return found + [BenchmarkCase.from_dict({**defaults, **item}) for item in data.get("cases", [])]
+
     path = Path(manifest)
     if not path.is_absolute():
         path = resolve_within_root(str(path))
-    data = json.loads(path.read_text(encoding="utf-8"))
-    if data.get("schema_version") not in {1, 2}:
-        raise ValueError(f"Unsupported benchmark schema_version: {data.get('schema_version')!r}")
-    cases = [BenchmarkCase.from_dict(item) for item in data.get("cases", [])]
+    cases = read(path, (), {})
     ids = [case.id for case in cases]
     if len(ids) != len(set(ids)):
         raise ValueError("Benchmark case ids must be unique")
@@ -404,6 +425,7 @@ def run_case(
 
     workspace = prepare_workspace(case)
     original_digest = _file_digest(workspace)
+    original_source = workspace.read_text(encoding="utf-8")
     baseline = validate_case(case)
     started = time.perf_counter()
     validation = baseline
@@ -420,7 +442,10 @@ def run_case(
     task = build_task(case, resolved_tool_budget)
     domain_version, capability_check, toolchain_fingerprint = domain_case_metadata(case)
 
-    for attempt in range(1, repair_attempts + 2):
+    # An environment failure (or an already-correct fixture) is not a repair task.
+    # Preserve an explicit invalid result without spending any model calls.
+    attempt_numbers = range(1, repair_attempts + 2) if not baseline.passed and baseline.error is None else ()
+    for attempt in attempt_numbers:
         _emit_progress(
             progress,
             "attempt_start",
@@ -526,6 +551,8 @@ def run_case(
         errors.append(validation.error)
     if baseline.passed:
         errors.append("Invalid benchmark fixture: baseline already passes")
+    if baseline.error:
+        errors.append("Invalid benchmark baseline: " + baseline.error)
 
     attempts = len(attempt_history)
 
@@ -536,7 +563,7 @@ def run_case(
         difficulty=case.difficulty,
         repeat_index=repeat_index,
         strategy=strategy,
-        success=validation.passed and not baseline.passed,
+        success=validation.passed and not baseline.passed and baseline.error is None,
         baseline_passed=baseline.passed,
         validation_details=validation.details,
         duration_seconds=round(duration, 4),
@@ -563,13 +590,20 @@ def run_case(
         official_validator_called=official_validator_calls > 0,
         official_validator_calls=official_validator_calls,
         official_validator_attempts=official_validator_attempts,
-        validator_compliance_rate=round(official_validator_attempts / attempts, 4),
+        validator_compliance_rate=round(official_validator_attempts / attempts, 4) if attempts else 0.,
         claimed_success=any(item["claimed_success"] for item in attempt_history),
         false_positive=any(item["false_positive"] for item in attempt_history),
         timed_out=any(item["timed_out"] for item in attempt_history),
         timeout_attempts=sum(item["timed_out"] for item in attempt_history),
         attempt_history=attempt_history,
         error="; ".join(errors) if errors else None,
+        baseline_error=baseline.error,
+        source_sha256_before=original_digest,
+        source_sha256_after=_file_digest(workspace),
+        source_diff="".join(difflib.unified_diff(
+            original_source.splitlines(keepends=True),
+            workspace.read_text(encoding="utf-8").splitlines(keepends=True),
+            fromfile=case.template, tofile=case.workspace)),
     )
 
 
@@ -638,6 +672,8 @@ def _build_report(
         case_passed = sum(result.success for result in case_results)
         case_attempts = sum(result.attempts for result in case_results)
         per_case[case.id] = {
+            "suite": case.suite, "provenance": case.provenance,
+            "category": case.category, "difficulty": case.difficulty, "tags": list(case.tags),
             "domain_pack": case.domain_pack,
             "required_capabilities": list(case.required_capabilities),
             "runs": len(case_results),
@@ -657,10 +693,26 @@ def _build_report(
             "within_tool_budget": sum(item.within_tool_budget for item in case_results),
             "validator_compliance_rate": round(
                 sum(item.official_validator_attempts for item in case_results) / case_attempts, 4
-            ),
+            ) if case_attempts else 0.,
         }
 
     completed_runs = len(results)
+    grouped: dict[str, dict[str, Any]] = {}
+    for dimension in ("category", "difficulty", "domain_pack"):
+        buckets: dict[str, Any] = {}
+        for label in sorted({str(getattr(item, dimension) or "none") for item in results}):
+            members = [item for item in results if str(getattr(item, dimension) or "none") == label]
+            buckets[label] = {"runs": len(members), "passed": sum(item.success for item in members),
+                "success_rate": round(sum(item.success for item in members) / len(members), 4),
+                "false_positives": sum(item.false_positive for item in members),
+                "timeouts": sum(item.timed_out for item in members),
+                "runs_with_errors": sum(item.error is not None or item.baseline_error is not None for item in members),
+                "average_tokens": round(sum(item.total_tokens for item in members) / len(members), 2),
+                "average_tool_calls": round(sum(item.tool_calls for item in members) / len(members), 2)}
+        grouped[dimension] = buckets
+    from agent.config import get_model_identity
+    catalog = [{**asdict(case), "template_sha256": _file_digest(resolve_within_root(case.template))}
+               for case in cases]
     return {
         "schema_version": 4,
         "run_id": run_id,
@@ -668,6 +720,12 @@ def _build_report(
         "created_at": created_at,
         "updated_at": datetime.now(UTC).isoformat(),
         "provider": os.getenv("MODEL_PROVIDER", "anthropic"),
+        "model_identity": get_model_identity(),
+        "case_catalog": catalog,
+        "case_catalog_sha256": hashlib.sha256(
+            json.dumps(catalog, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
+        "grouped": grouped,
+        "invalid_baselines": sum(item.baseline_passed or item.baseline_error is not None for item in results),
         "executor_backend": os.getenv("EXECUTOR_BACKEND", "local"),
         "domain_packs": sorted({case.domain_pack for case in cases if case.domain_pack}),
         "max_loop_steps": max_loop_steps,

@@ -70,6 +70,7 @@ def get_domain_registry() -> DomainRegistry:
     global _BUILTINS_LOADED
     if not _BUILTINS_LOADED:
         from agent.domain_packs.cpp_reference import create_pack
+        from agent.domain_packs.cpp_robotics import create_pack as create_cpp_robotics_pack
         from agent.domain_packs.crocoddyl_mpc import create_pack as create_crocoddyl_pack
         from agent.domain_packs.pinocchio_rnea import create_pack as create_pinocchio_pack
         from agent.domain_packs.robotics_autodiff_codegen import (
@@ -77,6 +78,7 @@ def get_domain_registry() -> DomainRegistry:
         )
 
         _REGISTRY.register(create_pack())
+        _REGISTRY.register(create_cpp_robotics_pack())
         _REGISTRY.register(create_autodiff_codegen_pack())
         _REGISTRY.register(create_pinocchio_pack())
         _REGISTRY.register(create_crocoddyl_pack())

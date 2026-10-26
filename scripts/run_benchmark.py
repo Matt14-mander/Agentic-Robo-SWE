@@ -210,6 +210,7 @@ def main() -> int:
         f"{report['average_tokens']:.0f} tokens"
     )
     print(f"Within tool budget: {report['tool_budget_compliance_rate']:.1%}")
+    print(f"Invalid baselines: {report['invalid_baselines']} (must be 0 for repair-rate comparisons)")
     print(f"Report: {report_path}")
     return 0 if report["failed"] == 0 else 1
 

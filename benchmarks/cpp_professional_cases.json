@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "suite": "m2_cpp_professional_v1",
+  "provenance": "synthetic_controlled",
+  "evaluation_split": "public_development_not_held_out",
+  "includes": [
+    "benchmarks/cpp_robotics_cases.json",
+    "benchmarks/cpp_cases.json",
+    "benchmarks/autodiff_codegen_cases.json",
+    "benchmarks/sparse_codegen_cases.json",
+    "benchmarks/pinocchio_cases.json"
+  ],
+  "cases": []
+}

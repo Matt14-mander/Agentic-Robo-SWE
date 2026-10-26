@@ -36,6 +36,11 @@ build-backend = "hatchling.build"
 packages = ["src/agent"]
 
 [tool.hatch.build.targets.wheel.force-include]
+"src/agent/domain_packs/cpp_robotics/pack.toml" = "agent/domain_packs/cpp_robotics/pack.toml"
+"src/agent/domain_packs/cpp_robotics/prompt.md" = "agent/domain_packs/cpp_robotics/prompt.md"
+"src/agent/domain_packs/cpp_robotics/harness/CMakeLists.txt" = "agent/domain_packs/cpp_robotics/harness/CMakeLists.txt"
+"src/agent/domain_packs/cpp_robotics/harness/main.cpp" = "agent/domain_packs/cpp_robotics/harness/main.cpp"
+"src/agent/domain_packs/cpp_robotics/harness/reference.hpp" = "agent/domain_packs/cpp_robotics/harness/reference.hpp"
 "src/agent/domain_packs/cpp_reference/pack.toml" = "agent/domain_packs/cpp_reference/pack.toml"
 "src/agent/domain_packs/cpp_reference/prompt.md" = "agent/domain_packs/cpp_reference/prompt.md"
 "src/agent/domain_packs/cpp_reference/harness/CMakeLists.txt" = "agent/domain_packs/cpp_reference/harness/CMakeLists.txt"
