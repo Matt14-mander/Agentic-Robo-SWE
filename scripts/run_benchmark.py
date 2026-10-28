@@ -124,6 +124,8 @@ def _build_parser() -> argparse.ArgumentParser:
         help="覆盖每题工具预算；默认按难度使用 easy=5、medium=7、hard=9",
     )
     parser.add_argument("--output", help="报告输出目录，默认 benchmarks/results/<run-id>")
+    parser.add_argument("--repair-trace", action="store_true",
+                        help="Record development-only structured traces for every attempt")
     return parser
 
 
@@ -190,6 +192,7 @@ def main() -> int:
             task_timeout_seconds=args.task_timeout,
             output_dir=args.output,
             progress=progress,
+            record_traces=args.repair_trace,
         )
     except KeyboardInterrupt:
         print("\nBenchmark interrupted; completed cases remain on disk.", file=sys.stderr)

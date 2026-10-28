@@ -30,6 +30,8 @@ def benchmark_validate(state: AgentState) -> dict:
     )
     output = str(execute_python.invoke({"code": code}))
     passed = validator_output_passed(output)
+    from agent.repair_trace import record_development_validation
+    record_development_validation(validator, output, passed)
     if passed:
         message = "M1.2 validator gate: official validator passed."
     else:

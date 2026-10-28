@@ -86,7 +86,10 @@ uv run python scripts/run_benchmark.py --manifest benchmarks/cpp_professional_ca
 - `baseline_error`、`invalid_baselines`：环境错误或已通过的原始题目不启动 LLM 尝试，保存为无效基线；对比前必须为零。
 
 当前成功率是“完成运行中通过官方验证的比例”，不是 pass@k；重复运行不是新题目，
-报告中的预算合规统计为全部尝试的累计调用数。补丁只记录最终文本差异，尚未保存完整操作轨迹。
+报告中的预算合规统计为全部尝试的累计调用数。默认仍记录最终补丁；增加 `--repair-trace`
+可保存每次尝试的结构化开发轨迹，并在 `attempt_history[].repair_trace` 中关联独立目录。
+它记录源码指纹、公开 Agent 陈述、工具请求/结果与 gate 开发反馈，含显式截断及中断状态；
+不等于完整源码快照或已验证技能。字段和限制见 [轨迹说明](phase71-structured-repair-traces.md)。
 公开开发集、少量合成任务和参考解可见性限制，应随任何成功率一起披露。
 
 ## 后续里程碑
@@ -99,7 +102,11 @@ uv run python scripts/run_benchmark.py --manifest benchmarks/cpp_professional_ca
 2. M2.1：扩至 20–30 个专业任务，增加多文件、Eigen、模板编译错误、真实缺陷来源与独立保留任务；
    先验证参考修复，再冻结评测输入/协议，避免同题变体泄漏。
 3. M2.2：按相同任务/模型/预算对照基础能力、文档 RAG、专业工具和 Validator。
-   当前 focused 与 general 同时改变探索策略，不能直接作为严格 RAG 消融；四组消融尚未实现。
+   当前 focused 与 general 同时改变探索策略，不能直接作为严格 RAG 消融；新增
+   [四组运行器](phase71-fair-ablations.md) 使用独立能力策略，初始适配公开 8 题，真实模型实验尚未执行。
 4. 根据失败分布进入 C++ 语义理解：compile_commands、类型/符号/引用、模板与跨文件上下文。
 
-尚未实现：隐藏测试隔离、首次编译成功率事件采集、完整四组消融、真实仓库大规模修复和生产机器人验证。
+M7.0 已提供外部仓库独立隐藏评测协议，但旧公开 M2 题未迁移为隐藏集。
+统一失败分类与四组运行器已实现。尚未完成：M2 各编译/数值验证器的精细结构化指标、首次编译成功率统计、真实模型四组消融、
+真实仓库大规模修复和生产机器人验证。M8 将增加 RepairSkill 提炼、独立开发验证准入、
+检索与撤销，并比较无记忆/原始轨迹/验证技能三组；SFT/RLVR 留在 M9。

@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import json
 import pickle
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -26,8 +27,12 @@ def main() -> int:
     payload: tuple[str, Any]
     try:
         from agent.graph import graph
+        from agent.repair_trace import use_repair_trace
 
-        payload = ("ok", graph.invoke(request["state"], config=request["config"]))
+        trace = request.get("repair_trace")
+        context = use_repair_trace(**trace) if trace else nullcontext()
+        with context:
+            payload = ("ok", graph.invoke(request["state"], config=request["config"]))
     except BaseException as exc:  # Return failures to the parent without losing their type.
         payload = ("error", f"{type(exc).__name__}: {exc}")
 

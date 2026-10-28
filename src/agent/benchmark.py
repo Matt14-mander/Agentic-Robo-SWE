@@ -97,6 +97,7 @@ class ValidationResult:
     details: list[str]
     duration_seconds: float
     error: str | None = None
+    failure: dict[str, Any] | None = None
 
 
 @dataclass
@@ -145,6 +146,7 @@ class BenchmarkResult:
     source_diff: str = ""
     source_sha256_before: str = ""
     source_sha256_after: str = ""
+    failure: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -210,6 +212,7 @@ def prepare_workspace(case: BenchmarkCase) -> Path:
 
 
 def validate_case(case: BenchmarkCase, timeout: int | None = None) -> ValidationResult:
+    from agent.failures import classify
     started = time.perf_counter()
     command = [
         sys.executable,
@@ -235,23 +238,35 @@ def validate_case(case: BenchmarkCase, timeout: int | None = None) -> Validation
             details=[],
             duration_seconds=time.perf_counter() - started,
             error=f"{type(exc).__name__}: {exc}",
+            failure=classify({"passed": False, "stage": "environment",
+                              "timed_out": isinstance(exc, subprocess.TimeoutExpired),
+                              "error": type(exc).__name__}).to_dict(),
         )
 
     try:
-        payload = json.loads(proc.stdout.strip())
+        from agent.evaluation import strict_json
+        payload = strict_json(proc.stdout.strip())
+        if (not isinstance(payload, dict) or type(payload.get("passed")) is not bool or
+                not isinstance(payload.get("details", []), list) or
+                payload.get("error") is not None and not isinstance(payload["error"], str)):
+            raise ValueError("Validator result requires boolean passed and list details")
+        if payload["passed"] and payload.get("error"):
+            raise ValueError("Passing validator result contains an error")
         details = [str(item) for item in payload.get("details", [])]
         error = payload.get("error")
         passed = bool(payload.get("passed")) and proc.returncode == 0
-    except (json.JSONDecodeError, AttributeError) as exc:
+    except (ValueError, AttributeError) as exc:
         details = [proc.stdout.strip()] if proc.stdout.strip() else []
         error = f"Invalid validator output: {exc}; stderr={proc.stderr.strip()}"
         passed = False
+        payload = {"passed": False, "stage": "protocol", "error": error}
 
     return ValidationResult(
         passed=passed,
         details=details,
         duration_seconds=time.perf_counter() - started,
         error=str(error) if error else None,
+        failure=classify({**payload, "passed": passed, "error": error}).to_dict(),
     )
 
 
@@ -352,6 +367,7 @@ def _invoke_graph_subprocess(
     state: dict[str, Any],
     config: dict[str, Any],
     timeout_seconds: float | None,
+    repair_trace: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run one graph attempt in a child process that can be killed on Windows."""
     DEFAULT_RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -360,7 +376,8 @@ def _invoke_graph_subprocess(
         input_path = temp_path / "request.json"
         output_path = temp_path / "result.pkl"
         input_path.write_text(
-            json.dumps({"state": state, "config": config}, ensure_ascii=False),
+            json.dumps({"state": state, "config": config, "repair_trace": repair_trace},
+                       ensure_ascii=False),
             encoding="utf-8",
         )
         command = [
@@ -412,6 +429,7 @@ def run_case(
     task_timeout_seconds: float | None = DEFAULT_TASK_TIMEOUT_SECONDS,
     progress: ProgressCallback | None = None,
     invoke: Callable[..., dict[str, Any]] | None = None,
+    trace_dir: str | Path | None = None,
 ) -> BenchmarkResult:
     if strategy not in {"focused", "general"}:
         raise ValueError(f"Unknown benchmark strategy: {strategy}")
@@ -476,11 +494,34 @@ def run_case(
             "domain_toolchain_fingerprint": toolchain_fingerprint,
         }
         config = {"recursion_limit": max(50, max_loop_steps * 4)}
+        trace_spec: dict[str, Any] | None = None
+        if trace_dir is not None:
+            import uuid
+            trace_spec = {
+                "directory": str(Path(trace_dir).resolve() / uuid.uuid4().hex),
+                "source": str(workspace.resolve()),
+                "metadata": {"case_id": case.id, "repeat_index": repeat_index,
+                             "attempt": attempt, "strategy": strategy,
+                             "suite": case.suite, "provenance": case.provenance,
+                             "category": case.category,
+                             "task_timeout_seconds": task_timeout_seconds,
+                             "task": task, "max_loop_steps": max_loop_steps,
+                             "tool_budget": resolved_tool_budget,
+                             "domain_pack": case.domain_pack, "domain_pack_version": domain_version,
+                             "capabilities": capability_check,
+                             "toolchain_fingerprint": toolchain_fingerprint},
+            }
         try:
             if invoke is None:
-                result = _invoke_graph_subprocess(state, config, task_timeout_seconds)
+                if trace_spec:
+                    result = _invoke_graph_subprocess(state, config, task_timeout_seconds, trace_spec)
+                else:
+                    result = _invoke_graph_subprocess(state, config, task_timeout_seconds)
             else:
-                result = invoke(state, config=config)
+                from contextlib import nullcontext
+                from agent.repair_trace import use_repair_trace
+                with use_repair_trace(**trace_spec) if trace_spec else nullcontext():
+                    result = invoke(state, config=config)
         except BenchmarkAttemptTimeout as exc:
             timed_out = True
             run_error = f"{type(exc).__name__}: {exc}"
@@ -513,6 +554,7 @@ def run_case(
             "validation_passed": validation.passed,
             "validation_details": validation.details,
             "validation_error": validation.error,
+            "validation_failure": validation.failure,
             "loop_steps": int(result.get("loop_step") or 0),
             "tool_calls": attempt_tools,
             "tool_calls_by_name": by_name,
@@ -527,6 +569,9 @@ def run_case(
             "timed_out": timed_out,
             "duration_seconds": round(time.perf_counter() - attempt_started, 4),
             "error": run_error,
+            # Parent verdict stays in the report; only public retry feedback can
+            # enter a later attempt's task. No hidden evaluator is connected here.
+            "repair_trace": trace_spec["directory"] if trace_spec else None,
         })
         _emit_progress(
             progress,
@@ -555,6 +600,15 @@ def run_case(
         errors.append("Invalid benchmark baseline: " + baseline.error)
 
     attempts = len(attempt_history)
+
+    from agent.failures import Failure, classify
+    failure = validation.failure or classify({"passed": validation.passed, "error": validation.error}).to_dict()
+    if baseline.passed or baseline.error:
+        failure = Failure("invalid_baseline", "calibration", "legacy baseline is invalid").to_dict()
+    elif attempt_history and attempt_history[-1]["timed_out"]:
+        failure = Failure("timeout", "attempt", "worker deadline exceeded").to_dict()
+    elif attempt_history and attempt_history[-1]["error"]:
+        failure = Failure("unclassified", "attempt", attempt_history[-1]["error"]).to_dict()
 
     return BenchmarkResult(
         case_id=case.id,
@@ -598,6 +652,7 @@ def run_case(
         attempt_history=attempt_history,
         error="; ".join(errors) if errors else None,
         baseline_error=baseline.error,
+        failure=failure,
         source_sha256_before=original_digest,
         source_sha256_after=_file_digest(workspace),
         source_diff="".join(difflib.unified_diff(
@@ -783,6 +838,7 @@ def run_suite(
     output_dir: str | Path | None = None,
     progress: ProgressCallback | None = None,
     invoke: Callable[..., dict[str, Any]] | None = None,
+    record_traces: bool = False,
 ) -> tuple[dict[str, Any], Path]:
     cases = list(cases)
     if repeats < 1:
@@ -800,7 +856,7 @@ def run_suite(
     results: list[BenchmarkResult] = []
 
     def make_report(status: str, fatal_error: str | None = None) -> dict[str, Any]:
-        return _build_report(
+        report = _build_report(
             run_id=run_id,
             created_at=created_at,
             cases=cases,
@@ -814,6 +870,8 @@ def run_suite(
             status=status,
             fatal_error=fatal_error,
         )
+        report["repair_traces_enabled"] = record_traces
+        return report
 
     _write_json_atomic(checkpoint_path, make_report("running"))
     _emit_progress(
@@ -847,6 +905,7 @@ def run_suite(
                     task_timeout_seconds=task_timeout_seconds,
                     progress=progress,
                     invoke=invoke,
+                    trace_dir=destination / "traces" if record_traces else None,
                 )
                 results.append(result)
                 case_path = case_results_dir / f"repeat-{repeat_index:02d}__{case.id}.json"

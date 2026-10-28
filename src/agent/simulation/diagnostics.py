@@ -24,7 +24,9 @@ class TrialDiagnosis:
     trace_samples: int
 
     def to_dict(self) -> dict[str, object]:
-        return asdict(self)
+        from agent.failures import classify_trial
+        payload = asdict(self)
+        return {**payload, "failure": classify_trial(payload).to_dict()}
 
 
 def diagnose_trial(trial: RobustnessTrial) -> TrialDiagnosis:

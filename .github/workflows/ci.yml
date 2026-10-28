@@ -73,6 +73,19 @@ jobs:
         run: uv run pytest -q tests/test_cpp_robotics.py -m cpp
       - name: Verify user-facing robotics fixture calibration
         run: uv run python scripts/check_cpp_robotics_fixtures.py
+      - name: Run four-arm native smoke without a model API
+        run: uv run python scripts/run_ablation.py --smoke --trusted-local --output .agent_state/ablation-ci-smoke
+      - name: Preserve ablation protocol and results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase71-ablation-smoke
+          path: |
+            .agent_state/ablation-ci-smoke/protocol.json
+            .agent_state/ablation-ci-smoke/report.json
+            .agent_state/ablation-ci-smoke/runs/**/trace/
+            .agent_state/ablation-ci-smoke/calibration/**/build.json
+          if-no-files-found: ignore
 
   autodiff-codegen-checks:
     runs-on: ubuntu-latest

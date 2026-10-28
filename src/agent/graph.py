@@ -41,6 +41,7 @@ from agent.nodes import (
     requires_write_approval,
 )
 from agent.state import AgentState
+from agent.repair_trace import trace_node
 from agent.tools import all_registered_tools, resolve_tools
 
 _DEFAULT_MAX_LOOP_STEPS = 15
@@ -150,12 +151,12 @@ def execute_tools(state: AgentState, config: RunnableConfig) -> dict:
 def build_graph(*, checkpointer: Any | None = None):
     workflow = StateGraph(AgentState)
 
-    workflow.add_node("planner", planner)
-    workflow.add_node("approval", request_write_approval)
-    workflow.add_node("tools", execute_tools)
-    workflow.add_node("reject_tools", reject_pending_tools)
-    workflow.add_node("benchmark_validate", benchmark_validate)
-    workflow.add_node("finalize", finalize)
+    workflow.add_node("planner", trace_node("planner", planner))
+    workflow.add_node("approval", trace_node("approval", request_write_approval))
+    workflow.add_node("tools", trace_node("tools", execute_tools, with_config=True))
+    workflow.add_node("reject_tools", trace_node("reject_tools", reject_pending_tools))
+    workflow.add_node("benchmark_validate", trace_node("benchmark_validate", benchmark_validate))
+    workflow.add_node("finalize", trace_node("finalize", finalize))
 
     workflow.add_edge(START, "planner")
     workflow.add_conditional_edges(

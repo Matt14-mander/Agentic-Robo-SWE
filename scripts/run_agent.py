@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 import uuid
-from contextlib import nullcontext
+from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +24,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--workspace", help="External target repository (separate from harness)")
     parser.add_argument("--artifact-root", help="State/build directory outside target repository")
     parser.add_argument("--cpp-tools", action="store_true", help="Enable CMake and clangd tools")
+    parser.add_argument("--repair-trace", action="store_true",
+                        help="Record a development trace segment (requires --workspace)")
     parser.add_argument("--trusted-local", action="store_true", help="Allow target code on host; development only")
     parser.add_argument("--execution-image", help="Pinned Docker image digest/ID for isolated execution")
     parser.add_argument("--max-loops", type=int, default=12)
@@ -168,7 +170,20 @@ def _run_session(args) -> int:
                     graph_input["workspace_binding"] = workspace.binding()
 
             print(f"Thread: {thread_id}")
-            result = _run(agent, graph_input, config, stream=args.stream)
+            from agent.repair_trace import use_repair_trace
+            trace_context: AbstractContextManager = nullcontext()
+            if args.repair_trace:
+                if workspace is None:
+                    raise ValueError("--repair-trace requires --workspace")
+                trace_path = workspace.artifacts / "repair_traces" / uuid.uuid4().hex
+                print(f"Repair trace: {trace_path}")
+                trace_context = use_repair_trace(trace_path, workspace.root, {
+                    "thread_id": thread_id, "task": args.task or snapshot.values.get("task"),
+                    "resumed": bool(args.resume or args.continue_run),
+                    "max_loop_steps": (snapshot.values or {}).get("max_loop_steps", args.max_loops),
+                })
+            with trace_context:
+                result = _run(agent, graph_input, config, stream=args.stream)
             snapshot = agent.get_state(config)
             if snapshot.interrupts:
                 _print_status(snapshot, thread_id)
@@ -206,6 +221,8 @@ def main() -> int:
             raise ValueError("External execution / C++ options require --workspace")
         if args.workspace and args.semantic_cache:
             raise ValueError("External repository semantic caching is not enabled")
+        if args.repair_trace and not args.workspace:
+            raise ValueError("--repair-trace requires --workspace")
         if args.read_only and args.cpp_tools:
             raise ValueError("C++ tools execute compiler processes and are not read-only mode tools")
         workspace = Workspace.create(args.workspace, args.artifact_root,

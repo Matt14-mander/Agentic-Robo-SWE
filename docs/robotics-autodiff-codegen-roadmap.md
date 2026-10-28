@@ -4,6 +4,8 @@
 > [Phase 7–9 验证驱动开发计划](phase7-verification-driven-development.md)，明确外部工作区、
 > C++ 语义工具、隔离评测、真实缺陷试点、反例驱动修复与受约束优化的优先级和验收标准。
 > 本轮 M7.0 实施入口见 [架构使用说明](phase70-workspaces-and-evaluation.md)。
+> M7.1 已加入[结构化修复轨迹](phase71-structured-repair-traces.md)；验证技能库与迁移实验
+> 前移到 M8，SFT/RLVR 保留在 M9，先验证无需权重更新的经验积累是否有效。
 
 ## 1. 战略定位
 

@@ -3,6 +3,10 @@
 下一阶段：[Phase 7–9 验证驱动开发计划](docs/phase7-verification-driven-development.md)。
 M7.0 新增外部仓库工作区、CMake/clangd 工具和候选/oracle 分离的容器评测；
 命令、执行边界与验收见 [M7.0 使用说明](docs/phase70-workspaces-and-evaluation.md)。
+M7.1 新增可选[结构化修复轨迹](docs/phase71-structured-repair-traces.md)：记录源码身份、
+操作和开发验证，为前移至 M8 的验证技能库准备证据；技能提炼与 SFT/RLVR 尚未实现。
+M7.1 [四组公平消融运行器](docs/phase71-fair-ablations.md)支持独立能力策略、统一失败分类、
+预算约束和真实 C++ scripted smoke；入口为 `scripts/run_ablation.py`。
 
 An autonomous, simulation-in-the-loop software engineering agent for robotics. Built with LangGraph to debug and verify embodied AI algorithms.
 
