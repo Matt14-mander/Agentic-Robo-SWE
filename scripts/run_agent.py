@@ -6,6 +6,7 @@ import argparse
 import json
 import sys
 import uuid
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +21,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("task", nargs="?", help="新会话任务；恢复或查看状态时省略")
     parser.add_argument("--thread-id", help="持久会话 ID；新会话未提供时自动生成")
     parser.add_argument("--checkpoint-db", default=".agent_state/checkpoints.sqlite")
+    parser.add_argument("--workspace", help="External target repository (separate from harness)")
+    parser.add_argument("--artifact-root", help="State/build directory outside target repository")
+    parser.add_argument("--cpp-tools", action="store_true", help="Enable CMake and clangd tools")
+    parser.add_argument("--trusted-local", action="store_true", help="Allow target code on host; development only")
+    parser.add_argument("--execution-image", help="Pinned Docker image digest/ID for isolated execution")
     parser.add_argument("--max-loops", type=int, default=12)
     parser.add_argument("--hitl", action="store_true", help="write_patch 前暂停并请求审批")
     parser.add_argument("--read-only", action="store_true", help="仅暴露读取/检索工具")
@@ -87,8 +93,7 @@ def _run(agent: Any, graph_input: Any, config: dict[str, Any], *, stream: bool) 
     return latest
 
 
-def main() -> int:
-    args = _build_parser().parse_args()
+def _run_session(args) -> int:
     modes = sum(bool(item) for item in (args.status, args.continue_run, args.resume))
     if modes > 1:
         print("ERROR: --status, --continue and --resume are mutually exclusive", file=sys.stderr)
@@ -115,6 +120,10 @@ def main() -> int:
     try:
         with open_persistent_graph(Path(args.checkpoint_db)) as agent:
             snapshot = agent.get_state(config)
+            from agent.workspace import check_binding, current_workspace
+            workspace = current_workspace()
+            if snapshot.values:
+                check_binding(snapshot.values)
             if args.status:
                 if not snapshot.values:
                     print(f"ERROR: thread not found: {thread_id}", file=sys.stderr)
@@ -153,7 +162,10 @@ def main() -> int:
                     "read_only_mode": args.read_only,
                     "semantic_cache_enabled": args.semantic_cache,
                     "semantic_cache_hit": False,
+                    "cpp_tools_enabled": args.cpp_tools,
                 }
+                if workspace:
+                    graph_input["workspace_binding"] = workspace.binding()
 
             print(f"Thread: {thread_id}")
             result = _run(agent, graph_input, config, stream=args.stream)
@@ -165,6 +177,8 @@ def main() -> int:
                     f"  uv run python scripts/run_agent.py --thread-id {thread_id} "
                     "--resume approve|deny"
                 )
+                if workspace:
+                    print("Use the same --workspace, --artifact-root and execution options when resuming.")
                 return 3
 
             if not args.stream:
@@ -180,6 +194,26 @@ def main() -> int:
                 print(f"\nSemantic cache: {status}{suffix}")
             return 0
     except (RuntimeError, ValueError, OSError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+
+
+def main() -> int:
+    args = _build_parser().parse_args()
+    from agent.workspace import Workspace, use_workspace
+    try:
+        if not args.workspace and any((args.artifact_root, args.cpp_tools, args.trusted_local, args.execution_image)):
+            raise ValueError("External execution / C++ options require --workspace")
+        if args.workspace and args.semantic_cache:
+            raise ValueError("External repository semantic caching is not enabled")
+        if args.read_only and args.cpp_tools:
+            raise ValueError("C++ tools execute compiler processes and are not read-only mode tools")
+        workspace = Workspace.create(args.workspace, args.artifact_root,
+                                     trusted_local=args.trusted_local,
+                                     execution_image=args.execution_image) if args.workspace else None
+        with use_workspace(workspace) if workspace else nullcontext():
+            return _run_session(args)
+    except (ValueError, OSError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
 

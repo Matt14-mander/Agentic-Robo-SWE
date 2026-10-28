@@ -1,5 +1,9 @@
 # Agentic-Robo-SWE
 
+下一阶段：[Phase 7–9 验证驱动开发计划](docs/phase7-verification-driven-development.md)。
+M7.0 新增外部仓库工作区、CMake/clangd 工具和候选/oracle 分离的容器评测；
+命令、执行边界与验收见 [M7.0 使用说明](docs/phase70-workspaces-and-evaluation.md)。
+
 An autonomous, simulation-in-the-loop software engineering agent for robotics. Built with LangGraph to debug and verify embodied AI algorithms.
 
 设计哲学：把 **LangGraph 显式状态机**（可视、可中断、可恢复）与 **Princeton SWE-agent 的 Agent-Computer Interface** 思想（为 LLM 量身设计的工具集，而非裸 shell）结合起来，做一个能自主排障机器人物理算法仓库的 Agent。
@@ -555,6 +559,7 @@ langgraph.json    # Studio 入口
 | 6.3 | Pinocchio 集成 — RNEA CodeGen、解析导数与可复现控制循环 | ✅ 完成 |
 | 6.4 | Crocoddyl/MPC — LQR、真实 MPC 与受控 ABA 导数替换 | ✅ 50 次采样原生链路跑通；正确性 3/3，性能门禁 2/3（单进程噪声），保持原生 |
 | M2 | Robo-SWE 专业 Benchmark — 20–30 题与 Harness/RAG/Tools/Validator 消融 | 🚧 M2.0：新增 8 个受控 C++17 任务，组合共 17 题；Agent 实测与正式消融待开展 |
+| 7.0 | 外部仓库、CMake/clangd 与候选/oracle 分离评测 | ✅ 架构实现、首轮验收通过；最终容器复验受 WSL 只读文件系统阻塞，详见验收记录 |
 
 CppADCodeGen 作为首个机器人优化专业能力包，而不是项目的全部。领域逻辑保持可插拔，建设顺序为
 专业构建环境与工具 → 数值/性能 Validator → 专业文档 RAG。详细方案见

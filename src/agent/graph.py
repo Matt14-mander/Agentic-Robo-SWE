@@ -27,6 +27,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from langchain_core.messages import ToolMessage
+from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 
@@ -40,7 +41,7 @@ from agent.nodes import (
     requires_write_approval,
 )
 from agent.state import AgentState
-from agent.tools import all_registered_tools
+from agent.tools import all_registered_tools, resolve_tools
 
 _DEFAULT_MAX_LOOP_STEPS = 15
 
@@ -129,12 +130,29 @@ def after_benchmark_validation(state: AgentState) -> Literal["planner", "finaliz
     return "planner"
 
 
+def execute_tools(state: AgentState, config: RunnableConfig) -> dict:
+    """Enforce session tool capabilities at dispatch, not only in the model schema."""
+    from agent.workspace import check_binding
+    check_binding(state)
+    mode = "read_only" if state.get("read_only_mode") else (
+        "focused" if _focused_benchmark(state) else "general")
+    allowed = {tool.name for tool in resolve_tools(
+        mode=mode, domain_packs=state.get("domain_packs") or (),
+        cpp=bool(state.get("cpp_tools_enabled")))}
+    calls = getattr(state["messages"][-1], "tool_calls", [])
+    if any(call["name"] not in allowed for call in calls):
+        return {"messages": [ToolMessage(content="ERROR: tool batch violates session capabilities",
+                                         tool_call_id=call["id"], name=call["name"])
+                             for call in calls]}
+    return ToolNode(all_registered_tools()).invoke(state, config)
+
+
 def build_graph(*, checkpointer: Any | None = None):
     workflow = StateGraph(AgentState)
 
     workflow.add_node("planner", planner)
     workflow.add_node("approval", request_write_approval)
-    workflow.add_node("tools", ToolNode(all_registered_tools()))
+    workflow.add_node("tools", execute_tools)
     workflow.add_node("reject_tools", reject_pending_tools)
     workflow.add_node("benchmark_validate", benchmark_validate)
     workflow.add_node("finalize", finalize)

@@ -247,6 +247,26 @@ def execute_python(code: str, timeout: int = 30) -> str:
     """
     timeout = min(max(1, int(timeout)), _MAX_TIMEOUT)
 
+    from agent.workspace import current_workspace
+    workspace = current_workspace()
+    if workspace:
+        from agent.containers import run_bounded, run_container
+        try:
+            if workspace.execution_image:
+                from agent.workspace import exported_source
+                with exported_source(workspace.root) as source:
+                    result = run_container(workspace.execution_image, ["python3", "-c", code],
+                                           [(source, "/workspace", False)],
+                                           timeout=timeout, workdir="/workspace")
+            elif workspace.trusted_local:
+                result = run_bounded([sys.executable, "-I", "-c", code],
+                                     cwd=workspace.root, timeout=timeout)
+            else:
+                return "ERROR: external execution requires --execution-image or --trusted-local"
+        except (ValueError, OSError) as exc:
+            return f"ERROR: external execution capability: {exc}"
+        return _format_output(result.returncode, result.stdout, result.stderr)
+
     backend = _resolve_backend()
     if backend == "e2b":
         return _execute_e2b(code, timeout)

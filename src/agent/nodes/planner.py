@@ -79,6 +79,15 @@ def build_system_prompt(state: AgentState) -> str:
     elif state.get("read_only_mode"):
         prompt += _READ_ONLY
     prompt += domain_prompt_fragment(state.get("domain_packs") or ())
+    from agent.workspace import current_workspace
+    if current_workspace():
+        prompt += (
+            "\nExternal repository session: all paths refer to the TARGET repository. "
+            "Harness RAG and legacy fixture validators are unavailable. Use grep with C++ globs. "
+            "When C++ tools are enabled, use cpp_build to configure/build, cpp_compile_commands "
+            "to inspect flags, and cpp_semantic_query for definitions/references/types/diagnostics. "
+            "Only public development tests are available. Never claim hidden evaluation passed.\n"
+        )
     return prompt
 
 
@@ -104,6 +113,8 @@ def focused_message_context(
 
 
 def planner(state: AgentState) -> dict:
+    from agent.workspace import check_binding
+    check_binding(state)
     messages = list(state.get("messages") or [])
     loop_step = state.get("loop_step", 0)
 
@@ -120,7 +131,8 @@ def planner(state: AgentState) -> dict:
     )
     read_only = bool(state.get("read_only_mode") and not state.get("benchmark_mode"))
     mode = "focused" if focused else "read_only" if read_only else "general"
-    tools = resolve_tools(mode=mode, domain_packs=state.get("domain_packs") or ())
+    tools = resolve_tools(mode=mode, domain_packs=state.get("domain_packs") or (),
+                          cpp=bool(state.get("cpp_tools_enabled")))
 
     system = SystemMessage(content=build_system_prompt(state))
     task = state.get("task", "")

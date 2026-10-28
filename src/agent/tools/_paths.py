@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from agent.workspace import current_workspace
+
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+
+def workspace_root() -> Path:
+    workspace = current_workspace()
+    return workspace.root if workspace else PROJECT_ROOT
 
 
 def resolve_within_root(path: str) -> Path:
@@ -12,6 +19,9 @@ def resolve_within_root(path: str) -> Path:
 
     Raises ``ValueError`` if the resolved path escapes the project root.
     """
+    workspace = current_workspace()
+    if workspace:
+        return workspace.resolve(path)
     p = Path(path)
     p = (PROJECT_ROOT / p).resolve() if not p.is_absolute() else p.resolve()
     try:
@@ -25,4 +35,4 @@ def resolve_within_root(path: str) -> Path:
 
 def relpath_for_display(p: Path) -> str:
     """Return path relative to project root with forward slashes (for LLM-friendly display)."""
-    return p.relative_to(PROJECT_ROOT).as_posix()
+    return p.relative_to(workspace_root()).as_posix()

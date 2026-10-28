@@ -13,7 +13,7 @@ from pathlib import Path
 
 from langchain_core.tools import tool
 
-from agent.tools._paths import PROJECT_ROOT, relpath_for_display, resolve_within_root
+from agent.tools._paths import relpath_for_display, resolve_within_root, workspace_root
 
 _MAX_GREP_RESULTS = 50
 _MAX_OUTPUT_CHARS = 20_000  # 单工具返回字符上限, 防上下文爆炸
@@ -91,7 +91,13 @@ def grep_codebase(pattern: str, glob: str = "**/*.py", max_results: int = 30) ->
                  ".ruff_cache", "node_modules", "dist", "build"}
 
     matches: list[str] = []
-    for file in PROJECT_ROOT.glob(glob): # 注意 glob 可能返回目录, 需要 is_file() 过滤; 也可能返回非 UTF-8 文件, 需要 try-except 过滤
+    if Path(glob).is_absolute() or ".." in Path(glob).parts:
+        return "ERROR: glob must stay inside the workspace"
+    for file in workspace_root().glob(glob):
+        try:
+            file = resolve_within_root(str(file))
+        except ValueError:
+            continue
         if not file.is_file():
             continue
         if any(part in skip_dirs for part in file.parts):
@@ -150,6 +156,10 @@ def list_dir(path: str = ".", max_depth: int = 1) -> str:
             return
         for entry in entries:
             if entry.name in skip or entry.name.startswith("."):
+                continue
+            try:
+                resolve_within_root(str(entry))
+            except ValueError:
                 continue
             suffix = "/" if entry.is_dir() else ""
             lines.append(f"{indent}{entry.name}{suffix}")

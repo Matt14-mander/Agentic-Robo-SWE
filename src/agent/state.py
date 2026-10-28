@@ -26,6 +26,8 @@ class AgentState(TypedDict, total=False):
 
     # —— 用户入口 ——
     task: str
+    workspace_binding: dict[str, object]
+    cpp_tools_enabled: bool
 
     # Optional hints used by the benchmark harness. Normal agent calls retain the
     # general exploratory workflow when these keys are absent.

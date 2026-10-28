@@ -91,6 +91,10 @@ uv run python scripts/run_benchmark.py --manifest benchmarks/cpp_professional_ca
 
 ## 后续里程碑
 
+与 [Phase 7–9 开发计划](phase7-verification-driven-development.md) 对齐：先完成 M7.0
+工作区/语义/隔离基础，再开展 M7.1 公平消融和 M7.2 真实仓库试点。当前公开 M2 fixture
+仍保持原入口；新的独立评测协议不会自动把旧公开题转换成隐藏集。
+
 1. M2.0：完成 8 题 smoke/3 次重复基线，按失败类别复盘，而非优先扩大题目数量。
 2. M2.1：扩至 20–30 个专业任务，增加多文件、Eigen、模板编译错误、真实缺陷来源与独立保留任务；
    先验证参考修复，再冻结评测输入/协议，避免同题变体泄漏。

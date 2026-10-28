@@ -38,9 +38,21 @@ READ_ONLY_TOOLS = [
 ]
 
 
-def resolve_tools(*, mode: str = "general", domain_packs: tuple[str, ...] = ()):
+def resolve_tools(*, mode: str = "general", domain_packs: tuple[str, ...] = (), cpp: bool = False):
     """Resolve the model-visible tool schema for one execution mode and pack set."""
     from agent.domain.selection import append_domain_tools
+    from agent.workspace import current_workspace
+
+    if current_workspace():
+        if domain_packs:
+            raise ValueError("Legacy fixture Domain Packs are not external-repository tools")
+        base = [list_dir, read_file_chunk, grep_codebase]
+        if mode != "read_only":
+            base += [execute_python, write_patch]
+            if cpp:
+                from agent.tools.cpp_ops import CPP_TOOLS
+                base += CPP_TOOLS
+        return base
 
     if mode == "focused":
         base = FOCUSED_BENCHMARK_TOOLS
@@ -57,8 +69,10 @@ def all_registered_tools():
     """Return every executable tool known to the graph's dispatch node."""
     from agent.domain.registry import get_domain_registry
 
+    from agent.tools.cpp_ops import CPP_TOOLS
+    from agent.domain.selection import append_domain_tools
     pack_ids = tuple(pack.id for pack in get_domain_registry().all_packs())
-    return resolve_tools(mode="general", domain_packs=pack_ids)
+    return append_domain_tools(ALL_TOOLS, pack_ids) + CPP_TOOLS
 
 __all__ = [
     "ALL_TOOLS",

@@ -1,5 +1,10 @@
 # Robotics Autodiff & CodeGen 专业能力路线图
 
+> 2026-10-28 后续计划：Phase 6 保持当前研究结论，M2 补齐 Agent 实验；新增
+> [Phase 7–9 验证驱动开发计划](phase7-verification-driven-development.md)，明确外部工作区、
+> C++ 语义工具、隔离评测、真实缺陷试点、反例驱动修复与受约束优化的优先级和验收标准。
+> 本轮 M7.0 实施入口见 [架构使用说明](phase70-workspaces-and-evaluation.md)。
+
 ## 1. 战略定位
 
 Agentic-Robo-SWE 不应收窄为“CppADCodeGen Agent”。长期定位是：

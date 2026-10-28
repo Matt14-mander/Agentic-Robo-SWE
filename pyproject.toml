@@ -81,6 +81,7 @@ markers = [
     "e2e: end-to-end test requiring live LLM or sandbox API access",
     "simulation: test requiring the optional MuJoCo dependency",
     "cpp: test requiring a local CMake and C++ compiler toolchain",
+    "isolation: real Docker tests requiring separate pinned runner/oracle images (no LLM)",
     "autodiff_codegen: test requiring pinned CppAD/CppADCodeGen and Linux runtime compilation",
     "pinocchio: test requiring pinned Pinocchio, CppAD/CppADCodeGen and Linux runtime",
     "crocoddyl: test requiring pinned Crocoddyl, Pinocchio and Linux runtime",

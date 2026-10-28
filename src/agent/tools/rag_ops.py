@@ -32,6 +32,9 @@ def search_code_knowledge(
     精确符号或已知字符串优先使用 grep_codebase；已知文件直接 read_file_chunk。
     索引需先运行 ``uv run python scripts/index_codebase.py`` 创建。
     """
+    from agent.workspace import current_workspace
+    if current_workspace():
+        return "ERROR: external repositories use grep / C++ semantic tools; harness RAG is not shared"
     try:
         results = get_code_index().search(
             query,
