@@ -1,8 +1,12 @@
 # M7.1 四组公平消融与失败分类
 
-更新：2026-10-28。运行器、分组能力边界、统一失败分类及结构化轨迹已实现。
+更新：2026-10-29。运行器、分组能力边界、统一失败分类及结构化轨迹已实现。
 首个适配器覆盖 `benchmarks/cpp_robotics_cases.json` 的 8 个公开 C++ 合成题；
 不把公开校准成绩称为隐藏测试通过率，不把 scripted smoke 称为模型修复实验。
+
+[首轮真实模型结果](experiments/m71-live-20261029.md)已完成：四组均 8/8，
+总 token 分别为 30,041 / 36,332 / 63,456 / 76,794，暂未观察到专业能力的成功率增益。
+主段最后一题被参考解运行失败阻断后单独补跑；所有原始记录与两段协议均保留。
 
 ## 四组定义
 
@@ -38,7 +42,7 @@ uv run python scripts/run_ablation.py --smoke --trusted-local --output .agent_st
 先对 broken/reference 做实际校准；然后 8 题 × 4 组运行。每次重新编译，不共享构建缓存。
 可通过 `--case cpp_sample_period` 选择一个任务；未知或重复 ID 会被拒绝。
 
-后续真实模型实验（会产生模型费用）：
+真实模型重复实验（会产生模型费用；首轮单次实验已完成）：
 
 ```bash
 uv run python scripts/run_ablation.py --live --trusted-local --repeats 3 --seed 17 --max-steps 8 --max-tools 12 --max-tokens 16000 --timeout 300 --output .agent_state/ablations/live-01
@@ -80,6 +84,19 @@ D 组的开发反馈与本适配器最终判分使用同一套公开开发样例
 超时及预算耗尽算端到端失败，同时在类别计数中单列；没有悄悄从分母删掉。
 live 的汇总按 case 平均重复实验结果，并按 case 做 bootstrap 区间，避免把重复运行当作新题。
 小样本区间仍不能说明跨仓库泛化；scripted smoke 不生成模型质量区间。
+
+完成后可离线审计并导出可提交的用量证据（不调用模型、不重跑验证器）：
+
+```bash
+uv run python scripts/analyze_ablation.py .agent_state/ablations/live-01 --output docs/experiments/live-01.json
+```
+
+分析器核对逐次轨迹完整性、协议标识、源码首尾/最终判分绑定、worker 与轨迹用量一致性，
+汇总输入/输出/缓存 token、响应数量、工具调用、耗时及中间工具失败。计费按已返回响应统计，
+不能代替账单，也不能证明超时或 SDK 内部重试没有额外消耗。失败运行仍计入组成本；
+每次成功的摊销 token = 全组 token / 成功次数。价格须另附日期和来源。
+若需要补齐校准阶段阻断的槽位，`--recovery <另一运行目录>` 只接受从未执行模型的槽位，
+并核对任务、源码、环境、预算与组序；不能用它替换已有的失败修复。合并分析保留各段协议来源。
 
 ## 统一失败分类 v1
 

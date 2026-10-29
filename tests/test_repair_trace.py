@@ -39,6 +39,9 @@ def patch_planner(state):
     response = AIMessage(content=[{"type": "text", "text": "Check the value"},
                                   {"type": "thinking", "thinking": "private-reasoning"}],
                          tool_calls=[calls[step]] if step < len(calls) else [],
+                         response_metadata={"model_name": "served-model", "finish_reason": "stop",
+                                            "system_fingerprint": "revision", "api_key": "private-key",
+                                            "reasoning_content": "private-reasoning"},
                          usage_metadata={"input_tokens": 10, "output_tokens": 5,
                                          "total_tokens": 15})
     return {"messages": [response], "loop_step": step + 1, "suggestion": "done"}
@@ -74,6 +77,10 @@ def test_graph_records_patch_build_and_source_without_changing_behavior(monkeypa
         "kind": "build", "reported_passed": True, "stage": "build", "exit_code": 0}
     assert all(e.data["source_attribution"] == "node_batch" for e in results)
     assert "private-reasoning" not in (directory / "events.jsonl").read_text(encoding="utf-8")
+    assert "private-key" not in (directory / "events.jsonl").read_text(encoding="utf-8")
+    assert all(e.data["provider_response"] == {
+        "model_name": "served-model", "finish_reason": "stop", "system_fingerprint": "revision"}
+        for e in rows if e.kind == "agent_message")
     assert [e.data["usage"]["total_tokens"] for e in rows if e.kind == "agent_message"] == [15] * 4
     summary = inspect_trace(directory)
     assert summary["session_closed"] and not summary["unfinished_spans"]

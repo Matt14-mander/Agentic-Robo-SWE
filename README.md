@@ -7,6 +7,9 @@ M7.1 新增可选[结构化修复轨迹](docs/phase71-structured-repair-traces.m
 操作和开发验证，为前移至 M8 的验证技能库准备证据；技能提炼与 SFT/RLVR 尚未实现。
 M7.1 [四组公平消融运行器](docs/phase71-fair-ablations.md)支持独立能力策略、统一失败分类、
 预算约束和真实 C++ scripted smoke；入口为 `scripts/run_ablation.py`。
+2026-10-29 [首轮真实模型四组结果](docs/experiments/m71-live-20261029.md)：当前 `deepseek-chat`
+别名实际返回 `deepseek-flash`；补齐校准阻断后四组均 8/8，总 token 为基础组的
+1.00× / 1.21× / 2.11× / 2.56×。公开小题出现天花板效应，尚未证明专业能力的成功率增益。
 
 An autonomous, simulation-in-the-loop software engineering agent for robotics. Built with LangGraph to debug and verify embodied AI algorithms.
 
@@ -562,7 +565,7 @@ langgraph.json    # Studio 入口
 | 6.2 | 数值正确性门禁 — Dense/Sparse FD/AD/CodeGen 等价性与固定 seed | ✅ 完成 |
 | 6.3 | Pinocchio 集成 — RNEA CodeGen、解析导数与可复现控制循环 | ✅ 完成 |
 | 6.4 | Crocoddyl/MPC — LQR、真实 MPC 与受控 ABA 导数替换 | ✅ 50 次采样原生链路跑通；正确性 3/3，性能门禁 2/3（单进程噪声），保持原生 |
-| M2 | Robo-SWE 专业 Benchmark — 20–30 题与 Harness/RAG/Tools/Validator 消融 | 🚧 M2.0：新增 8 个受控 C++17 任务，组合共 17 题；Agent 实测与正式消融待开展 |
+| M2 | Robo-SWE 专业 Benchmark — 20–30 题与 Harness/RAG/Tools/Validator 消融 | 🚧 8 题首轮真实四组消融完成，各组 8/8；组合 17 题、重复轮次与隐藏评测待完成 |
 | 7.0 | 外部仓库、CMake/clangd 与候选/oracle 分离评测 | ✅ 架构实现、首轮验收通过；最终容器复验受 WSL 只读文件系统阻塞，详见验收记录 |
 
 CppADCodeGen 作为首个机器人优化专业能力包，而不是项目的全部。领域逻辑保持可插拔，建设顺序为

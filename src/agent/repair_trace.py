@@ -188,6 +188,9 @@ class RepairTrace:
             if isinstance(message, AIMessage):
                 self.emit("agent_message", **common, text=_public_text(message.content),
                           usage=getattr(message, "usage_metadata", None),
+                          provider_response={key: message.response_metadata[key] for key in
+                                             ("model_name", "model", "system_fingerprint", "finish_reason")
+                                             if key in message.response_metadata},
                           epistemic_status="agent_statement_not_verified")
                 for call in message.tool_calls:
                     self.emit("tool_requested", **common, tool_call_id=call["id"],

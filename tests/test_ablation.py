@@ -148,6 +148,40 @@ def test_matrix_freezes_inputs_resets_workspaces_and_keeps_final_verdict_outside
             manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
             assert manifest["environment"]["model"] == "scripted_smoke_v1"
     assert all(value["case_cluster_bootstrap_95"] is None for value in report["summary"].values())
+    # Audit real traces against aggregate counters, then demonstrate evidence tampering detection.
+    import runpy
+    helpers = runpy.run_path(str(HARNESS_ROOT / "scripts/analyze_ablation.py"))
+    analyze = helpers["analyze"]
+    analysis = analyze(tmp_path / "matrix")
+    assert analysis["audit_ok"]
+    assert analysis["summary"]["base"]["usage"]["total_tokens"] == 4 * 45
+    assert analysis["summary"]["feedback"]["tool_calls"]["validate_development"] == 4
+    assert not analysis["summary"]["base"]["cache_usage_complete"]
+    from copy import deepcopy
+    merge = helpers["merge_calibration_recovery"]
+    blocked = deepcopy(analysis)
+    for row in blocked["results"]:
+        row.update(calibrated=False, success=False, usage={})
+        row["audit"]["trace_available"] = False
+    recovered = merge(blocked, analysis)
+    assert recovered["summary"]["base"]["usage"] == analysis["summary"]["base"]["usage"]
+    assert len(recovered["recovered_pre_model_blocks"]) == 16
+    with pytest.raises(ValueError, match="blocked before model"):
+        merge(analysis, analysis)
+    blocked["results"][0]["source_before"] = "different-source"
+    with pytest.raises(ValueError, match="starting source"):
+        merge(blocked, analysis)
+    changed = tmp_path / "matrix" / "runs" / "cpp_sample_period-1-base" / "workspace" / "candidate.hpp"
+    changed.write_text("tampered", encoding="utf-8")
+    assert not analyze(tmp_path / "matrix")["audit_ok"]
+    events_file = Path(report["results"][0]["trace"]) / "events.jsonl"
+    with events_file.open("ab") as stream:
+        stream.write(b'{"partial":')
+    assert not analyze(tmp_path / "matrix")["audit_ok"]
+    report["status"] = "running"
+    (tmp_path / "matrix" / "report.json").write_text(json.dumps(report), encoding="utf-8")
+    with pytest.raises(ValueError, match="completed"):
+        analyze(tmp_path / "matrix")
 
 
 def test_invalid_calibration_blocks_all_arms_without_model_calls(monkeypatch, tmp_path):

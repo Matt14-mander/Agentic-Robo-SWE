@@ -1,0 +1,66 @@
+{
+  "date_local": "2026-10-29",
+  "timezone": "Asia/Shanghai",
+  "base_git_revision": "80dafe407badd32b87cf097535d4d917bf35bddb",
+  "execution": "trusted-local Windows; network-enabled execution for DeepSeek API",
+  "environment_adjustment": "SSLKEYLOGFILE removed in experiment process; native TEMP/TMP retained",
+  "python": "3.13.2",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "packages": {
+    "langchain-openai": "1.2.2",
+    "langchain-core": "1.4.0",
+    "langgraph": "1.2.4",
+    "openai": "2.40.0"
+  },
+  "runtime_source_sha256": {
+    "src/agent/ablation.py": "0be35ea5d7aae038c23b594971a77a9dfa062dd8725f441faabf7a87f252585c",
+    "src/agent/ablation_native.py": "16a97474903e31a55f11f18544652086e2b3f0b06364064cf46ccd33de4b3c76",
+    "src/agent/ablation_worker.py": "0016889d435b00af6a5a532cdb990b7de6dfa36b49019546e066ae49b6a8ca85",
+    "src/agent/repair_trace.py": "b79dc362330c02d47a1e364275a8313a27379553449656eca2868e548f6b3248",
+    "src/agent/config.py": "c87436c2660ee81c25f2510af752207b94eecdb1315ea09fed8dcd90e9d0d2d4",
+    "src/agent/containers.py": "e4917215d5300ea0bce46014d3d6eeb259423af60526a11d09e373802862d1c8"
+  },
+  "preflight": {
+    "requested_model": "deepseek-chat",
+    "returned_model": "deepseek-flash",
+    "input_tokens": 7,
+    "output_tokens": 1,
+    "cached_input_tokens": 0,
+    "included_in_matrix_cost": false
+  },
+  "excluded_launches": [
+    ".agent_state/ablation-live-20261029-r1",
+    ".agent_state/ablation-preflight-20261029"
+  ],
+  "calibration_recovery_smoke": ".agent_state/ablation-preflight-20261029-native-temp",
+  "price_reference": {
+    "url": "https://api-docs.deepseek.com/quick_start/pricing/",
+    "accessed": "2026-10-29",
+    "model": "deepseek-flash",
+    "usd_per_million_tokens": {
+      "cache_hit": [
+        0.003,
+        0.006
+      ],
+      "cache_miss": [
+        0.15,
+        0.3
+      ],
+      "output": [
+        0.6,
+        1.2
+      ]
+    },
+    "interpretation": "off-peak to peak range, not an invoice"
+  },
+  "recovery": {
+    "directory": ".agent_state/ablation-live-20261029-r1-recovery",
+    "case": "cpp_anti_windup",
+    "seed": 3,
+    "purpose": "Fill four pre-model calibration blocks, preserving arm order",
+    "original_reference_observation_rows": 19,
+    "recheck_reference_observation_rows": 28,
+    "recheck_exit_code": 0,
+    "root_cause": "unconfirmed; original runtime exit code was not retained"
+  }
+}
