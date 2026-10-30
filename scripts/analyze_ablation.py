@@ -23,10 +23,12 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def analyze(directory: Path) -> dict[str, Any]:
+def analyze(directory: Path, *, allow_incomplete: bool = False) -> dict[str, Any]:
     report = json.loads((directory / "report.json").read_text(encoding="utf-8"))
     protocol = json.loads((directory / "protocol.json").read_text(encoding="utf-8"))
-    if report["status"] != "completed" or len(report["results"]) != report["planned_runs"]:
+    complete = report["status"] == "completed" and len(report["results"]) == report["planned_runs"]
+    partial = allow_incomplete and report["status"] == "interrupted"
+    if not complete and not partial:
         raise ValueError("Analyze only completed experiments; incomplete runs need a separate report")
     if report["protocol_id"] != protocol["protocol_id"]:
         raise ValueError("Report/protocol identity mismatch")
@@ -36,8 +38,11 @@ def analyze(directory: Path) -> dict[str, Any]:
         raise ValueError("Report changed frozen protocol fields")
     expected = {(case["id"], repeat, arm) for case in protocol["catalog"]
                 for repeat in range(1, protocol["repeats"] + 1) for arm in ARMS}
+    if report["planned_runs"] != len(expected):
+        raise ValueError("Planned runs do not match the frozen catalog")
     observed = [(row["case_id"], row["repeat"], row["arm"]) for row in report["results"]]
-    if len(set(observed)) != len(observed) or set(observed) != expected:
+    if (len(set(observed)) != len(observed) or not set(observed) <= expected or
+            (not partial and set(observed) != expected)):
         raise ValueError("Missing, duplicated or unexpected attempts")
     budget = Budget(**report["budget"])
     rows = []
@@ -132,12 +137,17 @@ def analyze(directory: Path) -> dict[str, Any]:
                      "intermediate_tool_failures": dict(tool_failures), "audit": audit,
                      "source_before": row["source_before"], "source_after": row["source_after"]})
     return {"schema_version": 1, "mode": report["mode"], "status": report["status"],
+            "analysis_kind": "complete_experiment_audit" if complete else "partial_experiment_audit",
+            "experiment_complete": complete, "observed_runs": len(rows),
+            "missing_attempts": [{"case_id": case_id, "repeat": repeat, "arm": arm}
+                                 for case_id, repeat, arm in sorted(expected - set(observed))],
+            "summary_scope": "observed_attempts_only" if partial else "complete_experiment",
             "evaluation_scope": report["evaluation_scope"], "requested_model": report["environment"]["model"],
             "environment_id": report["environment_id"],
             "protocol_id": report["protocol_id"], "report_sha256": sha256(directory / "report.json"),
             "protocol_sha256": sha256(directory / "protocol.json"), "budget": report["budget"],
             "seed": report["seed"], "repeats": report["repeats"], "planned_runs": report["planned_runs"],
-            "audit_ok": all(not row["audit"]["issues"] for row in rows),
+            "audit_ok": bool(rows) and all(not row["audit"]["issues"] for row in rows),
             "cost_scope": "provider-reported returned responses; not a billing receipt; excludes preflight",
             "summary": summarize_rows(rows, report["mode"], report["seed"]), "results": rows}
 
@@ -174,6 +184,8 @@ def summarize_rows(rows: list[dict[str, Any]], mode: str, seed: int) -> dict[str
 
 def merge_calibration_recovery(primary: dict[str, Any], recovery: dict[str, Any]) -> dict[str, Any]:
     """Fill only pre-model calibration blocks; never replace a paid failed attempt."""
+    if any(not segment.get("experiment_complete", True) for segment in (primary, recovery)):
+        raise ValueError("Incomplete experiments cannot be merged as calibration recovery")
     for key in ("budget", "mode", "environment_id", "requested_model", "evaluation_scope", "repeats"):
         if primary[key] != recovery[key]:
             raise ValueError(f"Recovery changed {key}")
@@ -205,14 +217,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("directory", type=Path)
     parser.add_argument("--recovery", type=Path, help="Fill only previously uncalibrated, unexecuted slots")
+    parser.add_argument("--allow-incomplete", action="store_true",
+                        help="Audit only saved attempts of an interrupted run; never declare the experiment complete")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    result = analyze(args.directory)
+    result = analyze(args.directory, allow_incomplete=args.allow_incomplete)
     if args.recovery:
         result = merge_calibration_recovery(result, analyze(args.recovery))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({"audit_ok": result["audit_ok"], "summary": result["summary"]}, indent=2))
+    print(json.dumps({"audit_ok": result["audit_ok"], "experiment_complete": result.get("experiment_complete"),
+                      "summary": result["summary"]}, indent=2))
     return 0 if result["audit_ok"] else 1
 
 

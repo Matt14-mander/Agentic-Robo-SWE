@@ -99,6 +99,9 @@ std::vector<Sample> make_samples(std::uint64_t seed, std::size_t random_samples)
       {"boundary", {2.0, 4.0}}, {"boundary", {-2.0, -4.0}},
       {"boundary", {2.0, -4.0}}, {"boundary", {-2.0, 4.0}},
   };
+#ifdef ABLATION_RANDOM_ONLY
+  samples.clear();
+#endif
   std::uint64_t state = seed == 0 ? 1 : seed;
   for (std::size_t index = 0; index < random_samples; ++index) {
     const double x0 = -2.0 + 4.0 * next_unit(state);

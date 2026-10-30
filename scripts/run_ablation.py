@@ -15,6 +15,9 @@ def main() -> int:
     mode.add_argument("--live", action="store_true", help="Run configured paid LLM")
     parser.add_argument("--trusted-local", action="store_true", help="Allow native candidate code on host")
     parser.add_argument("--compiler", default="g++")
+    parser.add_argument("--suite", choices=("robotics", "professional"), default="robotics")
+    parser.add_argument("--split", choices=("public", "independent"), default="public")
+    parser.add_argument("--dependency-root", type=Path, help="Optional pinned Linux dependency tree")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--case", action="append", dest="cases")
     parser.add_argument("--repeats", type=int, default=1)
@@ -29,7 +32,8 @@ def main() -> int:
         report = run_matrix(output=output, budget=Budget(args.max_steps, args.max_tools,
                             args.max_tokens, args.timeout), repeats=args.repeats, seed=args.seed,
                             mode="scripted_smoke" if args.smoke else "live", compiler=args.compiler,
-                            selected=args.cases, trusted_local=args.trusted_local)
+                            selected=args.cases, trusted_local=args.trusted_local,
+                            suite=args.suite, split=args.split, dependency_root=args.dependency_root)
     except (OSError, ValueError) as exc:
         print(f"ERROR: {exc}")
         return 2

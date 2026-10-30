@@ -24,7 +24,8 @@ def _finite_number(value: Any) -> TypeGuard[int | float]:
     return type(value) in (int, float) and math.isfinite(value)
 
 
-def evaluate_correctness(raw: dict[str, Any]) -> dict[str, Any]:
+def evaluate_correctness(raw: dict[str, Any], *,
+                         expected_inputs: list[list[float]] | None = None) -> dict[str, Any]:
     if not isinstance(raw, dict):
         raise ValueError("RNEA observations must be a JSON object")
     if raw.get("schema_version") != 1 or raw.get("nq") != 2 or raw.get("nv") != 2:
@@ -32,7 +33,7 @@ def evaluate_correctness(raw: dict[str, Any]) -> dict[str, Any]:
     if raw.get("urdf_sha256") != model_contract()["urdf_sha256"]:
         raise ValueError("URDF fingerprint does not match the fixed official model")
     records = raw.get("samples")
-    expected = samples()
+    expected = samples() if expected_inputs is None else expected_inputs
     if not isinstance(records, list) or len(records) != len(expected):
         raise ValueError("Incomplete official RNEA samples")
     failures: list[dict[str, Any]] = []

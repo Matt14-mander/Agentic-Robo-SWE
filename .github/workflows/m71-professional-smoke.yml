@@ -1,0 +1,56 @@
+name: M7.1 professional smoke (no model API)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  professional-smoke:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install native build dependencies
+        run: >-
+          sudo apt-get update && sudo apt-get install -y
+          cmake ninja-build g++ git pkg-config libgtest-dev libeigen3-dev liburdfdom-dev
+          clang-14=1:14.0.0-1ubuntu1.1
+          libboost-filesystem-dev libboost-serialization-dev libboost-system-dev
+      - name: Install locked Python runtime
+        run: |
+          uv python install 3.12
+          uv sync --frozen --extra dev
+      - name: Bootstrap fixed AD and Pinocchio revisions
+        run: |
+          uv run python scripts/bootstrap_autodiff_codegen.py
+          uv run python scripts/bootstrap_pinocchio.py
+      - name: Verify protocol and split rejection tests offline
+        run: uv run pytest -q tests/test_ablation.py tests/test_ablation_suite.py tests/test_repair_trace.py
+      - name: Preserve the Clang C++ driver invocation
+        run: |
+          mkdir -p .agent_state/toolchains
+          cat > .agent_state/toolchains/clang++ <<'DRIVER'
+          #!/bin/sh
+          exec /usr/bin/clang++-14 "$@"
+          DRIVER
+          chmod +x .agent_state/toolchains/clang++
+      - name: Run 17 cases and all four arms with independent inputs
+        run: >-
+          uv run python scripts/run_ablation.py --smoke --trusted-local
+          --compiler "$PWD/.agent_state/toolchains/clang++"
+          --suite professional --split independent --output .agent_state/m71-professional-smoke
+      - name: Audit trace and source evidence
+        run: >-
+          uv run python scripts/analyze_ablation.py .agent_state/m71-professional-smoke
+          --output .agent_state/m71-professional-smoke/audit.json
+      - name: Preserve evidence even if calibration or execution fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m71-professional-smoke
+          path: |
+            .agent_state/m71-professional-smoke/**/*.json
+            .agent_state/m71-professional-smoke/**/*.jsonl
+            .agent_state/m71-professional-smoke/**/*.hpp
+            .agent_state/m71-professional-smoke/**/worker.stderr
+          if-no-files-found: ignore

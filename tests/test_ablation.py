@@ -159,6 +159,28 @@ def test_matrix_freezes_inputs_resets_workspaces_and_keeps_final_verdict_outside
     assert not analysis["summary"]["base"]["cache_usage_complete"]
     from copy import deepcopy
     merge = helpers["merge_calibration_recovery"]
+    partial_report = deepcopy(report)
+    partial_report.update(status="interrupted", results=report["results"][:-1])
+    report_path = tmp_path / "matrix" / "report.json"
+    report_path.write_text(json.dumps(partial_report), encoding="utf-8")
+    with pytest.raises(ValueError, match="completed"):
+        analyze(tmp_path / "matrix")
+    partial = analyze(tmp_path / "matrix", allow_incomplete=True)
+    assert partial["audit_ok"] and not partial["experiment_complete"]
+    assert partial["observed_runs"] == 15 and len(partial["missing_attempts"]) == 1
+    assert partial["summary_scope"] == "observed_attempts_only"
+    with pytest.raises(ValueError, match="Incomplete"):
+        merge(partial, analysis)
+    partial_report["planned_runs"] = 15
+    report_path.write_text(json.dumps(partial_report), encoding="utf-8")
+    with pytest.raises(ValueError, match="Planned runs"):
+        analyze(tmp_path / "matrix", allow_incomplete=True)
+    partial_report["planned_runs"] = report["planned_runs"]
+    partial_report["results"].append(partial_report["results"][0])
+    report_path.write_text(json.dumps(partial_report), encoding="utf-8")
+    with pytest.raises(ValueError, match="duplicated"):
+        analyze(tmp_path / "matrix", allow_incomplete=True)
+    report_path.write_text(json.dumps(report), encoding="utf-8")
     blocked = deepcopy(analysis)
     for row in blocked["results"]:
         row.update(calibrated=False, success=False, usage={})

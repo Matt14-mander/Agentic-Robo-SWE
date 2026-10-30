@@ -17,8 +17,9 @@ ARTIFACT_ROOT = PROJECT_ROOT / ".agent_state/domain_artifacts/cpp_robotics"
 TARGET = "robotics_cpp_validator"
 
 
-def judge_observations(scenario: str, text: str) -> dict[str, Any]:
-    inputs = samples(scenario)
+def judge_observations(scenario: str, text: str, *,
+                       inputs: list[list[float]] | None = None) -> dict[str, Any]:
+    inputs = samples(scenario) if inputs is None else inputs
     rows = text.splitlines()
     if len(rows) != len(inputs):
         raise ValueError("Incomplete or extra observation rows")

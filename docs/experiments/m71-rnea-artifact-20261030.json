@@ -1,0 +1,44 @@
+{
+  "archive": ".agent_state/agentic-robo-swe-m71-rnea-direct-20261030.tar.gz",
+  "archive_sha256": "7eb7eca2e09815efc7fdaed9ee4930aa884799ee10c4d876a8456df2111f70cb",
+  "bytes": 509359,
+  "entries": 327,
+  "status": "completed",
+  "calibration": [
+    {
+      "case_id": "rnea_acceleration_slice",
+      "valid": true,
+      "splits": {
+        "development": {
+          "broken": "numerical_mismatch",
+          "reference_passed": true,
+          "reference_exit": 0
+        },
+        "heldout": {
+          "broken": "numerical_mismatch",
+          "reference_passed": true,
+          "reference_exit": 0
+        }
+      }
+    },
+    {
+      "case_id": "rnea_missing_velocity",
+      "valid": true,
+      "splits": {
+        "development": {
+          "broken": "numerical_mismatch",
+          "reference_passed": true,
+          "reference_exit": 0
+        },
+        "heldout": {
+          "broken": "numerical_mismatch",
+          "reference_passed": true,
+          "reference_exit": 0
+        }
+      }
+    }
+  ],
+  "events_files": 8,
+  "execution_receipts": 18,
+  "excluded": "build directories and .exe/.so/.o/.a binaries; source, observations, commands, protocol and traces retained"
+}

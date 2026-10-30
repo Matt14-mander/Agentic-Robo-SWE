@@ -1,0 +1,2808 @@
+{
+  "schema_version": 1,
+  "mode": "scripted_smoke",
+  "status": "completed",
+  "evaluation_scope": "public_synthetic_disjoint_inputs_not_secure_hidden",
+  "requested_model": "scripted_smoke_v1",
+  "environment_id": "e050e5545e178ebff3e4b00b126c6850f767a6445b45a58b195d21b37650f5f3",
+  "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+  "report_sha256": "7e658e70c35ebdca054e58d1b29e2292a56c649d2adaf95c0920c3546f3838b8",
+  "protocol_sha256": "3711ac78f43a5dc72f914676ee1eb2821cf9875ac17b2052f6e4b31ade0725fc",
+  "budget": {
+    "max_steps": 8,
+    "max_tools": 12,
+    "max_tokens": 16000,
+    "timeout_seconds": 300
+  },
+  "seed": 0,
+  "repeats": 1,
+  "planned_runs": 36,
+  "audit_ok": true,
+  "cost_scope": "provider-reported returned responses; not a billing receipt; excludes preflight",
+  "summary": {
+    "base": {
+      "runs": 9,
+      "calibrated_runs": 9,
+      "successes": 9,
+      "end_to_end_success_rate": 1.0,
+      "case_cluster_bootstrap_95": null,
+      "failure_counts": {
+        "none": 9
+      },
+      "model_quality_claim": false,
+      "usage": {
+        "input_tokens": 270,
+        "output_tokens": 135,
+        "total_tokens": 405,
+        "model_responses": 27
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "tool_calls": {
+        "read_candidate": 9,
+        "patch_candidate": 9
+      },
+      "intermediate_tool_failures": {},
+      "development_validations": {},
+      "tokens_per_success": 45.0,
+      "attempt_seconds": 39.87711736199981,
+      "median_attempt_seconds": 4.220057377000103,
+      "final_validation_seconds": 20.999382379000508,
+      "trace_recording_seconds": 4.734394004998194
+    },
+    "docs": {
+      "runs": 9,
+      "calibrated_runs": 9,
+      "successes": 9,
+      "end_to_end_success_rate": 1.0,
+      "case_cluster_bootstrap_95": null,
+      "failure_counts": {
+        "none": 9
+      },
+      "model_quality_claim": false,
+      "usage": {
+        "input_tokens": 270,
+        "output_tokens": 135,
+        "total_tokens": 405,
+        "model_responses": 27
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "tool_calls": {
+        "read_candidate": 9,
+        "patch_candidate": 9
+      },
+      "intermediate_tool_failures": {},
+      "development_validations": {},
+      "tokens_per_success": 45.0,
+      "attempt_seconds": 37.833746098999654,
+      "median_attempt_seconds": 4.067727295000168,
+      "final_validation_seconds": 19.330378331999782,
+      "trace_recording_seconds": 4.911592850999114
+    },
+    "tools": {
+      "runs": 9,
+      "calibrated_runs": 9,
+      "successes": 9,
+      "end_to_end_success_rate": 1.0,
+      "case_cluster_bootstrap_95": null,
+      "failure_counts": {
+        "none": 9
+      },
+      "model_quality_claim": false,
+      "usage": {
+        "input_tokens": 450,
+        "output_tokens": 225,
+        "total_tokens": 675,
+        "model_responses": 45
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "tool_calls": {
+        "read_candidate": 9,
+        "patch_candidate": 9,
+        "inspect_candidate_ad": 9,
+        "compile_candidate_cpp": 9
+      },
+      "intermediate_tool_failures": {},
+      "development_validations": {},
+      "tokens_per_success": 75.0,
+      "attempt_seconds": 60.596608056999685,
+      "median_attempt_seconds": 6.487352879000355,
+      "final_validation_seconds": 21.56628561200023,
+      "trace_recording_seconds": 7.165564508996795
+    },
+    "feedback": {
+      "runs": 9,
+      "calibrated_runs": 9,
+      "successes": 9,
+      "end_to_end_success_rate": 1.0,
+      "case_cluster_bootstrap_95": null,
+      "failure_counts": {
+        "none": 9
+      },
+      "model_quality_claim": false,
+      "usage": {
+        "input_tokens": 540,
+        "output_tokens": 270,
+        "total_tokens": 810,
+        "model_responses": 54
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "tool_calls": {
+        "read_candidate": 9,
+        "patch_candidate": 9,
+        "inspect_candidate_ad": 9,
+        "compile_candidate_cpp": 9,
+        "validate_development": 9
+      },
+      "intermediate_tool_failures": {},
+      "development_validations": {
+        "passed": 9
+      },
+      "tokens_per_success": 90.0,
+      "attempt_seconds": 83.25823631899948,
+      "median_attempt_seconds": 9.096068406000086,
+      "final_validation_seconds": 19.454856978000407,
+      "trace_recording_seconds": 8.295348013006787
+    }
+  },
+  "results": [
+    {
+      "case_id": "cpp_joint_wrap",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "8dc6ebffe842c301df643a275ae0cb8c13044f88f2d9da5bdf1429bf7d1827ef",
+      "execution_order": 0,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.600885611999729,
+      "final_validation_seconds": 3.1952844090001236,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "c432f949f8b24fbd9880a9373ddcc550",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.4610644780000257,
+        "recording_seconds": 0.39940608999995675,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "2be8c4f76338d9fcf6f7281fe33269c7f0f198f852a2142006f35bbf848e86a8",
+        "manifest_sha256": "7ae84069a03b82e3b7b64b9ff9802f22d71d31cc4506bbc0e0a0051ad7f1162e"
+      },
+      "source_before": "e425ff3e6cb72e6b20fdd6c189608b85e13ec38ad0e98d0b14be96f2b437f0e1",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_joint_wrap",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "8dc6ebffe842c301df643a275ae0cb8c13044f88f2d9da5bdf1429bf7d1827ef",
+      "execution_order": 1,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 5.3439440480001394,
+      "final_validation_seconds": 2.707571906999874,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "d9b4eab845cd4322bfbb74ffd96e52d8",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.9169318760000351,
+        "recording_seconds": 0.8205712360008874,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "5fd0ad468a1e02a24cf546dc5a12b081fe3a75846196fca02871b21070c03ff0",
+        "manifest_sha256": "ebab24abe48e5d70b2d789a91a4955532d95f89cde6c89c5d5d5105e2c9d4dbb"
+      },
+      "source_before": "e425ff3e6cb72e6b20fdd6c189608b85e13ec38ad0e98d0b14be96f2b437f0e1",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_joint_wrap",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "8dc6ebffe842c301df643a275ae0cb8c13044f88f2d9da5bdf1429bf7d1827ef",
+      "execution_order": 2,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 8.716800707999937,
+      "final_validation_seconds": 3.742718678000074,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "3e7b38f5b3194df1aab0aaa012e8086b",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 4.3277837639998324,
+        "recording_seconds": 1.0448764479965575,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "aedb2fe7aef5537d65c045d3ec837bcc12433eb432b5404de81fd6f9845e996c",
+        "manifest_sha256": "cf7392a8c1a2d224481c36b3bee99a0297acede6f1f2fa8c21b7cf3c65950385"
+      },
+      "source_before": "e425ff3e6cb72e6b20fdd6c189608b85e13ec38ad0e98d0b14be96f2b437f0e1",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_joint_wrap",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "8dc6ebffe842c301df643a275ae0cb8c13044f88f2d9da5bdf1429bf7d1827ef",
+      "execution_order": 3,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 12.54266997500008,
+      "final_validation_seconds": 2.0617515339999954,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "2a4bb01adec548d4af914c9e0b2e88b1",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 8.469257542999912,
+        "recording_seconds": 1.12531932100228,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "8e5bf2672dbf2bb1539ad0fdcdff8779e5a092f23c0a3216075fef14455f69e4",
+        "manifest_sha256": "94095f6503840e50e88a92ea0f1971e8461ab5154b5e555df82aaf2c71048610"
+      },
+      "source_before": "e425ff3e6cb72e6b20fdd6c189608b85e13ec38ad0e98d0b14be96f2b437f0e1",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_trajectory_scaling",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "3266d95370dab7f780e54479b6b52dbde6f3ae8c1859a2a0e6736cee4940176e",
+      "execution_order": 4,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.162554445999831,
+      "final_validation_seconds": 1.6245406259999982,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "4c4c5d2396c44b5285587d3b9ba380ce",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.3213993039998968,
+        "recording_seconds": 0.29301078999924357,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "d73e3368ddf5d885648e54ffe2c44ddecc69b8028639642cb694c2a431142c0c",
+        "manifest_sha256": "7d906517a0b705bacb86abf339d4eeb59c4c4429dc32e73d4992c98572a7c24c"
+      },
+      "source_before": "ef2f2ce0e4343cfaa558868cbf37737f23ee4b9b7d7aa167dc92ba6058b0853d",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_trajectory_scaling",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "3266d95370dab7f780e54479b6b52dbde6f3ae8c1859a2a0e6736cee4940176e",
+      "execution_order": 5,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 6.88656842499995,
+      "final_validation_seconds": 2.660884464999981,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "ad93e08a8bfb488db3a400b7e9d1468c",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 3.3560068980000324,
+        "recording_seconds": 0.8709321040005307,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "fef5c645906b61f32e7b711bbd2ec2b889c352ade2496d6368619b272ad357c0",
+        "manifest_sha256": "67c417e6426e04e1e4a8763a54a5c9a464c0d303aee0b7f6bc6b09c15bb093ff"
+      },
+      "source_before": "ef2f2ce0e4343cfaa558868cbf37737f23ee4b9b7d7aa167dc92ba6058b0853d",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_trajectory_scaling",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "3266d95370dab7f780e54479b6b52dbde6f3ae8c1859a2a0e6736cee4940176e",
+      "execution_order": 6,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 9.359546984999724,
+      "final_validation_seconds": 2.9184156020000955,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "9ca677b445804681827b00e4b54e04a5",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 5.378380863000075,
+        "recording_seconds": 0.9180998040001214,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "516d234b46466f99284b5e275047a32244a9b18470c27525f05a9a8a30942047",
+        "manifest_sha256": "1d8ff5e9a68343646774ed33a19e0f923f9fed00d1901a51c6415a2099c83fbf"
+      },
+      "source_before": "ef2f2ce0e4343cfaa558868cbf37737f23ee4b9b7d7aa167dc92ba6058b0853d",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_trajectory_scaling",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "3266d95370dab7f780e54479b6b52dbde6f3ae8c1859a2a0e6736cee4940176e",
+      "execution_order": 7,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 5.556234572999983,
+      "final_validation_seconds": 2.133417618999829,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "348cf2a745aa4bb1b605709203e7c9dd",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 1.0418648390000271,
+        "recording_seconds": 0.9799468420010271,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "6090a8dfe20d543ad07f1282826d49fb1a8b09f91bf34e2f9d77e38c24bc21f5",
+        "manifest_sha256": "001fd18869e443f4373a7c10e6ebcb6dcf0c282a3b1079cd95cb96a38ad6b12f"
+      },
+      "source_before": "ef2f2ce0e4343cfaa558868cbf37737f23ee4b9b7d7aa167dc92ba6058b0853d",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_jacobian_layout",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "5b096bcb02356caa0aa75d3d637f9a9ef08f70266f6f3c2baac4b0b1fd0fd194",
+      "execution_order": 8,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 5.417202812999676,
+      "final_validation_seconds": 1.462935688000016,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "d119ccc4dc0b4d24a118da93dc151aba",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 2.3749236310000015,
+        "recording_seconds": 0.8327542720003294,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "83b7b4ed23703e4c5865a29991050126dac69fd7a76351e3c6bfdbd25e66b4bb",
+        "manifest_sha256": "84a27673d4018d8d25fc22ffa08d77f16a083560a7bbb7d577526f9110d35a99"
+      },
+      "source_before": "75b4e884014407187e32d01f52b9daedc2c15f3d2ee8c797ec05212e81ea928b",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_jacobian_layout",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "5b096bcb02356caa0aa75d3d637f9a9ef08f70266f6f3c2baac4b0b1fd0fd194",
+      "execution_order": 9,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 8.819296844999826,
+      "final_validation_seconds": 1.8939799350000612,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "02d26387cad14ac4bd75e58d60108050",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 5.366920639,
+        "recording_seconds": 0.8787149189993215,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "045bb9c193b804a93d8387eba721601e94768463e63e7be5595baa9d4badbec1",
+        "manifest_sha256": "8cdea940253d6c217ee8c7aeaa9003c7748e03d01fc787d58372eaf2a323f01a"
+      },
+      "source_before": "75b4e884014407187e32d01f52b9daedc2c15f3d2ee8c797ec05212e81ea928b",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_jacobian_layout",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "5b096bcb02356caa0aa75d3d637f9a9ef08f70266f6f3c2baac4b0b1fd0fd194",
+      "execution_order": 10,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.9218314140002803,
+      "final_validation_seconds": 2.4173210949998065,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "0ff3e555f59e468f8da23a435a9d9445",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.42734940799982724,
+        "recording_seconds": 0.38092299799927787,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "a7140a3ba9507553d0c9bcc675be05b14b42f9cfb405ed973cfbe5b642a5ef98",
+        "manifest_sha256": "2ab061818ad3da3667e0d4783dbae441b045be52ec9aa750f82b76bc7a62c842"
+      },
+      "source_before": "75b4e884014407187e32d01f52b9daedc2c15f3d2ee8c797ec05212e81ea928b",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_jacobian_layout",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "5b096bcb02356caa0aa75d3d637f9a9ef08f70266f6f3c2baac4b0b1fd0fd194",
+      "execution_order": 11,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.871063929999764,
+      "final_validation_seconds": 2.2973586329999307,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "6f582d66da7c4c96a38078bbdcaf197c",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.7011774730003708,
+        "recording_seconds": 0.632327818000249,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "c7295708bfb4edc7f49c48f312de4fe01c4f65d469800a1c10c01a2da1e36794",
+        "manifest_sha256": "a6f3846b7c2682e90660f7059c7d0fa1f39fdf3a9ddbadf2f536f4e65e827d65"
+      },
+      "source_before": "75b4e884014407187e32d01f52b9daedc2c15f3d2ee8c797ec05212e81ea928b",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_wrench_frame",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "5efc2934a6aa917e1d82b71bfcf4f27cae1e9671a571ac72b044595b762c8fdc",
+      "execution_order": 12,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 9.404258862999995,
+      "final_validation_seconds": 2.2724418759999025,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "c5e298aabd0648c7a4e69b22bd224390",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 5.3157618979998915,
+        "recording_seconds": 0.8831404370012024,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "263c1a52409851e8e3bb88991f0af488214c06b6700a28c4c236e4661a205c30",
+        "manifest_sha256": "a8a4b848e6c8b82c8d84f478ea92814f922253f7c32d118bbae086a12caa3798"
+      },
+      "source_before": "7e1838b456bc31fa612b9bff2c1e844f23dac500602e60497369883dc6dc212d",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_wrench_frame",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "5efc2934a6aa917e1d82b71bfcf4f27cae1e9671a571ac72b044595b762c8fdc",
+      "execution_order": 13,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.987921173000359,
+      "final_validation_seconds": 1.8869965979997687,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "4b7d9ec1b7c84f5e94393f8431e762fb",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.509597677000329,
+        "recording_seconds": 0.46303139399924476,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "849a2fa30968de39d6969638fe32fa49cdc1f63382252036c95244ef12cc558f",
+        "manifest_sha256": "8765c3f42d79d504084095ef946d143c91140be42a35f3944f3e6366753a390d"
+      },
+      "source_before": "7e1838b456bc31fa612b9bff2c1e844f23dac500602e60497369883dc6dc212d",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_wrench_frame",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "5efc2934a6aa917e1d82b71bfcf4f27cae1e9671a571ac72b044595b762c8fdc",
+      "execution_order": 14,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.7178722389999166,
+      "final_validation_seconds": 1.6555787639999835,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "5f4f7541d2394dc9951a2b8a1ae73d4c",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.6300179840000055,
+        "recording_seconds": 0.5900062509995223,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "70444c84aa4701af1d4c264ef9dd4f3c62f199986cfed4b144452be01010add6",
+        "manifest_sha256": "9ba3ca169aade6f78f03a50d87268b295b36c58a4fc131d9cd56a7b90ed02874"
+      },
+      "source_before": "7e1838b456bc31fa612b9bff2c1e844f23dac500602e60497369883dc6dc212d",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_wrench_frame",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "5efc2934a6aa917e1d82b71bfcf4f27cae1e9671a571ac72b044595b762c8fdc",
+      "execution_order": 15,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 6.1271163789997445,
+      "final_validation_seconds": 3.06097524300003,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "f5b2b93a131a4d9ab7f77a32e457b3de",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 2.661881729000015,
+        "recording_seconds": 0.5801540059987929,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "746286d3bc38e38c3ed1d6d702e6208a470f381351fa26c320790197b303a399",
+        "manifest_sha256": "01ddffe068f4f4e5dc274d96e786c378aa643b1c177c6637df8a313af636a045"
+      },
+      "source_before": "7e1838b456bc31fa612b9bff2c1e844f23dac500602e60497369883dc6dc212d",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_sample_period",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "c3d55dd4d2453e147a3ae0e20a1ff1200e0e6003fce450d65eddfa11689cc6aa",
+      "execution_order": 16,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.393030851999811,
+      "final_validation_seconds": 2.2884977180001442,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "689489acf2b447f0837171a1b90d032d",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.7120996799999375,
+        "recording_seconds": 0.6451742209983422,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "ca403fac14f3ad6a05d1bddb12d19f1aeb64143e5a88e8bcdd4b47b05253f414",
+        "manifest_sha256": "6d07674a9ca0a2933f0352fc1d7f813e4fed9e00af258948dc76472da722e285"
+      },
+      "source_before": "d1404bb1dffc77f3f2e828329006b9c0f91a28a935c9e80cc4dfe6141c312d49",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_sample_period",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "c3d55dd4d2453e147a3ae0e20a1ff1200e0e6003fce450d65eddfa11689cc6aa",
+      "execution_order": 17,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.2821414259997255,
+      "final_validation_seconds": 1.7487701380000544,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "83edaec1a83349cba4a299f2690817bf",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.6674675039998874,
+        "recording_seconds": 0.6092053119996308,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "73c2b4d2c24375be0a310cb291720722fc677d8900539f33a81c3a52f545a8d3",
+        "manifest_sha256": "70562811877618688243273621882cb5dc1b7efd6407bc0799974e0b46c6cfe3"
+      },
+      "source_before": "d1404bb1dffc77f3f2e828329006b9c0f91a28a935c9e80cc4dfe6141c312d49",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_sample_period",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "c3d55dd4d2453e147a3ae0e20a1ff1200e0e6003fce450d65eddfa11689cc6aa",
+      "execution_order": 18,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 6.487352879000355,
+      "final_validation_seconds": 2.117794705000051,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "f23f6e60d32e4f4aa3672d4bbd25e7ad",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 3.0223130609997497,
+        "recording_seconds": 0.7558561169994391,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "69a92a23f27dd6bbeeaff82686d877740eb93367372e81609df9f32360087005",
+        "manifest_sha256": "385a5ad8d58d02bdf2070df7b0eb58ecf67bdac04db36b85bbd69ba7fe372455"
+      },
+      "source_before": "d1404bb1dffc77f3f2e828329006b9c0f91a28a935c9e80cc4dfe6141c312d49",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_sample_period",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "c3d55dd4d2453e147a3ae0e20a1ff1200e0e6003fce450d65eddfa11689cc6aa",
+      "execution_order": 19,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 9.096068406000086,
+      "final_validation_seconds": 2.2464296699999977,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "36278eaa864443e1bdf4607e028429f9",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 5.476497045999622,
+        "recording_seconds": 0.8888242900006844,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "3a42328d5fc3dacfbcbd19b7c004a0bf1344095f1b9d5f6a0626129810dac61f",
+        "manifest_sha256": "6e2338c3c80785ba258e394d073291c926f07c9cf67c8e2bba59e371ddf611fe"
+      },
+      "source_before": "d1404bb1dffc77f3f2e828329006b9c0f91a28a935c9e80cc4dfe6141c312d49",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_quaternion_order",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "782ec30b6404de25de4ab0992a8c884d6727e952cb356735d4f2627a8bdf923e",
+      "execution_order": 20,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.067727295000168,
+      "final_validation_seconds": 2.104018250000081,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "10137e9c67c4418a8672428558a9bcf0",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.5203554859999713,
+        "recording_seconds": 0.4688565120000021,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "48c7cca4336245ad85cdd2bc8101ea08d98f12b13e06f3c8597f03a9ef4087cd",
+        "manifest_sha256": "12484b88f2b500b5190d8d6cfb3d9feb4b732eb413ee55a68d18a48be537e334"
+      },
+      "source_before": "babd927c7103b14308de6dac37099971afc4498fab1faac4bd932bfc17cbbce2",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_quaternion_order",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "782ec30b6404de25de4ab0992a8c884d6727e952cb356735d4f2627a8bdf923e",
+      "execution_order": 21,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 6.486772435000148,
+      "final_validation_seconds": 2.4520407639997757,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "5ca8b95148ed49299a4db0691e2b2b59",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 3.2217087150002044,
+        "recording_seconds": 0.7002393260022473,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "a5f00f7aafe7c252ba16dd69eac556bfec2fb2cecdaa33a2ca884420a8472a1c",
+        "manifest_sha256": "38142dac412ec7b920d753c066ac089dacaa6a23ebb7bbaf1935a89e9f0537d6"
+      },
+      "source_before": "babd927c7103b14308de6dac37099971afc4498fab1faac4bd932bfc17cbbce2",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_quaternion_order",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "782ec30b6404de25de4ab0992a8c884d6727e952cb356735d4f2627a8bdf923e",
+      "execution_order": 22,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 10.17459804300006,
+      "final_validation_seconds": 2.433927631000188,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "b69f55b55d434c38ab4f091e2f7aca8e",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 5.923568143000011,
+        "recording_seconds": 0.822438300000158,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "2ef78652a466fc5137ada5eab944ff877cc1a5f8ed7b476c5e0f2270207607a4",
+        "manifest_sha256": "9511e68c0a78b432818cd87c6309ae689591be62ea75642719ccfb081212bba6"
+      },
+      "source_before": "babd927c7103b14308de6dac37099971afc4498fab1faac4bd932bfc17cbbce2",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_quaternion_order",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "782ec30b6404de25de4ab0992a8c884d6727e952cb356735d4f2627a8bdf923e",
+      "execution_order": 23,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.195025307999913,
+      "final_validation_seconds": 1.9330703300001915,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "799db16dd0a9475189f47ac09f7e7a81",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.47568378699997993,
+        "recording_seconds": 0.4338535759984552,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "0f168a7b31347be86b1f73e5b95a1b08c13db81d12324adab55bd785ece6fe51",
+        "manifest_sha256": "f49093788b34418a59fb974da7c03684d16cb263e8ee3743c3e6d45577b8cb05"
+      },
+      "source_before": "babd927c7103b14308de6dac37099971afc4498fab1faac4bd932bfc17cbbce2",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_scalar_adl",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "01f0592897905a7b133e510198f4c2dfb5cd95e0d65f35d5c0c4c175c823a4d5",
+      "execution_order": 24,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 6.839324311999917,
+      "final_validation_seconds": 2.5461184880000474,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "6b4247371f3b46babf4fb80ed5ce2c48",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 2.96736072900012,
+        "recording_seconds": 0.7139466749977146,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "a9ff54b7b8868c5b4af9a736bbd4fc7655e1f3b1ecd0bf4d03c7d65164f7f6ad",
+        "manifest_sha256": "4697a6b031c9aeb39cf2f8faf061a37308b0468029b1315d47820006b2b8f8a1"
+      },
+      "source_before": "bcafc61c6519bf1cbb1eccdcca66ce265a21f13464744af2755934ce5a081e5c",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_scalar_adl",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "01f0592897905a7b133e510198f4c2dfb5cd95e0d65f35d5c0c4c175c823a4d5",
+      "execution_order": 25,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 9.048607198999889,
+      "final_validation_seconds": 2.0859149350003463,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "0f5463070c574119bae9432316966780",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 5.671431558999757,
+        "recording_seconds": 1.0163404379995882,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "25f06bf489f13ee1e4ffd6d13e767d3c2b390edcc36c3d2b4307a894ba33a148",
+        "manifest_sha256": "2dc7a9ad2ca2476b4f0d29382b900ac0f2cd2acdccf0a7307700010eecadd9d7"
+      },
+      "source_before": "bcafc61c6519bf1cbb1eccdcca66ce265a21f13464744af2755934ce5a081e5c",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_scalar_adl",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "01f0592897905a7b133e510198f4c2dfb5cd95e0d65f35d5c0c4c175c823a4d5",
+      "execution_order": 26,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.922247160999632,
+      "final_validation_seconds": 2.2656778860000486,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "d8fbe3bc003149d685bad6c531c3c59e",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.5018961099999615,
+        "recording_seconds": 0.45122631999993246,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "ba98348ef8ef30477242d47bd49868f5361b2119f4eaabaca6b76107c781aa37",
+        "manifest_sha256": "c50c77c983e2e27e21bc42c14d042b6a098cfc1eb68201fc8834a76cfde2c8af"
+      },
+      "source_before": "bcafc61c6519bf1cbb1eccdcca66ce265a21f13464744af2755934ce5a081e5c",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_scalar_adl",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "01f0592897905a7b133e510198f4c2dfb5cd95e0d65f35d5c0c4c175c823a4d5",
+      "execution_order": 27,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.775963950000005,
+      "final_validation_seconds": 2.3733979839998938,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "30c239d3ab7741759ea4dea3e562632e",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.5488757630000691,
+        "recording_seconds": 0.4983403789988188,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "f05cac98b553ddb720e1588f6ab98fd4e33bc614d6421c3894b627ce307b7d2a",
+        "manifest_sha256": "c58088b9afc03258fc088f9d455d005ad94547a3f2c3c7d5876086e1a8fecaab"
+      },
+      "source_before": "bcafc61c6519bf1cbb1eccdcca66ce265a21f13464744af2755934ce5a081e5c",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_reference_output",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "c604bd1721c1fb3f24ecb773001e9c17af11ceefd42249ff631842c66ad56362",
+      "execution_order": 28,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 6.882381135999822,
+      "final_validation_seconds": 1.515047955999762,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "067c36bb22a94ed6aeb348132d419040",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 3.764001532000293,
+        "recording_seconds": 0.9000209029995858,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "4155c9e78d0e9c6d336135957b3d2c73fd2668288a7f0a9fc49ad56ccd96177c",
+        "manifest_sha256": "9ff4d1e77d2a5c23d514cb2707163ec101d395111f6483dc926864858d7a103d"
+      },
+      "source_before": "9cb715a219aa4d2fcdefdf294528100e3c0b5c8aece84fe6e8488d08b62ecb38",
+      "source_after": "ddf2150b06606feb040f12e4d4ad36676c353654674c7eb6a2e28edafd517905"
+    },
+    {
+      "case_id": "cpp_reference_output",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "c604bd1721c1fb3f24ecb773001e9c17af11ceefd42249ff631842c66ad56362",
+      "execution_order": 29,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.079883891999998,
+      "final_validation_seconds": 2.6670673050002733,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "859164e5b6bc4225a6bbb9b6e0b70b55",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.45451490000004924,
+        "recording_seconds": 0.41315505399961694,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "b38f9752ed80308e3dc205d06ec3ff56ed4f3d611637a8b687a82c861143b466",
+        "manifest_sha256": "02ba7fe95ef7dcd7edf27cef1a8a5298c56b97421fcb9cc2213db369af8908c8"
+      },
+      "source_before": "9cb715a219aa4d2fcdefdf294528100e3c0b5c8aece84fe6e8488d08b62ecb38",
+      "source_after": "ddf2150b06606feb040f12e4d4ad36676c353654674c7eb6a2e28edafd517905"
+    },
+    {
+      "case_id": "cpp_reference_output",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "c604bd1721c1fb3f24ecb773001e9c17af11ceefd42249ff631842c66ad56362",
+      "execution_order": 30,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.249805811000442,
+      "final_validation_seconds": 1.8737622109997574,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "5ffc5ca9c4c24fbcbf75fd049bbfd371",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.5028991350000069,
+        "recording_seconds": 0.4516665930009367,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "d6f9142945099dd1d1e0096ca22a9a24aab37143a087d6dd19e455e3cdc2b057",
+        "manifest_sha256": "f0d294535ca6ca3cee41ce2f430e6a291d7df7ea9d5c50b36ec4f678bd52fe6d"
+      },
+      "source_before": "9cb715a219aa4d2fcdefdf294528100e3c0b5c8aece84fe6e8488d08b62ecb38",
+      "source_after": "ddf2150b06606feb040f12e4d4ad36676c353654674c7eb6a2e28edafd517905"
+    },
+    {
+      "case_id": "cpp_reference_output",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "c604bd1721c1fb3f24ecb773001e9c17af11ceefd42249ff631842c66ad56362",
+      "execution_order": 31,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 5.937091684999814,
+      "final_validation_seconds": 1.478524715000276,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "2dc3abc746b2469b9007153c203b757e",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 2.3518942020000395,
+        "recording_seconds": 0.7766730270013795,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "e47686f2924512983f3ca95585f0ce6e04e9129b2f86798598a2452a2246b457",
+        "manifest_sha256": "42a44913442e0567c5f8ee8846b422a0b1033cc27b7566ab8d8126fb5c84a5bc"
+      },
+      "source_before": "9cb715a219aa4d2fcdefdf294528100e3c0b5c8aece84fe6e8488d08b62ecb38",
+      "source_after": "ddf2150b06606feb040f12e4d4ad36676c353654674c7eb6a2e28edafd517905"
+    },
+    {
+      "case_id": "cpp_anti_windup",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "fcd1bcdf24d13fe1c115c057b23ab1ed9cfd6ccdba10771d37ade91c15549247",
+      "execution_order": 32,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.220057377000103,
+      "final_validation_seconds": 2.212049419000323,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "5a260d5405c64b779197f4ba964f4c28",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.6576503510000293,
+        "recording_seconds": 0.5676775100023406,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "946833a63983991f3f8cea04117d89f4ac7b24c745a23dad7205fe4ccbcfaf18",
+        "manifest_sha256": "25c5e4e1794fa9e04d5a49e310792317996dc642114f745851326a5b9605bfda"
+      },
+      "source_before": "434fcfcf538b78cbf8695fa692c6a2827e6242800152f52108bb3f8b0624687e",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_anti_windup",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "fcd1bcdf24d13fe1c115c057b23ab1ed9cfd6ccdba10771d37ade91c15549247",
+      "execution_order": 33,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 5.362672953999663,
+      "final_validation_seconds": 2.945379819000209,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "da1a014c265b4632981cf03b3dd6ac54",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.6102260769998793,
+        "recording_seconds": 0.5476079599998229,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "f3561143f0d25a8c78cd0199fc7a77985f8bce21c0c1efe422cbc1a2df962bc4",
+        "manifest_sha256": "b3c0c91759c235b6ac827ff7488d33e8e23400df4de6b8097e3755c36f4c4dba"
+      },
+      "source_before": "434fcfcf538b78cbf8695fa692c6a2827e6242800152f52108bb3f8b0624687e",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_anti_windup",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "fcd1bcdf24d13fe1c115c057b23ab1ed9cfd6ccdba10771d37ade91c15549247",
+      "execution_order": 34,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 7.698378421000143,
+      "final_validation_seconds": 2.044292865999978,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "1ec73524dd204425a58e5ea5db3c28ad",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 3.100159640000129,
+        "recording_seconds": 0.8901325339998039,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "2c9aaf6b72b63c9501a4ebda5ec7b912f6c6f30f4588b6768d891bae5ecf6af8",
+        "manifest_sha256": "08700311d153d9582e454c5128af7b750537cd23e932d66fd3e48ad26c21018d"
+      },
+      "source_before": "434fcfcf538b78cbf8695fa692c6a2827e6242800152f52108bb3f8b0624687e",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    },
+    {
+      "case_id": "cpp_anti_windup",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "90ac5b345e66e3eecbb7e1ff8d9c4adadb1c31a7faf66dfdb5d04b65ff35b9c7",
+      "case_spec_sha256": "fcd1bcdf24d13fe1c115c057b23ab1ed9cfd6ccdba10771d37ade91c15549247",
+      "execution_order": 35,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "correctness",
+        "reason": "correctness",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 7.930808866999996,
+      "final_validation_seconds": 2.0269478390000586,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "95ae78aade44412b9266ec609c4250e5",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 4.766843751000124,
+        "recording_seconds": 0.8624496010038456,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "ca7b62972fb4dec8eac30a03848003763dd6553180530ddc51ca3000598cb121",
+        "manifest_sha256": "7475d40ec10936e45c2d2f66f2e48a732f596a4affcda46e0d494ca6a1baf6e7"
+      },
+      "source_before": "434fcfcf538b78cbf8695fa692c6a2827e6242800152f52108bb3f8b0624687e",
+      "source_after": "914af9991561dd678de8cc165aa3cb79a4ce240d80b170ca4856e142ccece336"
+    }
+  ]
+}

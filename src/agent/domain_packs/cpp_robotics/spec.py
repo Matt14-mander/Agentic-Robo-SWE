@@ -10,9 +10,9 @@ VERSION = "0.1.0"
 SEED = 24680
 
 
-def samples(scenario: str) -> list[list[float]]:
+def samples(scenario: str, *, seed: int = SEED, include_fixed: bool = True) -> list[list[float]]:
     index = CASE_NAMES.index(scenario)
-    rng = random.Random(SEED + index)
+    rng = random.Random(seed + index)
     if scenario == "scalar_adl":
         fixed = [[0., 0.], [1., -.5], [-1., .8], [math.pi / 2, 0.]]
         extra = [[rng.uniform(-2, 2), rng.uniform(-2, 2)] for _ in range(24)]
@@ -46,7 +46,7 @@ def samples(scenario: str) -> list[list[float]]:
     else:
         fixed = [[3., -3.], [-3., 3.], [0., 0.], [7., -6.]]
         extra = [[rng.uniform(-20, 20), rng.uniform(-20, 20)] for _ in range(24)]
-    return fixed + extra
+    return (fixed if include_fixed else []) + extra
 
 
 def expected(scenario: str, x: list[float]) -> list[float]:

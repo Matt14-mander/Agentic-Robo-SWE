@@ -1,0 +1,14 @@
+{
+  "packages": [
+    "clang-14=1:14.0.0-1ubuntu1.1",
+    "libclang-common-14-dev=1:14.0.0-1ubuntu1.1"
+  ],
+  "package_sha256": {
+    "clang-14_1%3a14.0.0-1ubuntu1.1_amd64.deb": "15119d554a3cbe8ec6fd92dccde495de0eec4208151390ccb9c82ea05a057ced",
+    "libclang-common-14-dev_1%3a14.0.0-1ubuntu1.1_amd64.deb": "a190eb2456b0cd398f04423eee53140d65f5f90d2353ad957e7e5884276d90b9"
+  },
+  "compiler": "toolchains/clang14/install/usr/lib/llvm-14/bin/clang++",
+  "version": "Ubuntu clang version 14.0.0-1ubuntu1.1\nTarget: x86_64-pc-linux-gnu\nThread model: posix\nInstalledDir: /mnt/e/Project Learning/大模型/Agentic-Robo-SWE/.agent_state/toolchains/clang14/install/usr/lib/llvm-14/bin\n",
+  "purpose": "RNEA smoke compiler fallback; no system package installation",
+  "source": "Ubuntu jammy-updates/universe configured APT source"
+}

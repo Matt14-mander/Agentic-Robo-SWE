@@ -1,0 +1,1969 @@
+{
+  "schema_version": 1,
+  "mode": "scripted_smoke",
+  "status": "interrupted",
+  "analysis_kind": "partial_experiment_audit",
+  "experiment_complete": false,
+  "observed_runs": 24,
+  "missing_attempts": [
+    {
+      "case_id": "rnea_acceleration_slice",
+      "repeat": 1,
+      "arm": "base"
+    },
+    {
+      "case_id": "rnea_acceleration_slice",
+      "repeat": 1,
+      "arm": "docs"
+    },
+    {
+      "case_id": "rnea_acceleration_slice",
+      "repeat": 1,
+      "arm": "feedback"
+    },
+    {
+      "case_id": "rnea_acceleration_slice",
+      "repeat": 1,
+      "arm": "tools"
+    },
+    {
+      "case_id": "rnea_missing_velocity",
+      "repeat": 1,
+      "arm": "base"
+    },
+    {
+      "case_id": "rnea_missing_velocity",
+      "repeat": 1,
+      "arm": "docs"
+    },
+    {
+      "case_id": "rnea_missing_velocity",
+      "repeat": 1,
+      "arm": "feedback"
+    },
+    {
+      "case_id": "rnea_missing_velocity",
+      "repeat": 1,
+      "arm": "tools"
+    }
+  ],
+  "summary_scope": "observed_attempts_only",
+  "evaluation_scope": "public_synthetic_disjoint_inputs_not_secure_hidden",
+  "requested_model": "scripted_smoke_v1",
+  "environment_id": "3e2c35cf97cbc9aeeeb5bf366f467e42fc2c43929709bdb310d4799ac7e0cbaa",
+  "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+  "report_sha256": "fe524e5618e9d520352a979dddc1f43601097dfca23cca5e259cfed2c44c8a5a",
+  "protocol_sha256": "cc07204792a59c3d76d1b19158843b1a3c69f1b9457c8a1a1e5858943d02e814",
+  "budget": {
+    "max_steps": 8,
+    "max_tools": 12,
+    "max_tokens": 16000,
+    "timeout_seconds": 300
+  },
+  "seed": 0,
+  "repeats": 1,
+  "planned_runs": 32,
+  "audit_ok": true,
+  "cost_scope": "provider-reported returned responses; not a billing receipt; excludes preflight",
+  "summary": {
+    "base": {
+      "runs": 6,
+      "calibrated_runs": 6,
+      "successes": 6,
+      "end_to_end_success_rate": 1.0,
+      "case_cluster_bootstrap_95": null,
+      "failure_counts": {
+        "none": 6
+      },
+      "model_quality_claim": false,
+      "usage": {
+        "input_tokens": 180,
+        "output_tokens": 90,
+        "total_tokens": 270,
+        "model_responses": 18
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "tool_calls": {
+        "read_candidate": 6,
+        "patch_candidate": 6
+      },
+      "intermediate_tool_failures": {},
+      "development_validations": {},
+      "tokens_per_success": 45.0,
+      "attempt_seconds": 24.217238307999878,
+      "median_attempt_seconds": 3.6772780090000197,
+      "final_validation_seconds": 370.5397307619994,
+      "trace_recording_seconds": 2.4101274470028784
+    },
+    "docs": {
+      "runs": 6,
+      "calibrated_runs": 6,
+      "successes": 6,
+      "end_to_end_success_rate": 1.0,
+      "case_cluster_bootstrap_95": null,
+      "failure_counts": {
+        "none": 6
+      },
+      "model_quality_claim": false,
+      "usage": {
+        "input_tokens": 180,
+        "output_tokens": 90,
+        "total_tokens": 270,
+        "model_responses": 18
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "tool_calls": {
+        "read_candidate": 6,
+        "patch_candidate": 6
+      },
+      "intermediate_tool_failures": {},
+      "development_validations": {},
+      "tokens_per_success": 45.0,
+      "attempt_seconds": 22.52916390999951,
+      "median_attempt_seconds": 3.7946763144998954,
+      "final_validation_seconds": 403.82037356900037,
+      "trace_recording_seconds": 2.2635564040033387
+    },
+    "tools": {
+      "runs": 6,
+      "calibrated_runs": 6,
+      "successes": 6,
+      "end_to_end_success_rate": 1.0,
+      "case_cluster_bootstrap_95": null,
+      "failure_counts": {
+        "none": 6
+      },
+      "model_quality_claim": false,
+      "usage": {
+        "input_tokens": 300,
+        "output_tokens": 150,
+        "total_tokens": 450,
+        "model_responses": 30
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "tool_calls": {
+        "read_candidate": 6,
+        "patch_candidate": 6,
+        "inspect_candidate_ad": 6,
+        "compile_candidate_cpp": 6
+      },
+      "intermediate_tool_failures": {},
+      "development_validations": {},
+      "tokens_per_success": 75.0,
+      "attempt_seconds": 400.54933645999995,
+      "median_attempt_seconds": 66.45220877449992,
+      "final_validation_seconds": 386.6581040610008,
+      "trace_recording_seconds": 3.935684214995945
+    },
+    "feedback": {
+      "runs": 6,
+      "calibrated_runs": 6,
+      "successes": 6,
+      "end_to_end_success_rate": 1.0,
+      "case_cluster_bootstrap_95": null,
+      "failure_counts": {
+        "none": 6
+      },
+      "model_quality_claim": false,
+      "usage": {
+        "input_tokens": 360,
+        "output_tokens": 180,
+        "total_tokens": 540,
+        "model_responses": 36
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "tool_calls": {
+        "read_candidate": 6,
+        "patch_candidate": 6,
+        "inspect_candidate_ad": 6,
+        "compile_candidate_cpp": 6,
+        "validate_development": 6
+      },
+      "intermediate_tool_failures": {},
+      "development_validations": {
+        "passed": 6
+      },
+      "tokens_per_success": 90.0,
+      "attempt_seconds": 721.667425311,
+      "median_attempt_seconds": 119.63786112949992,
+      "final_validation_seconds": 345.5092609020014,
+      "trace_recording_seconds": 4.282697581002367
+    }
+  },
+  "results": [
+    {
+      "case_id": "sparse_unexpected_dependency",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "e437f4e4c2142116e9c05839f4072c50d8694d0778b57cd3e32f0a0270621c05",
+      "execution_order": 0,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.734425354999985,
+      "final_validation_seconds": 62.96579972800009,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "9a1f7f2774794a80acd7ec8f43bb71e2",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.443180294000058,
+        "recording_seconds": 0.37763585000016064,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "279802e9b03e95902f4db328269dfc8c610fee3dd5b2e0f228e83e7b726fa349",
+        "manifest_sha256": "20e39877943957c3d2110c7df2abd3e9e2dfbbde44239ca40479e5772212cb75"
+      },
+      "source_before": "3f26d2002c2e5fa5bd79c6a1951171d076f396d850f8c85738f585ca3ab27c3d",
+      "source_after": "c8817c714ca65209ea875c498b37b0b16c9bf615f20252cf512bfcdc7ca43cfa"
+    },
+    {
+      "case_id": "sparse_unexpected_dependency",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "e437f4e4c2142116e9c05839f4072c50d8694d0778b57cd3e32f0a0270621c05",
+      "execution_order": 1,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.739661238999929,
+      "final_validation_seconds": 56.600220101000104,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "5fc69f6ca17648808c6da1b31982673f",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.32502782300002764,
+        "recording_seconds": 0.2909879000001183,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "9757a3e9bc95d39f5c0d8614d57816b49c9e42ee2bb7dd4476fc12087571635c",
+        "manifest_sha256": "80db5fa02ab62044cc8af7567ee7b808d5e40358ccc0d9b9bf227bcaa123e9d8"
+      },
+      "source_before": "3f26d2002c2e5fa5bd79c6a1951171d076f396d850f8c85738f585ca3ab27c3d",
+      "source_after": "c8817c714ca65209ea875c498b37b0b16c9bf615f20252cf512bfcdc7ca43cfa"
+    },
+    {
+      "case_id": "sparse_unexpected_dependency",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "e437f4e4c2142116e9c05839f4072c50d8694d0778b57cd3e32f0a0270621c05",
+      "execution_order": 2,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 71.96220796399984,
+      "final_validation_seconds": 91.46184942700006,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "9afddda50dbf458bba82efa106a64524",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 68.49638054000002,
+        "recording_seconds": 0.6653170219999538,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "0c452bb68acfb35275e24c6815fe9a306fa1275cd360c0c0e93b216480288925",
+        "manifest_sha256": "1049523c336b76e646257e2fda94b966562583df1b40d9373eee42ae71642954"
+      },
+      "source_before": "3f26d2002c2e5fa5bd79c6a1951171d076f396d850f8c85738f585ca3ab27c3d",
+      "source_after": "c8817c714ca65209ea875c498b37b0b16c9bf615f20252cf512bfcdc7ca43cfa"
+    },
+    {
+      "case_id": "sparse_unexpected_dependency",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "e437f4e4c2142116e9c05839f4072c50d8694d0778b57cd3e32f0a0270621c05",
+      "execution_order": 3,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 121.12851330700005,
+      "final_validation_seconds": 69.09311244199989,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "7f4207e9fa4a4b7fb7b7a860256fcc46",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 117.59510456399994,
+        "recording_seconds": 0.6419275670000388,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "5a2ec28f5716665b3a6ff0319b91f0989834a9e4dc7132175029b4ff150269b5",
+        "manifest_sha256": "133441acef6e1e1c3e2ffc0e7e74bed9d0a5a6b60f1fb59caab60f843daef30d"
+      },
+      "source_before": "3f26d2002c2e5fa5bd79c6a1951171d076f396d850f8c85738f585ca3ab27c3d",
+      "source_after": "c8817c714ca65209ea875c498b37b0b16c9bf615f20252cf512bfcdc7ca43cfa"
+    },
+    {
+      "case_id": "autodiff_scalar_propagation",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "c57fc5b9d2be3e1b4eabf3812a06b8eef1143258f05314171c0192531cce820e",
+      "execution_order": 4,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.43753205400003,
+      "final_validation_seconds": 65.49286690300005,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "4982643be5074881a90ed324a865a4a7",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.4867584200001147,
+        "recording_seconds": 0.4294195519994446,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "bd58ae2a3f7f612924b4cf3dbf9983b52eeeff1c3c49b3622f0cacef1d57ac0a",
+        "manifest_sha256": "c813d5857b7c0e9f9b09557bb976b816afc961d45425c8d10ed834fbf4dd1ed8"
+      },
+      "source_before": "04f483441b515786134e748da68bb0ccef3a165162ab6ca4a7d33f9fabb08356",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_scalar_propagation",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "c57fc5b9d2be3e1b4eabf3812a06b8eef1143258f05314171c0192531cce820e",
+      "execution_order": 5,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 77.0706136450001,
+      "final_validation_seconds": 56.265026271000124,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "7cb94be7eea942a09d3e4a921002a483",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 72.880105942,
+        "recording_seconds": 1.025735162999581,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "868735a599daf90d2a2db15c1158a66baf41e88cdc8e707409882df4a2e06c3f",
+        "manifest_sha256": "1577ccd4181d563afefe9f1759ab13fc5356a588eb3f7fe4f15fb628024f6f47"
+      },
+      "source_before": "04f483441b515786134e748da68bb0ccef3a165162ab6ca4a7d33f9fabb08356",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_scalar_propagation",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "c57fc5b9d2be3e1b4eabf3812a06b8eef1143258f05314171c0192531cce820e",
+      "execution_order": 6,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 124.9493128680001,
+      "final_validation_seconds": 64.39861086099995,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "43cb4123c96d442f97442a2c38f791f8",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 121.89730377000001,
+        "recording_seconds": 0.7870312760003344,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "9b45546bc6254e3c865cbd77395d8ce9c9b5bcadbcd64da2a7628be1afc0ea88",
+        "manifest_sha256": "fc38aec67b1f683d995b92511f6eaf0d2640f1c394dc008587672edd6b482b9d"
+      },
+      "source_before": "04f483441b515786134e748da68bb0ccef3a165162ab6ca4a7d33f9fabb08356",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_scalar_propagation",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "c57fc5b9d2be3e1b4eabf3812a06b8eef1143258f05314171c0192531cce820e",
+      "execution_order": 7,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.4290847350000604,
+      "final_validation_seconds": 53.36660329599977,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "9aca9cee283947058b40ee4372327033",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.5784739200000786,
+        "recording_seconds": 0.5223405040001126,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "fe575c9d68ecdda1073e4d148f709cfa1e1f0d4dd128ede02824564dc68d459c",
+        "manifest_sha256": "b3749b11727ecdb882e05e950c68abf70ee4f75909ad4ba7b7ac4121ee3000e0"
+      },
+      "source_before": "04f483441b515786134e748da68bb0ccef3a165162ab6ca4a7d33f9fabb08356",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "sparse_missing_dependency",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "2b21eff40097dd19cdfa0dcfabfca134f8c756f134d02282d87f4cbda507c2a1",
+      "execution_order": 8,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 60.942209585,
+      "final_validation_seconds": 57.73976552699969,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "76a69eb2978d4b8697719ed8d867980a",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 58.03988499500019,
+        "recording_seconds": 0.637636916998872,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "78e4b4f1d72025d5fb94bfc7f99b1968df8ca65da914122df876b0f986f55108",
+        "manifest_sha256": "03367f9ed9c9c32476b0774bdd2bda46731d08c34f735e570a56396020b3767f"
+      },
+      "source_before": "8b8b0f394436712d785273637a77feeb006b9b65b5859bc2b1a02d20a712f106",
+      "source_after": "c8817c714ca65209ea875c498b37b0b16c9bf615f20252cf512bfcdc7ca43cfa"
+    },
+    {
+      "case_id": "sparse_missing_dependency",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "2b21eff40097dd19cdfa0dcfabfca134f8c756f134d02282d87f4cbda507c2a1",
+      "execution_order": 9,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 118.1472089519998,
+      "final_validation_seconds": 56.595224516000144,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "f4838b95c2c342b383cf43177672e832",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 113.94794342700015,
+        "recording_seconds": 0.7276469510006791,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "c2f8e7fa91febd51fab5d08825af8ce6b2a961dbfaf0ce66d8416e8b61ef1401",
+        "manifest_sha256": "595ff5cc4267def3aadc2233687413335a2416b80dc5da3b9e573d36106695d9"
+      },
+      "source_before": "8b8b0f394436712d785273637a77feeb006b9b65b5859bc2b1a02d20a712f106",
+      "source_after": "c8817c714ca65209ea875c498b37b0b16c9bf615f20252cf512bfcdc7ca43cfa"
+    },
+    {
+      "case_id": "sparse_missing_dependency",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "2b21eff40097dd19cdfa0dcfabfca134f8c756f134d02282d87f4cbda507c2a1",
+      "execution_order": 10,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 5.728396920999785,
+      "final_validation_seconds": 72.33606489000022,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "c364a91f6d31450385af65d85bb4dd7b",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.3660669610003424,
+        "recording_seconds": 0.3275809649999246,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "54c38c286c61cb0cbab9b0fd83379feaa691b43c2b1d749c2e068e30cf8a9828",
+        "manifest_sha256": "9ca0915d4742461ad7253a3d0574236e93d1d1c39b2b10e0ff5fdd4453beb3c4"
+      },
+      "source_before": "8b8b0f394436712d785273637a77feeb006b9b65b5859bc2b1a02d20a712f106",
+      "source_after": "c8817c714ca65209ea875c498b37b0b16c9bf615f20252cf512bfcdc7ca43cfa"
+    },
+    {
+      "case_id": "sparse_missing_dependency",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "2b21eff40097dd19cdfa0dcfabfca134f8c756f134d02282d87f4cbda507c2a1",
+      "execution_order": 11,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.8496913899998617,
+      "final_validation_seconds": 82.90427597000007,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "27587198d4f74a8e93571ee352256bbf",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.37145087600038096,
+        "recording_seconds": 0.33706022800060964,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "b952683263fdbf538b2fbe0afd5e7256c34befc64c6eed7e1b885177a7365239",
+        "manifest_sha256": "e30f62b142e647faa835dd5ee019d3587b7573178dd5beee1cbd4319cf7d8de1"
+      },
+      "source_before": "8b8b0f394436712d785273637a77feeb006b9b65b5859bc2b1a02d20a712f106",
+      "source_after": "c8817c714ca65209ea875c498b37b0b16c9bf615f20252cf512bfcdc7ca43cfa"
+    },
+    {
+      "case_id": "autodiff_jacobian_input_order",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "2ae1f460b6ad55686056eb8f074e38f8e8b1531ea94fd66e5193836f2cdf234d",
+      "execution_order": 12,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 187.04913746900002,
+      "final_validation_seconds": 78.29823102400042,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "ef5ffb85f76f4db7a6d0a525eb7af2cf",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 182.6721660950002,
+        "recording_seconds": 1.1743285709990232,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "292c7b9092fda731690cf500318ac72d1fdcd6a6638c0fb3da0a3cb4302dd7fe",
+        "manifest_sha256": "95d01425bb9910fd3e9652d8853e142b5a10ddb40a04340c3ef2c0c1bb81df37"
+      },
+      "source_before": "269f8e4ad9b76a89de984a666a893213875d750a7b093b48597b13211e3a5bb5",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_jacobian_input_order",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "2ae1f460b6ad55686056eb8f074e38f8e8b1531ea94fd66e5193836f2cdf234d",
+      "execution_order": 13,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.6201306630000545,
+      "final_validation_seconds": 64.30362217499987,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "91048ca2bc1b4ff487e694acb0fcbc5e",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.3874828559996786,
+        "recording_seconds": 0.3525707860003422,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "751e96ae106c2b758347033ef62d62f14c7aa90dad743dec28529777b9423ae8",
+        "manifest_sha256": "363d2755bd5b4a68f46b3b018cdcce2a60c92a9e390c7607221ef28df2e7c199"
+      },
+      "source_before": "269f8e4ad9b76a89de984a666a893213875d750a7b093b48597b13211e3a5bb5",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_jacobian_input_order",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "2ae1f460b6ad55686056eb8f074e38f8e8b1531ea94fd66e5193836f2cdf234d",
+      "execution_order": 14,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.5189470499999516,
+      "final_validation_seconds": 59.06755375800003,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "0488f040c8dc463cb215b5d42bced7c1",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.45283341200001814,
+        "recording_seconds": 0.4077347899997221,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "542f62c2e7cfb8c36e5e477872cf2881eb37e7eecd9e4c417d33b897fe9c7a7b",
+        "manifest_sha256": "e46b752f61d8ce25c533e7453ecae15e583f9b0d64ed1d19357a37172ae82fb7"
+      },
+      "source_before": "269f8e4ad9b76a89de984a666a893213875d750a7b093b48597b13211e3a5bb5",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_jacobian_input_order",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "2ae1f460b6ad55686056eb8f074e38f8e8b1531ea94fd66e5193836f2cdf234d",
+      "execution_order": 15,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 50.85130330799984,
+      "final_validation_seconds": 61.053876586000115,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "b9c605ff4cfd4bd585af62fa288c4729",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 48.451930593999805,
+        "recording_seconds": 0.46976137600177026,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "8b4fe1934d5a3102374c15578d74a1a29277530dad74dec1e8c1e765140aec84",
+        "manifest_sha256": "4633ef64a88b6423f62d0ab41610fd94dff35a54b50e902def4169b15cab714e"
+      },
+      "source_before": "269f8e4ad9b76a89de984a666a893213875d750a7b093b48597b13211e3a5bb5",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_hardcoded_scalar",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "32f31c6de64a3c253fcfaf6fe674b1f8333a289ab09519f42e28679d1d132f2a",
+      "execution_order": 16,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.126102901000195,
+      "final_validation_seconds": 83.02304636500003,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "bd7c600f464d4f0f9e295de53d1d8635",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.3372942480000347,
+        "recording_seconds": 0.3093794840024202,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "c915f433aad8029de21478bc9424d04c3877877e66627f3aee5eb7bb77ad1611",
+        "manifest_sha256": "941e82eed0b243eb0d08e73841597d46f26c938379a3e1a7b5bf12e766b3b89c"
+      },
+      "source_before": "673358e8db05da51812ab4cf8759694f264abff66b382040e09ac580d5bc77fe",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_hardcoded_scalar",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "32f31c6de64a3c253fcfaf6fe674b1f8333a289ab09519f42e28679d1d132f2a",
+      "execution_order": 17,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 4.226888491999944,
+      "final_validation_seconds": 85.36275162999982,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "f78b26500ac84e6db49010c804f1a347",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.5844818710002073,
+        "recording_seconds": 0.530025120001028,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "1028efe297225a0d2ecdc5c2df080a75c6a5e26ddf35f661c9db3732c9040b69",
+        "manifest_sha256": "71bf7910c01929e2ca5bf154e1779acf8c9ae142a4b724d5e2c16346f59e9da2"
+      },
+      "source_before": "673358e8db05da51812ab4cf8759694f264abff66b382040e09ac580d5bc77fe",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_hardcoded_scalar",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "32f31c6de64a3c253fcfaf6fe674b1f8333a289ab09519f42e28679d1d132f2a",
+      "execution_order": 18,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 85.2411028710003,
+      "final_validation_seconds": 76.98871731600047,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "7214d7f9b3e44d1b9beb88b5289ad1c7",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 81.76345688600031,
+        "recording_seconds": 0.680293136997534,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "14a6b160f62176d4c218782ba165b4a40cebf87acfce9462b2bb2c8cc394c1e1",
+        "manifest_sha256": "3960ac38c2d326a18482f95fb9e2fe8f389113c9e7606e6be1810bb8cdd523e7"
+      },
+      "source_before": "673358e8db05da51812ab4cf8759694f264abff66b382040e09ac580d5bc77fe",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_hardcoded_scalar",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "32f31c6de64a3c253fcfaf6fe674b1f8333a289ab09519f42e28679d1d132f2a",
+      "execution_order": 19,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 101.5202026650004,
+      "final_validation_seconds": 42.60110605900081,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "6bed8b83197e41c3aa217c90a6500087",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 99.36103185800039,
+        "recording_seconds": 0.5163662740005748,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "f59ef2c9a81480c0cee2bee48f9aa64d2434133011d8f517c9b03c64922392fb",
+        "manifest_sha256": "440ead2b1ae3433b4b61885f53046d2c5bd8921aa1d62c5e29cf00fe8e527f8a"
+      },
+      "source_before": "673358e8db05da51812ab4cf8759694f264abff66b382040e09ac580d5bc77fe",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_random_blind_spot",
+      "repeat": 1,
+      "arm": "docs",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "02463cc68251411aa34ee7a701abcc2242ae153ddc0bb6220e4988d7fbf470b6",
+      "execution_order": 20,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 2.7564436849997946,
+      "final_validation_seconds": 54.39270520700029,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "579100e169ad448aac5e83452c11db2c",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.2961512829997446,
+        "recording_seconds": 0.26832881400241604,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "fea8830c1e417f0f0d246668e539a41a71d471e9bfec5e47f37a85ad6a8c4485",
+        "manifest_sha256": "b325c19db9275c165839e62e0e339c69c16d95eeb95998ff1bc9f913466892f2"
+      },
+      "source_before": "223d1c102fab56cbc5a95441fd80b4a1315a42a9b93ddd4d2de1fbcfcf80e33a",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_random_blind_spot",
+      "repeat": 1,
+      "arm": "tools",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "02463cc68251411aa34ee7a701abcc2242ae153ddc0bb6220e4988d7fbf470b6",
+      "execution_order": 21,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 54.481899086999874,
+      "final_validation_seconds": 43.14886893400035,
+      "usage": {
+        "input_tokens": 50,
+        "output_tokens": 25,
+        "total_tokens": 75,
+        "model_responses": 5
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 5
+      },
+      "system_fingerprints": {
+        "unknown": 5
+      },
+      "finish_reasons": {
+        "unknown": 5
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "86263fdbd8da46c6bcdb783fa6b8ad06",
+        "scope": "development",
+        "events": 33,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 50,
+          "output_tokens": 25,
+          "total_tokens": 75
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 52.20874608000031,
+        "recording_seconds": 0.45694059999823367,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 4,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "ffcd64dec4dba8c5dcf48e1ebd9132c70fdb082d0a1b0799deedb79a610f0317",
+        "manifest_sha256": "69063255c68b3e1d683b003d740f8b9d87a359afbaaa1f7b2604c35783f4db13"
+      },
+      "source_before": "223d1c102fab56cbc5a95441fd80b4a1315a42a9b93ddd4d2de1fbcfcf80e33a",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_random_blind_spot",
+      "repeat": 1,
+      "arm": "feedback",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "02463cc68251411aa34ee7a701abcc2242ae153ddc0bb6220e4988d7fbf470b6",
+      "execution_order": 22,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 68.87305004999962,
+      "final_validation_seconds": 34.5229760000002,
+      "usage": {
+        "input_tokens": 60,
+        "output_tokens": 30,
+        "total_tokens": 90,
+        "model_responses": 6
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 6
+      },
+      "system_fingerprints": {
+        "unknown": 6
+      },
+      "finish_reasons": {
+        "unknown": 6
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1,
+        "inspect_candidate_ad": 1,
+        "compile_candidate_cpp": 1,
+        "validate_development": 1
+      },
+      "development_validations": {
+        "passed": 1
+      },
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "51cff4ff610249cc8a65227fb3892ab5",
+        "scope": "development",
+        "events": 41,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 60,
+          "output_tokens": 30,
+          "total_tokens": 90
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 66.94911210400005,
+        "recording_seconds": 0.4353969420017165,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 5,
+        "development_validations": 1,
+        "skill_eligible": false,
+        "events_sha256": "3b900180cabf00c9f2fa0d32e5db4421fd5b67a6d2e8e878b07e0796510181ed",
+        "manifest_sha256": "455a0bd79db33d35a752079451fa73ffe874b8655bb175177a1632534212a497"
+      },
+      "source_before": "223d1c102fab56cbc5a95441fd80b4a1315a42a9b93ddd4d2de1fbcfcf80e33a",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    },
+    {
+      "case_id": "autodiff_random_blind_spot",
+      "repeat": 1,
+      "arm": "base",
+      "protocol_id": "548340077c1b76bc501cc464b202003912e4f152ce1402d247fc838748eaedba",
+      "case_spec_sha256": "02463cc68251411aa34ee7a701abcc2242ae153ddc0bb6220e4988d7fbf470b6",
+      "execution_order": 23,
+      "success": true,
+      "calibrated": true,
+      "failure": {
+        "category": "none",
+        "stage": "complete",
+        "reason": "complete",
+        "schema_version": 1
+      },
+      "final_passed": true,
+      "attempt_seconds": 3.5790977329997986,
+      "final_validation_seconds": 34.54459430799943,
+      "usage": {
+        "input_tokens": 30,
+        "output_tokens": 15,
+        "total_tokens": 45,
+        "model_responses": 3
+      },
+      "cached_input_tokens": 0,
+      "cache_usage_complete": false,
+      "served_models": {
+        "unknown": 3
+      },
+      "system_fingerprints": {
+        "unknown": 3
+      },
+      "finish_reasons": {
+        "unknown": 3
+      },
+      "tool_calls": {
+        "read_candidate": 1,
+        "patch_candidate": 1
+      },
+      "development_validations": {},
+      "intermediate_tool_failures": {},
+      "audit": {
+        "trace_available": true,
+        "issues": [],
+        "schema_version": 1,
+        "run_id": "04063910568743f7bdba2d1253525f56",
+        "scope": "development",
+        "events": 19,
+        "partial_tail": false,
+        "session_closed": true,
+        "unfinished_spans": [],
+        "node_errors": 0,
+        "interrupted_nodes": 0,
+        "reported_usage": {
+          "input_tokens": 30,
+          "output_tokens": 15,
+          "total_tokens": 45
+        },
+        "usage_missing": 0,
+        "elapsed_seconds": 0.5795619310001712,
+        "recording_seconds": 0.5206198579999182,
+        "source_changes": 1,
+        "source_unavailable": 0,
+        "tool_results": 2,
+        "development_validations": 0,
+        "skill_eligible": false,
+        "events_sha256": "a19673e09342b0831d210dd4251e3570623ff426c17f5a0e99dde69188c0677c",
+        "manifest_sha256": "a11b0f74cda2d5b11d2dcf0dd3502710eb699fbab06b0f928a883b5b854a8082"
+      },
+      "source_before": "223d1c102fab56cbc5a95441fd80b4a1315a42a9b93ddd4d2de1fbcfcf80e33a",
+      "source_after": "6590bf2cceb4592ea18190a14c8b22f380aa22d75622ad6327bc07a451909834"
+    }
+  ]
+}

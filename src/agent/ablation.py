@@ -218,8 +218,9 @@ SMOKE_EDITS = {
 
 class ScriptedSmokeModel:
     """Transport/protocol exerciser with known patches, not an agent quality benchmark."""
-    def __init__(self, scenario: str):
+    def __init__(self, scenario: str, repair: str | None = None):
         self.scenario = scenario
+        self.repair = repair
 
     def bind_tools(self, tools):
         self.names = [item.name for item in tools]
@@ -235,10 +236,12 @@ class ScriptedSmokeModel:
         if name == "patch_candidate":
             old = str(results[0].content)
             new = old
-            for before, after in SMOKE_EDITS[self.scenario]:
+            for before, after in SMOKE_EDITS.get(self.scenario, []) if self.repair is None else []:
                 if before not in new:
                     raise ValueError("Smoke patch no longer matches fixture")
                 new = new.replace(before, after)
+            if self.repair is not None:
+                new = self.repair
             args = {"old_string": old, "new_string": new}
         return AIMessage(content="scripted smoke" if name else "scripted attempt completed",
                          tool_calls=[{"name": name, "args": args, "id": f"call-{len(results)}"}]
@@ -251,8 +254,11 @@ def run_attempt(request: dict[str, Any]) -> dict[str, Any]:
     workspace = Workspace.create(source.parent, request["artifacts"], trusted_local=True)
     budget = Budget(**request["budget"])
     scenario, compiler = request["scenario"], request["compiler"]
+    independent = request.get("split_policy") == "independent"
+    dependency_root = request.get("dependency_root")
+    from agent import ablation_suite as suite_adapter
     if request["mode"] == "scripted_smoke":
-        model: Any = ScriptedSmokeModel(scenario)
+        model: Any = ScriptedSmokeModel(scenario, suite_adapter.reference_text(scenario) if independent else None)
     elif request["mode"] == "live":
         from agent.config import get_chat_model, get_model_identity
         if get_model_identity() != request["metadata"]["model_identity"]:
@@ -263,8 +269,11 @@ def run_attempt(request: dict[str, Any]) -> dict[str, Any]:
     with use_workspace(workspace):
         graph, policy = build_experiment_graph(
             arm=request["arm"], source=source, budget=budget, notes=request["notes"], model=model,
-            compile_fn=lambda: compile_candidate(source, scenario, workspace.artifacts, compiler),
-            validate_fn=lambda: evaluate_candidate(source, scenario, workspace.artifacts, compiler))
+            compile_fn=lambda: (suite_adapter.compile_source(source, scenario, workspace.artifacts, compiler, dependency_root=dependency_root)
+                                if independent else compile_candidate(source, scenario, workspace.artifacts, compiler)),
+            validate_fn=lambda: (suite_adapter.evaluate_source(source, scenario, workspace.artifacts, compiler,
+                                                               split="development", dependency_root=dependency_root) if independent else
+                                 evaluate_candidate(source, scenario, workspace.artifacts, compiler)))
         with use_repair_trace(request["trace"], source.parent, {
             **request["metadata"], **policy, "arm": request["arm"], "mode": request["mode"],
             "budget": asdict(budget), "task": request["task"],
@@ -348,15 +357,24 @@ def summarize(rows: list[dict[str, Any]], mode: str, seed: int) -> dict[str, Any
 
 def run_matrix(*, output: Path, budget: Budget, repeats: int = 1, seed: int = 0,
                mode: str = "scripted_smoke", compiler: str = "g++",
-               selected: list[str] | None = None, trusted_local: bool = False) -> dict[str, Any]:
+               selected: list[str] | None = None, trusted_local: bool = False,
+               suite: str = "robotics", split: str = "public",
+               dependency_root: Path | None = None) -> dict[str, Any]:
     if not trusted_local:
         raise ValueError("Public native calibration requires explicit trusted_local execution")
     if mode not in {"scripted_smoke", "live"} or not 1 <= repeats <= 20:
         raise ValueError("Invalid mode or repeat count (1..20)")
-    cases = load_cases("benchmarks/cpp_robotics_cases.json")
+    if suite not in {"robotics", "professional"} or split not in {"public", "independent"}:
+        raise ValueError("Unknown suite or split policy")
+    if suite == "professional" and split != "independent":
+        raise ValueError("Professional suite requires independent split policy")
+    independent = split == "independent"
+    dependency_path = str(dependency_root.resolve()) if dependency_root else None
+    from agent import ablation_suite as suite_adapter
+    cases = load_cases(f"benchmarks/cpp_{suite}_cases.json")
     if selected:
         if len(set(selected)) != len(selected) or set(selected) - {c.id for c in cases}:
-            raise ValueError("Select unique cases from the eight-case public C++ adapter")
+            raise ValueError("Select unique cases from the selected C++ suite")
         cases = [c for c in cases if c.id in selected]
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -368,10 +386,13 @@ def run_matrix(*, output: Path, budget: Budget, repeats: int = 1, seed: int = 0,
                    "harness_sha256": hashlib.sha256((PACK_ROOT / "harness/main.cpp").read_bytes()).hexdigest(),
                    "oracle_sha256": hashlib.sha256((PACK_ROOT / "spec.py").read_bytes()).hexdigest(),
                    "notes_sha256": hashlib.sha256(notes.encode()).hexdigest()}
+    if independent:
+        environment["suite_adapter"] = suite_adapter.suite_identity([case.id for case in cases], dependency_root=dependency_path)
     catalog = [{**asdict(case), "source_sha256": hashlib.sha256(
         (HARNESS_ROOT / case.template).read_bytes()).hexdigest()} for case in cases]
-    protocol = {"schema_version": 1, "arms": list(ARMS), "budget": asdict(budget), "repeats": repeats,
-                "seed": seed, "mode": mode, "evaluation_scope": "public_development_not_held_out",
+    protocol = {"schema_version": 2 if independent else 1, "arms": list(ARMS), "budget": asdict(budget), "repeats": repeats,
+                "seed": seed, "mode": mode, "suite": suite, "split_policy": split,
+                "evaluation_scope": "public_synthetic_disjoint_inputs_not_secure_hidden" if independent else "public_development_not_held_out",
                 "environment": environment, "environment_id": fingerprint(environment), "catalog": catalog}
     protocol["protocol_id"] = fingerprint(protocol)
     _write_json_atomic(output / "protocol.json", protocol)
@@ -388,7 +409,7 @@ def run_matrix(*, output: Path, budget: Budget, repeats: int = 1, seed: int = 0,
         rng = random.Random(seed)
         rng.shuffle(cases)
         for index, case in enumerate(cases):
-            scenario = case.validator.split(".", 1)[1]
+            scenario = case.id if independent else case.validator.split(".", 1)[1]
             original = (HARNESS_ROOT / case.template).read_bytes()
             if hashlib.sha256(original).hexdigest() != next(c["source_sha256"] for c in catalog if c["id"] == case.id):
                 raise ValueError("Fixture changed after protocol freeze")
@@ -396,16 +417,28 @@ def run_matrix(*, output: Path, budget: Budget, repeats: int = 1, seed: int = 0,
             calibration.mkdir(parents=True)
             broken_source, reference = calibration / "broken.hpp", calibration / "reference.hpp"
             broken_source.write_bytes(original)
-            reference.write_bytes((PACK_ROOT / "harness/reference.hpp").read_bytes())
-            if toolchain["passed"]:
-                broken = evaluate_candidate(broken_source, scenario, calibration, toolchain["compiler"])
-                repaired = evaluate_candidate(reference, scenario, calibration, toolchain["compiler"])
-            else:
-                broken = repaired = toolchain
-            calibrated = (classify(broken).category in {"compile_error", "runtime_error", "numerical_mismatch"}
-                          and classify(repaired).category == "none")
+            reference.write_text(suite_adapter.reference_text(case.id) if independent else
+                                 (PACK_ROOT / "harness/reference.hpp").read_text(encoding="utf-8"), encoding="utf-8")
+            def evaluate(path, artifacts, evaluation_split):
+                if independent:
+                    return suite_adapter.evaluate_source(path, case.id, artifacts, toolchain["compiler"], split=evaluation_split, dependency_root=dependency_path)
+                return evaluate_candidate(path, scenario, artifacts, toolchain["compiler"])
+            cap = suite_adapter.capability(case.id, dependency_root=dependency_path) if independent and toolchain["passed"] else toolchain
+            calibrations = {}
+            for name in ("development", "heldout") if independent else ("development",):
+                if cap["passed"]:
+                    broken = evaluate(broken_source, calibration, name)
+                    repaired = evaluate(reference, calibration, name)
+                else:
+                    broken = repaired = cap
+                allowed = {"compile_error", "numerical_mismatch", "derivative_mismatch", "compatibility_error"}
+                if not independent:
+                    allowed.add("runtime_error")
+                calibrations[name] = {"broken": broken, "reference": repaired,
+                                      "valid": classify(broken).category in allowed and classify(repaired).category == "none"}
+            calibrated = all(item["valid"] for item in calibrations.values())
             report["calibration"].append({"case_id": case.id, "valid": calibrated,
-                                           "broken": broken, "reference": repaired})
+                                           "broken": broken, "reference": repaired, "splits": calibrations})
             for repeat in range(1, repeats + 1):
                 offset = (index + repeat - 1 + seed) % 4
                 order = ARMS[offset:] + ARMS[:offset]
@@ -426,6 +459,8 @@ def run_matrix(*, output: Path, budget: Budget, repeats: int = 1, seed: int = 0,
                     else:
                         task = f"Task: {case.title}\nTarget: candidate.hpp\nContract: {case.prompt}"
                         request = {"arm": arm, "mode": mode, "source": str(source),
+                            "split_policy": split,
+                            "dependency_root": dependency_path,
                             "artifacts": str(slot / "artifacts"), "trace": row["trace"],
                             "budget": asdict(budget), "scenario": scenario, "notes": notes,
                             "task": task, "compiler": toolchain["compiler"],
@@ -440,7 +475,7 @@ def run_matrix(*, output: Path, budget: Budget, repeats: int = 1, seed: int = 0,
                         # Trace context is closed before final judging; no retry consumes this verdict.
                         evaluated_source = source_digest(root)
                         validation_started = time.perf_counter()
-                        final = evaluate_candidate(source, scenario, slot / "final", toolchain["compiler"])
+                        final = evaluate(source, slot / "final", "heldout" if independent else "development")
                         row["final_validation_seconds"] = time.perf_counter() - validation_started
                         row["evaluated_source"] = evaluated_source
                         if source_digest(root) != evaluated_source:

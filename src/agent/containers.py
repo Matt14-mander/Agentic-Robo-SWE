@@ -30,6 +30,8 @@ class ProcessResult:
     returncode: int
     stdout: str
     stderr: str
+    native_returncode: int | None = None
+    termination: str | None = None
 
 
 def stop_process(process: subprocess.Popen) -> None:
@@ -106,7 +108,9 @@ def run_bounded(
         error = "output limit exceeded"
     return ProcessResult(124 if error else int(process.returncode),
                          buffers[0].decode("utf-8", errors="replace"),
-                         buffers[1].decode("utf-8", errors="replace") + error)
+                         buffers[1].decode("utf-8", errors="replace") + error,
+                         native_returncode=int(process.returncode),
+                         termination=("output_limit" if exceeded.is_set() else "timeout") if error else None)
 
 
 def container_command(

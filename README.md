@@ -10,6 +10,9 @@ M7.1 [四组公平消融运行器](docs/phase71-fair-ablations.md)支持独立�
 2026-10-29 [首轮真实模型四组结果](docs/experiments/m71-live-20261029.md)：当前 `deepseek-chat`
 别名实际返回 `deepseek-flash`；补齐校准阻断后四组均 8/8，总 token 为基础组的
 1.00× / 1.21× / 2.11× / 2.56×。公开小题出现天花板效应，尚未证明专业能力的成功率增益。
+后续 [17 题适配与独立开发/保留输入](docs/phase71-professional-splits.md)已接入原生退出码证据、
+双侧校准与固定版本依赖检查；使用 `--suite professional --split independent`，
+离线与 smoke 验收状态见该文档，尚未运行这套新协议的真实模型实验。
 
 An autonomous, simulation-in-the-loop software engineering agent for robotics. Built with LangGraph to debug and verify embodied AI algorithms.
 

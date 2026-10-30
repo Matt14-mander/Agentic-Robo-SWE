@@ -40,6 +40,7 @@ class DenseValidationSpec:
     schema_version: int = 1
     seed: int = DENSE_VALIDATION_SEED
     random_samples: int = DENSE_RANDOM_SAMPLES
+    include_fixed: bool = True
     input_lower: tuple[float, float] = (-2.0, -4.0)
     input_upper: tuple[float, float] = (2.0, 4.0)
     input_names: tuple[str, str] = ("joint_position", "joint_velocity")
@@ -51,7 +52,7 @@ class DenseValidationSpec:
 
     @property
     def sample_count(self) -> int:
-        return len(_REGRESSION_SAMPLES) + len(_BOUNDARY_SAMPLES) + self.random_samples
+        return (len(_REGRESSION_SAMPLES) + len(_BOUNDARY_SAMPLES) if self.include_fixed else 0) + self.random_samples
 
     @property
     def fingerprint(self) -> str:
@@ -71,7 +72,8 @@ def deterministic_samples(
 ) -> list[dict[str, object]]:
     samples = [
         {"index": index, "kind": kind, "input": list(values)}
-        for index, (kind, values) in enumerate((*_REGRESSION_SAMPLES, *_BOUNDARY_SAMPLES))
+        for index, (kind, values) in enumerate((*_REGRESSION_SAMPLES, *_BOUNDARY_SAMPLES)
+                                             if spec.include_fixed else ())
     ]
     state = spec.seed & _MASK_64 or 1
     for _ in range(spec.random_samples):
