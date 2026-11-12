@@ -236,6 +236,20 @@ Phase 3.0 使用 AST 按模块、函数、类和方法切块，保存路径、�
 使用语义检索；精确字符串仍优先 `grep_codebase`，已知文件直接 `read_file_chunk`。
 M1.2 focused benchmark 不暴露 RAG 工具，因此原有成本基线不会被改变。
 
+外部 C++ 仓库现在使用独立的 workspace 索引，支持 C/C++ 源码、头文件、Markdown 与 CMake
+文本，保留路径和行号；基础切块不依赖构建或 clangd。先显式建索引，再启动同一 workspace
+的 Agent 会话（后者会调用配置的模型）：
+
+```bash
+uv run python scripts/index_codebase.py --workspace examples/external_cpp --query "joint error"
+uv run python scripts/run_agent.py --workspace examples/external_cpp --read-only "定位 joint_error 的实现"
+```
+
+索引位于目标仓库之外的 artifacts，并按仓库根目录隔离；自定义 `--artifact-root` 时，两条
+命令必须保持一致。只读会话可以检索，但仍不能运行 CMake/clangd。RAG 找到候选文件后，
+读取实际符号行列，再在具备执行授权的 C++ 会话中调用 `cpp_semantic_query`。
+范围、限制与验收见 [外部 workspace RAG](docs/external-workspace-rag.md)。
+
 ### 8. Phase 3.1 RAG 评测
 
 RAG 质量使用固定查询集 `benchmarks/rag_cases.json` 做确定性离线评测，不调用 LLM。

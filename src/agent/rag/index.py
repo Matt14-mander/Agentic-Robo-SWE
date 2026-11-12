@@ -15,6 +15,10 @@ from agent.rag.cache import RetrievalCache, RetrievalCacheStats
 from agent.rag.embedding import HashingEmbedder, tokenize
 from agent.rag.models import CodeChunk, IndexStats, SearchResult
 from agent.tools._paths import PROJECT_ROOT, resolve_within_root
+from agent.workspace import Workspace, current_workspace
+from agent.rag.workspace_source import (
+    chunk_workspace, chunk_workspace_source, read_workspace_source, workspace_index_path,
+)
 
 DEFAULT_CHROMA_DIR = PROJECT_ROOT / "chroma_db"
 DEFAULT_COLLECTION = "agentic_robo_swe_code"
@@ -35,8 +39,11 @@ class CodeIndex:
         collection: Any,
         embedder: HashingEmbedder | None = None,
         cache: RetrievalCache | None = None,
+        *,
+        workspace: Workspace | None = None,
     ) -> None:
         self.collection = collection
+        self.workspace = workspace
         self.embedder = embedder or HashingEmbedder()
         self.cache = cache or RetrievalCache()
         self._revision: str | None = None
@@ -45,11 +52,15 @@ class CodeIndex:
 
     def sync(
         self,
-        roots: Iterable[str] = ("src",),
+        roots: Iterable[str] | None = None,
         *,
         rebuild: bool = False,
     ) -> IndexStats:
-        files, chunks = chunk_codebase(roots)
+        self._check_workspace()
+        roots = tuple(roots) if roots is not None else ((".",) if self.workspace else ("src",))
+        files, chunks = (
+            chunk_workspace(self.workspace, roots) if self.workspace else chunk_codebase(roots)
+        )
         existing_payload = self.collection.get(include=["metadatas"])
         existing_ids = [str(item) for item in existing_payload.get("ids") or []]
         existing_metadatas = existing_payload.get("metadatas") or []
@@ -99,10 +110,14 @@ class CodeIndex:
         strategy: SearchStrategy = "hybrid",
         use_cache: bool = True,
     ) -> list[SearchResult]:
+        self._check_workspace()
         if not query.strip():
             raise ValueError("query must not be empty")
         if strategy not in {"vector", "lexical", "hybrid"}:
             raise ValueError(f"Unsupported search strategy: {strategy}")
+        if self.workspace and path_prefix:
+            prefix = self.workspace.resolve(path_prefix).relative_to(self.workspace.root).as_posix()
+            path_prefix = None if prefix == "." else prefix
         top_k = min(max(1, top_k), 20)
         revision = self._ensure_revision()
         key = self.cache.make_key(
@@ -159,6 +174,11 @@ class CodeIndex:
     def cache_stats(self) -> RetrievalCacheStats:
         return self.cache.stats()
 
+    def _check_workspace(self) -> None:
+        active = current_workspace()
+        if active is not None and active != self.workspace:
+            raise ValueError("RAG workspace binding mismatch")
+
     def _ensure_revision(self) -> str:
         # Refresh source before consulting the result cache, even for use_cache=False.
         # Reading index metadata alone cannot detect editor/write_patch changes on disk.
@@ -197,12 +217,15 @@ class CodeIndex:
         snapshots: dict[str, tuple[str, str]] = {}
         updated = False
         for relative, existing in by_path.items():
-            path = (PROJECT_ROOT / relative).resolve()
-            path.relative_to(PROJECT_ROOT)  # Keep stored paths inside the harness repository.
-            try:
-                source = path.read_text(encoding="utf-8")
-            except FileNotFoundError:
-                source = ""
+            if self.workspace:
+                path, source = read_workspace_source(self.workspace, relative)
+            else:
+                path = (PROJECT_ROOT / relative).resolve()
+                path.relative_to(PROJECT_ROOT)
+                try:
+                    source = path.read_text(encoding="utf-8")
+                except FileNotFoundError:
+                    source = ""
             source_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
             snapshot = (source_hash, _revision_for_pairs(existing.items()))
             if self._source_snapshots.get(relative) == snapshot:
@@ -210,7 +233,10 @@ class CodeIndex:
                 continue
 
             # Chunk exactly the text hashed above, avoiding a second, inconsistent read.
-            chunks = chunk_python_file(path, source_text=source)
+            chunks = (
+                chunk_workspace_source(self.workspace, path, source) if self.workspace
+                else chunk_python_file(path, source_text=source)
+            )
             current = {chunk.id: chunk.content_hash for chunk in chunks}
             changed = [chunk for chunk in chunks if existing.get(chunk.id) != chunk.content_hash]
             stale = sorted(set(existing) - set(current))
@@ -404,8 +430,10 @@ def _with_score(result: SearchResult, score: float) -> SearchResult:
 
 
 def open_code_index(
-    persist_directory: str | Path = DEFAULT_CHROMA_DIR,
+    persist_directory: str | Path | None = None,
     collection_name: str = DEFAULT_COLLECTION,
+    *,
+    workspace: Workspace | None = None,
 ) -> CodeIndex:
     """Open the persistent Chroma collection with a clear optional-dependency error."""
     try:
@@ -415,12 +443,24 @@ def open_code_index(
             "ChromaDB is not installed. Run: uv sync --extra rag"
         ) from exc
 
-    path = Path(persist_directory)
+    workspace = workspace or current_workspace()
+    if workspace:
+        if persist_directory is not None or collection_name != DEFAULT_COLLECTION:
+            raise ValueError("External RAG storage is bound to workspace artifacts; no persist-dir override")
+        path = workspace_index_path(workspace)
+    else:
+        path = Path(persist_directory) if persist_directory is not None else DEFAULT_CHROMA_DIR
     if not path.is_absolute():
         path = resolve_within_root(str(path))
     client = chromadb.PersistentClient(path=str(path))
+    metadata = {"hnsw:space": "cosine"}
+    if workspace:
+        metadata["source_root"] = str(workspace.root)
+        metadata["source_schema"] = "workspace-text-v1"
     collection = client.get_or_create_collection(
         name=collection_name,
-        metadata={"hnsw:space": "cosine"},
+        metadata=metadata,
     )
-    return CodeIndex(collection)
+    if workspace and any((collection.metadata or {}).get(key) != value for key, value in metadata.items()):
+        raise ValueError("RAG collection workspace binding or schema mismatch")
+    return CodeIndex(collection, workspace=workspace)

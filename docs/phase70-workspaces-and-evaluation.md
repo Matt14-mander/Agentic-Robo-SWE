@@ -30,6 +30,11 @@ uv run python scripts/run_agent.py "定位并修复连续关节跨界错误" \
 内置 fixture Domain Pack。工具拒绝目标外路径、符号链接/junction、`.git`、`.env*`、
 `.agent_state` 等私有元数据；调度端再次检查工具权限，不能靠伪造调用绕过只读模式。
 
+2026-11-12：新增独立的 [外部 workspace RAG](external-workspace-rag.md)。通过
+`scripts/index_codebase.py --workspace <目标>` 显式建立 C/C++、头文件、Markdown/CMake 索引，
+`search_code_knowledge` 自动按当前 Workspace 选择索引与缓存。读取和检索不需要执行授权，
+与后面的 clangd 工具分工协作；不复用 Harness 索引或回答缓存。
+
 ## 2. C++ 工具
 
 当前支持根 CMakeLists、Ninja、单一 Debug 构建树，数据库位于

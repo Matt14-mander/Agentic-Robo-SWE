@@ -46,7 +46,7 @@ def resolve_tools(*, mode: str = "general", domain_packs: tuple[str, ...] = (), 
     if current_workspace():
         if domain_packs:
             raise ValueError("Legacy fixture Domain Packs are not external-repository tools")
-        base = [list_dir, read_file_chunk, grep_codebase]
+        base = [list_dir, read_file_chunk, grep_codebase, search_code_knowledge]
         if mode != "read_only":
             base += [execute_python, write_patch]
             if cpp:

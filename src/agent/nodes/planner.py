@@ -83,7 +83,11 @@ def build_system_prompt(state: AgentState) -> str:
     if current_workspace():
         prompt += (
             "\nExternal repository session: all paths refer to the TARGET repository. "
-            "Harness RAG and legacy fixture validators are unavailable. Use grep with C++ globs. "
+            "search_code_knowledge searches only this workspace's separately built index, "
+            "never Harness code. Legacy fixture validators remain unavailable. "
+            "Use RAG for candidate files, grep with C++ globs for exact identifiers, and "
+            "read_file_chunk to determine symbol line/column before a semantic query; "
+            "a retrieved chunk start is not necessarily the symbol position. "
             "When C++ tools are enabled, use cpp_build to configure/build, cpp_compile_commands "
             "to inspect flags, and cpp_semantic_query for definitions/references/types/diagnostics. "
             "Only public development tests are available. Never claim hidden evaluation passed.\n"

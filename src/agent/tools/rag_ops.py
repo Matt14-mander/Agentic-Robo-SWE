@@ -7,13 +7,19 @@ from functools import lru_cache
 from langchain_core.tools import tool
 
 from agent.rag import CodeIndex, open_code_index
+from agent.rag.workspace_source import source_language
+from agent.workspace import Workspace, current_workspace
 
 _MAX_RESULT_CHARS = 4_000
 
 
-@lru_cache(maxsize=1)
 def get_code_index() -> CodeIndex:
-    return open_code_index()
+    return _get_code_index(current_workspace())
+
+
+@lru_cache(maxsize=8)
+def _get_code_index(workspace: Workspace | None) -> CodeIndex:
+    return open_code_index(workspace=workspace)
 
 
 @tool
@@ -30,11 +36,9 @@ def search_code_knowledge(
         path_prefix: 可选的仓库相对路径前缀，例如 ``src/agent``。
 
     精确符号或已知字符串优先使用 grep_codebase；已知文件直接 read_file_chunk。
-    索引需先运行 ``uv run python scripts/index_codebase.py`` 创建。
+    索引需先运行 ``uv run python scripts/index_codebase.py`` 创建；外部仓库加 --workspace。
+    自动选择当前 workspace，返回片段行号；C++ 符号行列需读文件确认后再用 cpp_semantic_query。
     """
-    from agent.workspace import current_workspace
-    if current_workspace():
-        return "ERROR: external repositories use grep / C++ semantic tools; harness RAG is not shared"
     try:
         results = get_code_index().search(
             query,
@@ -44,6 +48,11 @@ def search_code_knowledge(
     except (RuntimeError, ValueError, OSError) as exc:
         return f"ERROR: {exc}"
     if not results:
+        if current_workspace():
+            return (
+                "<no indexed code matches; build/sync with scripts/index_codebase.py "
+                "--workspace <target> (and the session's --artifact-root), or broaden the query>"
+            )
         return "<no indexed code matches; run scripts/index_codebase.py or broaden the query>"
 
     sections: list[str] = []
@@ -54,6 +63,6 @@ def search_code_knowledge(
         sections.append(
             f"## {rank}. {result.path}:{result.start_line}-{result.end_line} "
             f"{result.symbol} ({result.kind}, score={result.score:.3f})\n"
-            f"```python\n{content.rstrip()}\n```"
+            f"```{source_language(result.path)}\n{content.rstrip()}\n```"
         )
     return "# Hybrid code search results\n\n" + "\n\n".join(sections)

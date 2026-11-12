@@ -10,14 +10,16 @@ from agent.rag import open_code_index
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Index source code into persistent ChromaDB")
+    parser.add_argument("--workspace", help="External target repository; defaults to the harness")
+    parser.add_argument("--artifact-root", help="External workspace artifacts, outside the target")
     parser.add_argument(
         "--root",
         action="append",
         dest="roots",
-        help="仓库相对源码根，可重复传入；默认仅索引 src",
+        help="仓库相对源码根，可重复传入；Harness 默认 src，外部仓库默认整个目录",
     )
     parser.add_argument("--rebuild", action="store_true", help="清空 collection 后完整重建")
-    parser.add_argument("--persist-dir", default="chroma_db", help="Chroma 持久化目录")
+    parser.add_argument("--persist-dir", help="Harness Chroma 目录，默认 chroma_db；外部模式不可覆盖")
     parser.add_argument("--query", help="建索引后立即执行一次查询")
     parser.add_argument(
         "--repeat-query",
@@ -39,10 +41,15 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main() -> int:
     args = _build_parser().parse_args()
-    roots = args.roots or ["src"]
     try:
-        index = open_code_index(args.persist_dir)
-        stats = index.sync(roots, rebuild=args.rebuild)
+        from agent.workspace import Workspace
+        if args.artifact_root and not args.workspace:
+            raise ValueError("--artifact-root requires --workspace")
+        if args.workspace and args.persist_dir:
+            raise ValueError("--persist-dir cannot override workspace RAG artifacts")
+        workspace = Workspace.create(args.workspace, args.artifact_root) if args.workspace else None
+        index = open_code_index(args.persist_dir, workspace=workspace)
+        stats = index.sync(args.roots, rebuild=args.rebuild)
     except (RuntimeError, ValueError, OSError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
@@ -57,13 +64,17 @@ def main() -> int:
             print("ERROR: --repeat-query must be positive", file=sys.stderr)
             return 2
         results = []
-        for _ in range(args.repeat_query):
-            results = index.search(
-                args.query,
-                top_k=max(1, args.top_k),
-                path_prefix=args.path_prefix,
-                strategy=args.strategy,
-            )
+        try:
+            for _ in range(args.repeat_query):
+                results = index.search(
+                    args.query,
+                    top_k=max(1, args.top_k),
+                    path_prefix=args.path_prefix,
+                    strategy=args.strategy,
+                )
+        except (RuntimeError, ValueError, OSError) as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
         for rank, result in enumerate(results, start=1):
             print(
                 f"{rank}. {result.path}:{result.start_line}-{result.end_line} "
