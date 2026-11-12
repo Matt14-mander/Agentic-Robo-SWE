@@ -223,8 +223,11 @@ uv run python scripts/index_codebase.py --root src --root examples
 Phase 3.0 使用 AST 按模块、函数、类和方法切块，保存路径、符号、行号和内容哈希；
 函数之间及文件末尾的模块语句、方法之间及之后的类体内容和注释均保留。
 装饰器随对应函数、类或方法切块，起始行号包含装饰器；嵌套/条件定义保留在所属片段中。
-重复执行只更新变化 chunk，并删除已消失 chunk。默认 hashing embedding 完全本地运行，
-无需下载模型或配置额外 API Key，向量持久化在被 Git 忽略的 `chroma_db/`。
+重复执行只更新变化 chunk，并删除已消失 chunk。默认 `auto` 优先使用已下载、校验通过的
+Jina 代码语义模型；不可用时明确警告并回退到本地 hashing embedding。两者使用独立 collection。
+通过 `scripts/download_code_embedding.py` 显式下载权重；`--embedding semantic` 严格启用，
+`--embedding hash` 保持无模型的离线基线，不需要额外 API Key。向量持久化在被 Git 忽略的
+`chroma_db/`。配置、复现命令与实测见 [代码语义 embedding](docs/semantic-code-embedding.md)。
 
 检索前会核对已索引文件的当前内容：`write_patch`、编辑器或其他进程修改源码后，
 下一次查询自动刷新变化的片段并使旧检索缓存失效；文件删除或清空后移除对应片段。

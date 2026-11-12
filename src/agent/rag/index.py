@@ -12,7 +12,7 @@ from typing import Any, Iterable, Literal
 
 from agent.rag.chunking import chunk_codebase, chunk_python_file
 from agent.rag.cache import RetrievalCache, RetrievalCacheStats
-from agent.rag.embedding import HashingEmbedder, tokenize
+from agent.rag.embedding import Embedder, EmbeddingConfig, HashingEmbedder, create_embedder, tokenize
 from agent.rag.models import CodeChunk, IndexStats, SearchResult
 from agent.tools._paths import PROJECT_ROOT, resolve_within_root
 from agent.workspace import Workspace, current_workspace
@@ -37,7 +37,7 @@ class CodeIndex:
     def __init__(
         self,
         collection: Any,
-        embedder: HashingEmbedder | None = None,
+        embedder: Embedder | None = None,
         cache: RetrievalCache | None = None,
         *,
         workspace: Workspace | None = None,
@@ -121,7 +121,7 @@ class CodeIndex:
         top_k = min(max(1, top_k), 20)
         revision = self._ensure_revision()
         key = self.cache.make_key(
-            revision=revision,
+            revision=f"{self.embedder.identity}:{revision}",
             query=query,
             top_k=top_k,
             path_prefix=path_prefix,
@@ -161,18 +161,22 @@ class CodeIndex:
         if count == 0:
             return []
 
+        if strategy == "lexical":
+            return [candidate.result for candidate in self._lexical_candidates(query, path_prefix)[:top_k]]
+
         vector_ranked = self._vector_candidates(query, top_k, path_prefix)
         if strategy == "vector":
             return [candidate.result for candidate in vector_ranked[:top_k]]
 
         lexical_ranked = self._lexical_candidates(query, path_prefix)
-        if strategy == "lexical":
-            return [candidate.result for candidate in lexical_ranked[:top_k]]
-
         return self._fuse_rankings(vector_ranked, lexical_ranked, top_k)
 
     def cache_stats(self) -> RetrievalCacheStats:
         return self.cache.stats()
+
+    def retrieval_manifest(self) -> dict:
+        return {"embedding": self.embedder.describe(), "source_revision": self._revision,
+                "chunk_count": int(self.collection.count())}
 
     def _check_workspace(self) -> None:
         active = current_workspace()
@@ -258,7 +262,7 @@ class CodeIndex:
 
     def _set_revision(self, revision: str) -> None:
         self._revision = revision
-        self.cache.prepare_revision(revision)
+        self.cache.prepare_revision(f"{self.embedder.identity}:{revision}")
 
     def _vector_candidates(
         self,
@@ -434,6 +438,7 @@ def open_code_index(
     collection_name: str = DEFAULT_COLLECTION,
     *,
     workspace: Workspace | None = None,
+    embedding: EmbeddingConfig | None = None,
 ) -> CodeIndex:
     """Open the persistent Chroma collection with a clear optional-dependency error."""
     try:
@@ -452,6 +457,10 @@ def open_code_index(
         path = Path(persist_directory) if persist_directory is not None else DEFAULT_CHROMA_DIR
     if not path.is_absolute():
         path = resolve_within_root(str(path))
+    embedder = create_embedder(embedding)
+    legacy_hash = embedder.identity == HashingEmbedder().identity
+    if not legacy_hash:
+        collection_name = f"{collection_name}_{embedder.identity}"
     client = chromadb.PersistentClient(path=str(path))
     metadata = {"hnsw:space": "cosine"}
     if workspace:
@@ -459,8 +468,11 @@ def open_code_index(
         metadata["source_schema"] = "workspace-text-v1"
     collection = client.get_or_create_collection(
         name=collection_name,
-        metadata=metadata,
+        metadata={**metadata, "embedding_identity": embedder.identity},
     )
     if workspace and any((collection.metadata or {}).get(key) != value for key, value in metadata.items()):
         raise ValueError("RAG collection workspace binding or schema mismatch")
-    return CodeIndex(collection, workspace=workspace)
+    stored_identity = (collection.metadata or {}).get("embedding_identity")
+    if stored_identity != embedder.identity and not (stored_identity is None and legacy_hash):
+        raise ValueError("RAG embedding identity mismatch; choose a fresh collection")
+    return CodeIndex(collection, embedder=embedder, workspace=workspace)

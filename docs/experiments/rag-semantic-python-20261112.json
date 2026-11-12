@@ -1,0 +1,353 @@
+{
+  "schema_version": 1,
+  "created_at": "2026-11-12T15:12:20.412620+00:00",
+  "case_count": 10,
+  "retrieval_cache_enabled": false,
+  "cases_sha256": "f46a7c55c0808d2c36ee3c1668b8a0629ba75c235c14d8c41f3418fade340f29",
+  "arms": {
+    "lexical": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.7,
+          "recall": 0.7,
+          "mrr": 0.7,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 0.7
+        },
+        "at_3": {
+          "hit_rate": 0.9,
+          "recall": 0.9,
+          "mrr": 0.8,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 0.9
+        },
+        "at_5": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.825,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        }
+      },
+      "average_query_latency_ms": 160.435,
+      "retrieval": {
+        "embedding": {
+          "backend": "hash",
+          "version": 1,
+          "dimensions": 384,
+          "identity": "8c5983b920537e4737ec",
+          "fallback_reason": null
+        },
+        "source_revision": "42851ee509188036",
+        "chunk_count": 545
+      },
+      "model_load_seconds": 0.895,
+      "index_sync_seconds": 0.733,
+      "chunks_updated": 545,
+      "index_embedding": {
+        "backend": "hash",
+        "version": 1,
+        "dimensions": 384,
+        "identity": "8c5983b920537e4737ec",
+        "fallback_reason": null
+      },
+      "ranks": {
+        "official_validator_gate": 1,
+        "graph_validation_routing": 1,
+        "benchmark_hard_timeout": 4,
+        "incremental_code_index": 2,
+        "ast_source_chunking": 1,
+        "e2b_project_upload": 2,
+        "path_traversal_guard": 1,
+        "focused_context_compression": 1,
+        "semantic_search_tool": 1,
+        "model_provider_factory": 1
+      }
+    },
+    "hash_vector": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.4,
+          "recall": 0.4,
+          "mrr": 0.4,
+          "path_hit_rate": 0.5,
+          "symbol_hit_rate": 0.4
+        },
+        "at_3": {
+          "hit_rate": 0.8,
+          "recall": 0.8,
+          "mrr": 0.55,
+          "path_hit_rate": 0.8,
+          "symbol_hit_rate": 0.8
+        },
+        "at_5": {
+          "hit_rate": 0.8,
+          "recall": 0.8,
+          "mrr": 0.55,
+          "path_hit_rate": 0.9,
+          "symbol_hit_rate": 0.8
+        }
+      },
+      "average_query_latency_ms": 52.421,
+      "retrieval": {
+        "embedding": {
+          "backend": "hash",
+          "version": 1,
+          "dimensions": 384,
+          "identity": "8c5983b920537e4737ec",
+          "fallback_reason": null
+        },
+        "source_revision": "42851ee509188036",
+        "chunk_count": 545
+      },
+      "model_load_seconds": 0.895,
+      "index_sync_seconds": 0.733,
+      "chunks_updated": 545,
+      "index_embedding": {
+        "backend": "hash",
+        "version": 1,
+        "dimensions": 384,
+        "identity": "8c5983b920537e4737ec",
+        "fallback_reason": null
+      },
+      "ranks": {
+        "official_validator_gate": 1,
+        "graph_validation_routing": 3,
+        "benchmark_hard_timeout": null,
+        "incremental_code_index": 3,
+        "ast_source_chunking": 1,
+        "e2b_project_upload": 3,
+        "path_traversal_guard": 2,
+        "focused_context_compression": 1,
+        "semantic_search_tool": null,
+        "model_provider_factory": 1
+      }
+    },
+    "hash_hybrid": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.6,
+          "recall": 0.6,
+          "mrr": 0.6,
+          "path_hit_rate": 0.9,
+          "symbol_hit_rate": 0.6
+        },
+        "at_3": {
+          "hit_rate": 0.9,
+          "recall": 0.9,
+          "mrr": 0.7333,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 0.9
+        },
+        "at_5": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.7533,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        }
+      },
+      "average_query_latency_ms": 145.529,
+      "retrieval": {
+        "embedding": {
+          "backend": "hash",
+          "version": 1,
+          "dimensions": 384,
+          "identity": "8c5983b920537e4737ec",
+          "fallback_reason": null
+        },
+        "source_revision": "42851ee509188036",
+        "chunk_count": 545
+      },
+      "model_load_seconds": 0.895,
+      "index_sync_seconds": 0.733,
+      "chunks_updated": 545,
+      "index_embedding": {
+        "backend": "hash",
+        "version": 1,
+        "dimensions": 384,
+        "identity": "8c5983b920537e4737ec",
+        "fallback_reason": null
+      },
+      "ranks": {
+        "official_validator_gate": 1,
+        "graph_validation_routing": 1,
+        "benchmark_hard_timeout": 5,
+        "incremental_code_index": 2,
+        "ast_source_chunking": 1,
+        "e2b_project_upload": 2,
+        "path_traversal_guard": 1,
+        "focused_context_compression": 1,
+        "semantic_search_tool": 3,
+        "model_provider_factory": 1
+      }
+    },
+    "semantic_vector": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.6,
+          "recall": 0.6,
+          "mrr": 0.6,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 0.6
+        },
+        "at_3": {
+          "hit_rate": 0.9,
+          "recall": 0.9,
+          "mrr": 0.7333,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 0.9
+        },
+        "at_5": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.7533,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        }
+      },
+      "average_query_latency_ms": 98.224,
+      "retrieval": {
+        "embedding": {
+          "backend": "semantic",
+          "model": "jinaai/jina-embeddings-v2-base-code",
+          "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+          "files": {
+            "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+            "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+          },
+          "identity": "9a0dc73795282c194900",
+          "dimensions": 768,
+          "max_tokens": 512,
+          "pooling": "masked-mean-l2-v1",
+          "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+          "threads": 4,
+          "batch_size": 4,
+          "texts_encoded": 555,
+          "truncated_texts": 62,
+          "fallback_reason": null
+        },
+        "source_revision": "42851ee509188036",
+        "chunk_count": 545
+      },
+      "model_load_seconds": 0.846,
+      "index_sync_seconds": 143.27,
+      "chunks_updated": 545,
+      "index_embedding": {
+        "backend": "semantic",
+        "model": "jinaai/jina-embeddings-v2-base-code",
+        "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+        "files": {
+          "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+          "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+        },
+        "identity": "9a0dc73795282c194900",
+        "dimensions": 768,
+        "max_tokens": 512,
+        "pooling": "masked-mean-l2-v1",
+        "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+        "threads": 4,
+        "batch_size": 4,
+        "texts_encoded": 545,
+        "truncated_texts": 62,
+        "fallback_reason": null
+      },
+      "ranks": {
+        "official_validator_gate": 1,
+        "graph_validation_routing": 1,
+        "benchmark_hard_timeout": 5,
+        "incremental_code_index": 2,
+        "ast_source_chunking": 2,
+        "e2b_project_upload": 1,
+        "path_traversal_guard": 3,
+        "focused_context_compression": 1,
+        "semantic_search_tool": 1,
+        "model_provider_factory": 1
+      }
+    },
+    "semantic_hybrid": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.8,
+          "recall": 0.8,
+          "mrr": 0.8,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 0.8
+        },
+        "at_3": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.8833,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        },
+        "at_5": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.8833,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        }
+      },
+      "average_query_latency_ms": 192.044,
+      "retrieval": {
+        "embedding": {
+          "backend": "semantic",
+          "model": "jinaai/jina-embeddings-v2-base-code",
+          "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+          "files": {
+            "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+            "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+          },
+          "identity": "9a0dc73795282c194900",
+          "dimensions": 768,
+          "max_tokens": 512,
+          "pooling": "masked-mean-l2-v1",
+          "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+          "threads": 4,
+          "batch_size": 4,
+          "texts_encoded": 565,
+          "truncated_texts": 62,
+          "fallback_reason": null
+        },
+        "source_revision": "42851ee509188036",
+        "chunk_count": 545
+      },
+      "model_load_seconds": 0.846,
+      "index_sync_seconds": 143.27,
+      "chunks_updated": 545,
+      "index_embedding": {
+        "backend": "semantic",
+        "model": "jinaai/jina-embeddings-v2-base-code",
+        "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+        "files": {
+          "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+          "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+        },
+        "identity": "9a0dc73795282c194900",
+        "dimensions": 768,
+        "max_tokens": 512,
+        "pooling": "masked-mean-l2-v1",
+        "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+        "threads": 4,
+        "batch_size": 4,
+        "texts_encoded": 545,
+        "truncated_texts": 62,
+        "fallback_reason": null
+      },
+      "ranks": {
+        "official_validator_gate": 1,
+        "graph_validation_routing": 1,
+        "benchmark_hard_timeout": 3,
+        "incremental_code_index": 2,
+        "ast_source_chunking": 1,
+        "e2b_project_upload": 1,
+        "path_traversal_guard": 1,
+        "focused_context_compression": 1,
+        "semantic_search_tool": 1,
+        "model_provider_factory": 1
+      }
+    }
+  },
+  "source_revision": "42851ee509188036"
+}

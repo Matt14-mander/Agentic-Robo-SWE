@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {"id": "angle_difference", "query": "implementation of the error between desired and measured joint angles", "targets": [{"path": "controller.cpp"}], "tags": ["cpp", "public-smoke"]},
+    {"id": "function_declaration", "query": "header declaring the joint_error function interface", "targets": [{"path": "controller.hpp"}], "tags": ["cpp", "public-smoke"]},
+    {"id": "stdin_driver", "query": "read angle pairs from standard input and print numeric results with high precision", "targets": [{"path": "main.cpp"}], "tags": ["cpp", "public-smoke"]},
+    {"id": "build_definition", "query": "CMake configuration creating the controller executable from source files", "targets": [{"path": "CMakeLists.txt"}], "tags": ["cpp", "public-smoke"]}
+  ]
+}

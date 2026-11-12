@@ -2,7 +2,7 @@
 
 ## 设计与边界
 
-外部仓库检索复用 `CodeIndex` 的 hashing embedding、BM25 风格评分、RRF 融合和
+外部仓库检索复用 `CodeIndex` 的可切换 embedding、BM25 风格评分、RRF 融合和
 版本化缓存，通过显式 `Workspace` 绑定替换 Harness 的源码发现、读取与切块。
 
 - 索引存储于 `workspace.artifacts/rag/<root-identity>/chroma/`，不写入目标仓库。
@@ -76,5 +76,6 @@ uv run pytest -q -m "not e2e and not cpp and not isolation and not simulation an
 uv run pytest -q tests/test_workspace_rag.py
 ```
 
-本阶段不引入训练过的语义 embedding、C++ AST 切块、自动 clangd 图扩展或新一轮真实模型消融。
-这些属于后续检索质量评测与增强，不改变既有 M7.1 四组实验结论。
+后续已接入 [本地代码语义 embedding 与离线回退](semantic-code-embedding.md)，可用同一
+workspace 和 `--embedding semantic` 单独建立语义 collection。C++ AST 切块、自动 clangd
+图扩展和新一轮真实模型消融仍待后续验证，不改变既有 M7.1 四组实验结论。

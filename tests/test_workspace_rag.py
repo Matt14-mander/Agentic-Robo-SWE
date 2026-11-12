@@ -145,7 +145,7 @@ def test_tool_cache_and_storage_are_bound_to_workspace(tmp_path, monkeypatch):
     assert workspace_index_path(first) != workspace_index_path(second)
     opened = []
 
-    def open_index(*, workspace):
+    def open_index(*, workspace, embedding):
         opened.append(workspace)
         index = CodeIndex(MemoryCollection(), workspace=workspace)
         index.sync()
@@ -215,7 +215,7 @@ def test_empty_workspace_index_gives_workspace_setup_hint(workspace_index, monke
 def test_external_index_cli(workspace_index, monkeypatch, capsys):
     workspace, _ = workspace_index
     cli = importlib.import_module("scripts.index_codebase")
-    monkeypatch.setattr(cli, "open_code_index", lambda directory, *, workspace:
+    monkeypatch.setattr(cli, "open_code_index", lambda directory, *, workspace, embedding:
                         CodeIndex(MemoryCollection(), workspace=workspace))
     monkeypatch.setattr("sys.argv", ["index_codebase", "--workspace", str(workspace.root),
                                     "--artifact-root", str(workspace.artifacts),
@@ -229,6 +229,7 @@ def test_external_index_cli(workspace_index, monkeypatch, capsys):
 
 
 def test_real_chroma_workspace_isolation_and_reopen(tmp_path, monkeypatch):
+    monkeypatch.setenv("RAG_EMBEDDING", "hash")
     monkeypatch.delenv("SSLKEYLOGFILE", raising=False)
     monkeypatch.setenv("ANONYMIZED_TELEMETRY", "False")
     pytest.importorskip("chromadb")

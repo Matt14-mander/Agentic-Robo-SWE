@@ -7,6 +7,7 @@ from functools import lru_cache
 from langchain_core.tools import tool
 
 from agent.rag import CodeIndex, open_code_index
+from agent.rag.embedding import EmbeddingConfig
 from agent.rag.workspace_source import source_language
 from agent.workspace import Workspace, current_workspace
 
@@ -14,12 +15,12 @@ _MAX_RESULT_CHARS = 4_000
 
 
 def get_code_index() -> CodeIndex:
-    return _get_code_index(current_workspace())
+    return _get_code_index(current_workspace(), EmbeddingConfig.from_env())
 
 
 @lru_cache(maxsize=8)
-def _get_code_index(workspace: Workspace | None) -> CodeIndex:
-    return open_code_index(workspace=workspace)
+def _get_code_index(workspace: Workspace | None, embedding: EmbeddingConfig) -> CodeIndex:
+    return open_code_index(workspace=workspace, embedding=embedding)
 
 
 @tool
