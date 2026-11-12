@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Literal
 
-from agent.rag.chunking import chunk_codebase
+from agent.rag.chunking import chunk_codebase, chunk_python_file
 from agent.rag.cache import RetrievalCache, RetrievalCacheStats
 from agent.rag.embedding import HashingEmbedder, tokenize
 from agent.rag.models import CodeChunk, IndexStats, SearchResult
@@ -40,6 +40,8 @@ class CodeIndex:
         self.embedder = embedder or HashingEmbedder()
         self.cache = cache or RetrievalCache()
         self._revision: str | None = None
+        # (source hash, indexed chunk revision), scoped to the paths already indexed.
+        self._source_snapshots: dict[str, tuple[str, str]] = {}
 
     def sync(
         self,
@@ -158,9 +160,11 @@ class CodeIndex:
         return self.cache.stats()
 
     def _ensure_revision(self) -> str:
-        # Re-read lightweight metadata on every lookup so a long-lived Agent also notices
-        # an index refreshed by another process. This is cheaper than stale source results.
+        # Refresh source before consulting the result cache, even for use_cache=False.
+        # Reading index metadata alone cannot detect editor/write_patch changes on disk.
         payload = self.collection.get(include=["metadatas"])
+        if self._refresh_sources(payload):
+            payload = self.collection.get(include=["metadatas"])
         ids = [str(item) for item in payload.get("ids") or []]
         metadatas = payload.get("metadatas") or []
         pairs = [
@@ -172,6 +176,59 @@ class CodeIndex:
         if revision != self._revision:
             self._set_revision(revision)
         return revision
+
+    def _refresh_sources(self, payload: dict[str, Any]) -> bool:
+        """Reconcile indexed files with disk; never expand or replace the index scope.
+
+        Hash source text on every lookup, but only parse and embed changed content.
+        Reopening a collection also checks legacy indexes without requiring a rebuild.
+        Read/update errors propagate so callers cannot silently serve stale cache entries.
+        """
+        by_path: dict[str, dict[str, str]] = {}
+        for chunk_id, metadata in zip(
+            payload.get("ids") or [], payload.get("metadatas") or []
+        ):
+            if not isinstance(metadata, dict) or not metadata.get("path"):
+                raise ValueError("Indexed chunk has no source path; rebuild the code index")
+            by_path.setdefault(str(metadata["path"]), {})[str(chunk_id)] = str(
+                metadata.get("content_hash", "")
+            )
+
+        snapshots: dict[str, tuple[str, str]] = {}
+        updated = False
+        for relative, existing in by_path.items():
+            path = (PROJECT_ROOT / relative).resolve()
+            path.relative_to(PROJECT_ROOT)  # Keep stored paths inside the harness repository.
+            try:
+                source = path.read_text(encoding="utf-8")
+            except FileNotFoundError:
+                source = ""
+            source_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
+            snapshot = (source_hash, _revision_for_pairs(existing.items()))
+            if self._source_snapshots.get(relative) == snapshot:
+                snapshots[relative] = snapshot
+                continue
+
+            # Chunk exactly the text hashed above, avoiding a second, inconsistent read.
+            chunks = chunk_python_file(path, source_text=source)
+            current = {chunk.id: chunk.content_hash for chunk in chunks}
+            changed = [chunk for chunk in chunks if existing.get(chunk.id) != chunk.content_hash]
+            stale = sorted(set(existing) - set(current))
+            # Keep old path metadata available for a retry if an upsert fails.
+            for batch in _batches(changed, 128):
+                documents = [chunk.content for chunk in batch]
+                self.collection.upsert(
+                    ids=[chunk.id for chunk in batch],
+                    documents=documents,
+                    metadatas=[chunk.metadata() for chunk in batch],
+                    embeddings=self.embedder.embed(documents),
+                )
+            if stale:
+                self.collection.delete(ids=stale)
+            updated = updated or bool(changed or stale)
+            snapshots[relative] = (source_hash, _revision_for_pairs(current.items()))
+        self._source_snapshots = snapshots
+        return updated
 
     def _set_revision(self, revision: str) -> None:
         self._revision = revision

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import io
+import tokenize
 from pathlib import Path
 from typing import Iterable
 
@@ -71,8 +73,41 @@ def _make_chunks(
     return chunks
 
 
-def chunk_python_file(path: Path, max_lines: int = 120, overlap: int = 15) -> list[CodeChunk]:
-    """Chunk a Python file by module preamble, functions, classes and methods."""
+def _decorator_lines(text: str) -> list[int]:
+    """Locate decorator markers, including @(...), without confusing matrix products."""
+    starts: list[int] = []
+    statement_start = True
+    for token in tokenize.generate_tokens(io.StringIO(text).readline):
+        if token.type in (tokenize.COMMENT, tokenize.NL, tokenize.INDENT, tokenize.DEDENT):
+            continue
+        if token.type == tokenize.NEWLINE:
+            statement_start = True
+            continue
+        if statement_start and token.type == tokenize.OP and token.string == "@":
+            starts.append(token.start[0])
+        statement_start = False
+    return starts
+
+
+def _definition_start(
+    node: ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef,
+    decorators: list[int],
+) -> int:
+    if not node.decorator_list:
+        return node.lineno
+    # AST expression positions can start below the @ line for parenthesized decorators.
+    first_expression = node.decorator_list[0].lineno
+    return max(line for line in decorators if line <= first_expression)
+
+
+def chunk_python_file(
+    path: Path,
+    max_lines: int = 120,
+    overlap: int = 15,
+    *,
+    source_text: str | None = None,
+) -> list[CodeChunk]:
+    """Chunk a Python file, optionally using an already-read source snapshot."""
     resolved = path.resolve()
     try:
         resolved.relative_to(PROJECT_ROOT)
@@ -81,7 +116,7 @@ def chunk_python_file(path: Path, max_lines: int = 120, overlap: int = 15) -> li
     if max_lines < 10 or overlap < 0 or overlap >= max_lines:
         raise ValueError("Require max_lines >= 10 and 0 <= overlap < max_lines")
 
-    text = resolved.read_text(encoding="utf-8")
+    text = resolved.read_text(encoding="utf-8") if source_text is None else source_text
     lines = text.splitlines()
     relative = relpath_for_display(resolved)
     try:
@@ -98,60 +133,46 @@ def chunk_python_file(path: Path, max_lines: int = 120, overlap: int = 15) -> li
         )
 
     chunks: list[CodeChunk] = []
-    first_definition = min(
-        (node.lineno for node in tree.body if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))),
-        default=len(lines) + 1,
-    )
-    preamble = lines[:first_definition - 1]
-    if any(line.strip() for line in preamble):
+    decorators = _decorator_lines(text)
+
+    def emit(start: int, end: int, symbol: str, kind: str) -> None:
+        region = lines[start - 1:end]
+        if not any(line.strip() for line in region):
+            return
         chunks.extend(_make_chunks(
             path=relative,
-            symbol="<module>",
-            kind="module",
-            lines=preamble,
-            start_line=1,
+            symbol=symbol,
+            kind=kind,
+            lines=region,
+            start_line=start,
             max_lines=max_lines,
             overlap=overlap,
         ))
 
+    cursor = 1
     for node in tree.body:
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            continue
+        start = _definition_start(node, decorators)
+        end = node.end_lineno or node.lineno
+        # Preserve assignments, imports, control flow and comments between definitions.
+        emit(cursor, start - 1, "<module>", "module")
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            end = node.end_lineno or node.lineno
-            chunks.extend(_make_chunks(
-                path=relative,
-                symbol=node.name,
-                kind="function",
-                lines=lines[node.lineno - 1:end],
-                start_line=node.lineno,
-                max_lines=max_lines,
-                overlap=overlap,
-            ))
-        elif isinstance(node, ast.ClassDef):
-            methods = [
-                child for child in node.body
-                if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef))
-            ]
-            header_end = methods[0].lineno - 1 if methods else (node.end_lineno or node.lineno)
-            chunks.extend(_make_chunks(
-                path=relative,
-                symbol=node.name,
-                kind="class",
-                lines=lines[node.lineno - 1:header_end],
-                start_line=node.lineno,
-                max_lines=max_lines,
-                overlap=overlap,
-            ))
-            for method in methods:
-                end = method.end_lineno or method.lineno
-                chunks.extend(_make_chunks(
-                    path=relative,
-                    symbol=f"{node.name}.{method.name}",
-                    kind="method",
-                    lines=lines[method.lineno - 1:end],
-                    start_line=method.lineno,
-                    max_lines=max_lines,
-                    overlap=overlap,
-                ))
+            emit(start, end, node.name, "function")
+        else:
+            class_cursor = start
+            for method in node.body:
+                if not isinstance(method, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                method_start = _definition_start(method, decorators)
+                method_end = method.end_lineno or method.lineno
+                emit(class_cursor, method_start - 1, node.name, "class")
+                emit(method_start, method_end, f"{node.name}.{method.name}", "method")
+                class_cursor = method_end + 1
+            # Includes class attributes and nested/conditional definitions after methods.
+            emit(class_cursor, end, node.name, "class")
+        cursor = end + 1
+    emit(cursor, len(lines), "<module>", "module")
 
     if not chunks and lines:
         chunks.extend(_make_chunks(

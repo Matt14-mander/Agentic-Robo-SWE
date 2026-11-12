@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import os
 
 import pytest
 
@@ -274,3 +275,142 @@ def test_rag_tool_formats_ranked_source_results(monkeypatch):
     assert "src/control/pid.py:20-31" in output
     assert "PIDController.update" in output
     assert "score=0.875" in output
+
+
+@pytest.fixture
+def live_rag(tmp_path, monkeypatch):
+    from agent.rag import chunking
+    from agent.rag import index as index_module
+    from agent.tools import _paths, rag_ops
+
+    for module in (chunking, index_module, _paths):
+        monkeypatch.setattr(module, "PROJECT_ROOT", tmp_path)
+    source = tmp_path / "controller.py"
+    source.write_text('def controller():\n    return "before"\n', encoding="utf-8")
+    collection = MemoryCollection()
+    index = CodeIndex(collection)
+    index.sync(["controller.py"])
+    monkeypatch.setattr(rag_ops, "get_code_index", lambda: index)
+    return source, collection, index
+
+
+@pytest.mark.parametrize("strategy", ["vector", "lexical", "hybrid"])
+@pytest.mark.parametrize("use_cache", [True, False])
+def test_search_refreshes_after_write_patch(live_rag, strategy, use_cache):
+    from agent.tools.write_ops import write_patch
+
+    source, _, index = live_rag
+    assert "before" in index.search("controller", strategy=strategy)[0].content
+    stat = source.stat()
+    status = write_patch.invoke({
+        "path": "controller.py", "old_string": '"before"', "new_string": '"after!"',
+    })
+    assert status.startswith("OK:")
+    # Same length and mtime: source freshness must depend on content, not stat alone.
+    os.utime(source, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+    results = index.search("controller", strategy=strategy, use_cache=use_cache)
+    assert '"after!"' in results[0].content
+    assert "before" not in results[0].content
+    assert index.cache_stats().invalidations == 1
+
+
+def test_reopened_index_and_tool_refresh_external_edits(live_rag):
+    from agent.tools.rag_ops import search_code_knowledge
+
+    source, collection, index = live_rag
+    index.search("controller")
+    source.write_text('\n\ndef repaired_controller():\n    return "repaired"\n', encoding="utf-8")
+    # Simulate a new process opening an existing index without first calling sync.
+    reopened = CodeIndex(collection)
+    result = reopened.search("repaired_controller")[0]
+    assert result.symbol == "repaired_controller"
+    assert result.start_line == 3
+    assert collection.count() == 1
+    output = search_code_knowledge.invoke({"query": "controller"})
+    assert "repaired_controller" in output
+    assert "before" not in output
+
+
+@pytest.mark.parametrize("change", ["delete", "empty"])
+def test_refresh_removes_obsolete_chunks_without_losing_other_files(live_rag, change):
+    source, collection, index = live_rag
+    other = source.with_name("other.py")
+    other.write_text("def untouched():\n    return 7\n", encoding="utf-8")
+    index.sync(["controller.py", "other.py"])
+    index.search("controller")
+    if change == "delete":
+        source.unlink()
+    else:
+        source.write_text("", encoding="utf-8")
+    results = index.search("controller", top_k=20)
+    assert {result.path for result in results} == {"other.py"}
+    assert collection.count() == 1
+
+
+def test_refresh_failure_does_not_serve_cached_source(live_rag, monkeypatch):
+    from pathlib import Path
+    from agent.tools.rag_ops import search_code_knowledge
+
+    source, _, index = live_rag
+    index.search("controller")
+    read_text = Path.read_text
+
+    def unreadable(path, *args, **kwargs):
+        if path == source:
+            raise PermissionError("source unavailable")
+        return read_text(path, *args, **kwargs)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "read_text", unreadable)
+        output = search_code_knowledge.invoke({"query": "controller"})
+    assert output.startswith("ERROR:")
+    assert "before" not in output
+    assert "before" in index.search("controller")[0].content
+
+
+def test_unchanged_search_reuses_chunks_and_embeddings(live_rag, monkeypatch):
+    from agent.rag import chunking
+
+    _, collection, index = live_rag
+    index.search("controller", strategy="vector")
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("unchanged cached search must not parse or embed source again")
+
+    monkeypatch.setattr(chunking.ast, "parse", unexpected)
+    monkeypatch.setattr(index.embedder, "embed", unexpected)
+    assert index.search("controller", strategy="vector")
+    assert collection.query_calls == 1
+
+
+def test_failed_index_update_can_retry_without_serving_old_cache(live_rag, monkeypatch):
+    from agent.tools.rag_ops import search_code_knowledge
+
+    source, collection, index = live_rag
+    index.search("controller")
+    source.write_text("def renamed_controller():\n    return 9\n", encoding="utf-8")
+
+    def unavailable(**kwargs):
+        raise RuntimeError("index unavailable")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(collection, "upsert", unavailable)
+        output = search_code_knowledge.invoke({"query": "controller"})
+    assert output.startswith("ERROR:")
+    assert "before" not in output
+    assert index.search("controller")[0].symbol == "renamed_controller"
+    assert collection.count() == 1
+
+
+def test_refresh_rejects_indexed_path_outside_repository(live_rag, monkeypatch):
+    from pathlib import Path
+
+    _, collection, index = live_rag
+    next(iter(collection.data.values()))[1]["path"] = "../outside.py"
+
+    def unexpected(*args, **kwargs):
+        pytest.fail("must reject an escaping path before reading it")
+
+    monkeypatch.setattr(Path, "read_text", unexpected)
+    with pytest.raises(ValueError):
+        index.search("controller")
