@@ -66,4 +66,19 @@ def search_code_knowledge(
             f"{result.symbol} ({result.kind}, score={result.score:.3f})\n"
             f"```{source_language(result.path)}\n{content.rstrip()}\n```"
         )
+        if result.parent_context:
+            parent = result.parent_context
+            sections[-1] += (
+                f"\nMatched child: {result.start_line}:{result.start_column}"
+                f"–{result.end_line}:{result.end_column}; "
+                f"parent: {result.path}:{parent.start_line}-{parent.end_line}"
+            )
+            remaining = max(0, _MAX_RESULT_CHARS - len(content))
+            if remaining:
+                context = parent.content[:remaining]
+                note = " (excerpt; read full parent range for more)" if len(context) < len(parent.content) else ""
+                sections[-1] += (
+                    f"\nParent context{note}:\n"
+                    f"```{source_language(result.path)}\n{context.rstrip()}\n```"
+                )
     return "# Hybrid code search results\n\n" + "\n\n".join(sections)

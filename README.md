@@ -283,6 +283,10 @@ Top-5 漏召回的 `semantic_search_tool` 提升到第 3 位。当前索引规�
 
 ### 9. Phase 3.2 Retrieval Cache
 
+语义索引会按模型实际 token 预算拆分过长片段，检索后保留命中子片段和父片段上下文。
+同一父片段的多个命中合并为一个结果；升级需重新同步新的语义 collection，详见
+[Token 切块与父上下文](docs/rag-token-chunking.md)。
+
 实际 Agent 的重复源码检索使用进程内 LRU Cache，默认最多保存 128 个结果。缓存键包含
 标准化查询、`top_k`、路径前缀、检索策略和源码索引 revision。每次查询都会核对 Chroma
 中的 chunk 内容哈希；本进程或其它进程刷新索引后，旧结果会自动清空，不会返回过期代码。

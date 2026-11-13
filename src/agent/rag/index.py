@@ -6,14 +6,14 @@ import math
 import hashlib
 import time
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Iterable, Literal
 
 from agent.rag.chunking import chunk_codebase, chunk_python_file
 from agent.rag.cache import RetrievalCache, RetrievalCacheStats
 from agent.rag.embedding import Embedder, EmbeddingConfig, HashingEmbedder, create_embedder, tokenize
-from agent.rag.models import CodeChunk, IndexStats, SearchResult
+from agent.rag.models import CodeChunk, IndexStats, ParentContext, SearchResult
 from agent.tools._paths import PROJECT_ROOT, resolve_within_root
 from agent.workspace import Workspace, current_workspace
 from agent.rag.workspace_source import (
@@ -49,6 +49,7 @@ class CodeIndex:
         self._revision: str | None = None
         # (source hash, indexed chunk revision), scoped to the paths already indexed.
         self._source_snapshots: dict[str, tuple[str, str]] = {}
+        self._parents: dict[str, CodeChunk] = {}
 
     def sync(
         self,
@@ -61,6 +62,8 @@ class CodeIndex:
         files, chunks = (
             chunk_workspace(self.workspace, roots) if self.workspace else chunk_codebase(roots)
         )
+        parents = {chunk.id: chunk for chunk in chunks}
+        chunks = self._embedding_chunks(chunks)
         existing_payload = self.collection.get(include=["metadatas"])
         existing_ids = [str(item) for item in existing_payload.get("ids") or []]
         existing_metadatas = existing_payload.get("metadatas") or []
@@ -80,7 +83,7 @@ class CodeIndex:
 
         changed = [
             chunk for chunk in chunks
-            if existing_hashes.get(chunk.id) != chunk.content_hash
+            if existing_hashes.get(chunk.id) != chunk.revision_hash
         ]
         for batch in _batches(changed, 128):
             documents = [chunk.content for chunk in batch]
@@ -91,6 +94,7 @@ class CodeIndex:
                 embeddings=self.embedder.embed(documents),
             )
 
+        self._parents = parents
         self._set_revision(_revision_for_chunks(chunks))
 
         return IndexStats(
@@ -141,6 +145,7 @@ class CodeIndex:
             path_prefix=path_prefix,
             strategy=strategy,
         )
+        results = [self._with_parent(result) for result in results]
         if use_cache:
             self.cache.put(
                 key,
@@ -175,8 +180,22 @@ class CodeIndex:
         return self.cache.stats()
 
     def retrieval_manifest(self) -> dict:
-        return {"embedding": self.embedder.describe(), "source_revision": self._revision,
+        return {"embedding": self.embedder.describe(),
+                "source_revision": _revision_for_chunks(self._parents.values()),
+                "index_revision": self._revision, "parent_count": len(self._parents),
                 "chunk_count": int(self.collection.count())}
+
+    def _embedding_chunks(self, chunks: list[CodeChunk]) -> list[CodeChunk]:
+        chunker = getattr(self.embedder, "chunker", None)
+        return [child for chunk in chunks for child in chunker.split(chunk)] if chunker else chunks
+
+    def _with_parent(self, result: SearchResult) -> SearchResult:
+        if not result.parent_id:
+            return result
+        parent = self._parents[result.parent_id]
+        return replace(result, parent_context=ParentContext(
+            parent.id, parent.start_line, parent.end_line, parent.content,
+        ))
 
     def _check_workspace(self) -> None:
         active = current_workspace()
@@ -219,6 +238,10 @@ class CodeIndex:
             )
 
         snapshots: dict[str, tuple[str, str]] = {}
+        parents: dict[str, CodeChunk] = {}
+        cached_parents: dict[str, dict[str, CodeChunk]] = {}
+        for key, chunk in self._parents.items():
+            cached_parents.setdefault(chunk.path, {})[key] = chunk
         updated = False
         for relative, existing in by_path.items():
             if self.workspace:
@@ -233,6 +256,7 @@ class CodeIndex:
             source_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
             snapshot = (source_hash, _revision_for_pairs(existing.items()))
             if self._source_snapshots.get(relative) == snapshot:
+                parents.update(cached_parents.get(relative, {}))
                 snapshots[relative] = snapshot
                 continue
 
@@ -241,8 +265,10 @@ class CodeIndex:
                 chunk_workspace_source(self.workspace, path, source) if self.workspace
                 else chunk_python_file(path, source_text=source)
             )
-            current = {chunk.id: chunk.content_hash for chunk in chunks}
-            changed = [chunk for chunk in chunks if existing.get(chunk.id) != chunk.content_hash]
+            parents.update((chunk.id, chunk) for chunk in chunks)
+            chunks = self._embedding_chunks(chunks)
+            current = {chunk.id: chunk.revision_hash for chunk in chunks}
+            changed = [chunk for chunk in chunks if existing.get(chunk.id) != chunk.revision_hash]
             stale = sorted(set(existing) - set(current))
             # Keep old path metadata available for a retry if an upsert fails.
             for batch in _batches(changed, 128):
@@ -258,6 +284,7 @@ class CodeIndex:
             updated = updated or bool(changed or stale)
             snapshots[relative] = (source_hash, _revision_for_pairs(current.items()))
         self._source_snapshots = snapshots
+        self._parents = parents
         return updated
 
     def _set_revision(self, revision: str) -> None:
@@ -272,11 +299,23 @@ class CodeIndex:
     ) -> list[_Candidate]:
         count = int(self.collection.count())
         candidates = count if path_prefix else min(count, max(top_k * 8, 32))
-        payload = self.collection.query(
-            query_embeddings=self.embedder.embed([query]),
-            n_results=candidates,
-            include=["documents", "metadatas", "distances"],
-        )
+        query_embeddings = self.embedder.embed([query])
+        while True:
+            payload = self.collection.query(
+                query_embeddings=query_embeddings,
+                n_results=candidates,
+                include=["documents", "metadatas", "distances"],
+            )
+            identities = {
+                str(metadata.get("parent_id") or chunk_id)
+                for chunk_id, metadata in zip(
+                    _first_result_list(payload.get("ids")),
+                    _first_result_list(payload.get("metadatas")),
+                ) if isinstance(metadata, dict)
+            }
+            if len(identities) >= top_k or candidates == count:
+                break
+            candidates = min(count, candidates * 2)
         ids = _first_result_list(payload.get("ids"))
         documents = _first_result_list(payload.get("documents"))
         metadatas = _first_result_list(payload.get("metadatas"))
@@ -293,7 +332,7 @@ class CodeIndex:
                 chunk_id=str(chunk_id),
                 result=_make_result(document, metadata, 1.0 - float(distance)),
             ))
-        return results
+        return _collapse_parents(results)
 
     def _lexical_candidates(
         self,
@@ -353,10 +392,10 @@ class CodeIndex:
             )))
         ranked.sort(key=lambda item: (-item[0], item[1].chunk_id))
         maximum = ranked[0][0] if ranked else 1.0
-        return [
+        return _collapse_parents([
             _Candidate(candidate.chunk_id, _with_score(candidate.result, score / maximum))
             for score, candidate in ranked
-        ]
+        ])
 
     @staticmethod
     def _fuse_rankings(
@@ -374,7 +413,9 @@ class CodeIndex:
         candidates: dict[str, _Candidate] = {}
         for ranking, weight in weights:
             for rank, candidate in enumerate(ranking, start=1):
-                candidates[candidate.chunk_id] = candidate
+                # Preserve the vector-matched child when lexical evidence names
+                # a different child of the same parent.
+                candidates.setdefault(candidate.chunk_id, candidate)
                 fused[candidate.chunk_id] = fused.get(candidate.chunk_id, 0.0) + weight / (60 + rank)
         maximum = sum(weight / 61 for _, weight in weights)
         ordered_ids = sorted(fused, key=lambda chunk_id: (-fused[chunk_id], chunk_id))[:top_k]
@@ -390,7 +431,18 @@ def _batches(items: list[CodeChunk], size: int) -> Iterable[list[CodeChunk]]:
 
 
 def _revision_for_chunks(chunks: Iterable[CodeChunk]) -> str:
-    return _revision_for_pairs((chunk.id, chunk.content_hash) for chunk in chunks)
+    return _revision_for_pairs((chunk.id, chunk.revision_hash) for chunk in chunks)
+
+
+def _collapse_parents(candidates: list[_Candidate]) -> list[_Candidate]:
+    seen: set[str] = set()
+    results = []
+    for candidate in candidates:
+        identity = candidate.result.parent_id or candidate.chunk_id
+        if identity not in seen:
+            seen.add(identity)
+            results.append(_Candidate(identity, candidate.result))
+    return results
 
 
 def _revision_for_pairs(pairs: Iterable[tuple[str, str]]) -> str:
@@ -418,19 +470,14 @@ def _make_result(document: Any, metadata: dict[str, Any], score: float) -> Searc
         end_line=int(metadata.get("end_line", 1)),
         content=str(document),
         score=round(score, 6),
+        parent_id=str(metadata.get("parent_id", "")),
+        start_column=int(metadata.get("start_column", 1)),
+        end_column=int(metadata.get("end_column", 1)),
     )
 
 
 def _with_score(result: SearchResult, score: float) -> SearchResult:
-    return SearchResult(
-        path=result.path,
-        symbol=result.symbol,
-        kind=result.kind,
-        start_line=result.start_line,
-        end_line=result.end_line,
-        content=result.content,
-        score=round(score, 6),
-    )
+    return replace(result, score=round(score, 6))
 
 
 def open_code_index(
