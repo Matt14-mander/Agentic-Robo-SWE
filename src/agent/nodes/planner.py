@@ -15,6 +15,7 @@ from agent.semantic_cache import get_semantic_cache, semantic_cache_scope
 from agent.state import AgentState
 from agent.domain.selection import domain_prompt_fragment
 from agent.tools import resolve_tools
+from agent.rag.settings import resolve_strategy
 
 _DEFAULT_MAX_LOOP_STEPS = 15
 
@@ -24,7 +25,7 @@ _SYSTEM = """你是一个面向机器人算法仓库的自主排障 Agent。
 - `list_dir(path, max_depth)` —— 浏览目录结构
 - `read_file_chunk(path, offset, limit)` —— 分段读取文件 (返回带行号)
 - `grep_codebase(pattern, glob, max_results)` —— 正则搜索整个仓库
-- `search_code_knowledge(query, top_k, path_prefix)` —— 语义检索已建立的源码索引
+- `search_code_knowledge(query, top_k, path_prefix, strategy)` —— 关键词/向量/混合检索源码索引
 - `execute_python(code, timeout)` —— 在沙盒中跑 Python, 复现 bug 或验证修复
 - `write_patch(path, old_string, new_string)` —— 精确字符串替换修改文件 (old_string 必须唯一)
 
@@ -73,6 +74,13 @@ def build_system_prompt(state: AgentState) -> str:
     """Build the planner prompt and apply the requested benchmark strategy."""
     max_steps = state.get("max_loop_steps", _DEFAULT_MAX_LOOP_STEPS)
     prompt = _SYSTEM.format(max_loop_steps=max_steps)
+    prompt += (
+        f"\nDefault RAG strategy: {resolve_strategy(session=state.get('rag_strategy'))}. "
+        "You may override strategy per search: lexical for identifiers/terms, vector for "
+        "semantic descriptions, hybrid for combined evidence. Vector quality depends on "
+        "the configured embedding backend (semantic model or offline hash fallback). "
+        "Do not automatically issue all three searches or assume hybrid is always best.\n"
+    )
     if state.get("benchmark_mode") and state.get("benchmark_strategy", "focused") == "focused":
         budget = state.get("benchmark_tool_budget", 6)
         prompt += _BENCHMARK_FOCUSED + f"\nTool-call budget: {budget}.\n"
@@ -119,6 +127,7 @@ def focused_message_context(
 def planner(state: AgentState) -> dict:
     from agent.workspace import check_binding
     check_binding(state)
+    state = {**state, "rag_strategy": resolve_strategy(session=state.get("rag_strategy"))}
     messages = list(state.get("messages") or [])
     loop_step = state.get("loop_step", 0)
 
@@ -155,6 +164,7 @@ def planner(state: AgentState) -> dict:
             if match is not None:
                 response = AIMessage(content=match.response)
                 return {
+                    "rag_strategy": state["rag_strategy"],
                     "messages": [response],
                     "loop_step": loop_step + 1,
                     "suggestion": match.response,
@@ -174,6 +184,7 @@ def planner(state: AgentState) -> dict:
     response = llm.invoke([system, *model_messages])
 
     update: dict = {
+        "rag_strategy": state["rag_strategy"],
         "messages": [response],
         "loop_step": loop_step + 1,
     }

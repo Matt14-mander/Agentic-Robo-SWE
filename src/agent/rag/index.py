@@ -8,12 +8,13 @@ import time
 from collections import Counter
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Iterable, Literal
+from typing import Any, Iterable
 
 from agent.rag.chunking import chunk_codebase, chunk_python_file
 from agent.rag.cache import RetrievalCache, RetrievalCacheStats
 from agent.rag.embedding import Embedder, EmbeddingConfig, HashingEmbedder, create_embedder, tokenize
 from agent.rag.models import CodeChunk, IndexStats, ParentContext, SearchResult
+from agent.rag.settings import SearchStrategy
 from agent.tools._paths import PROJECT_ROOT, resolve_within_root
 from agent.workspace import Workspace, current_workspace
 from agent.rag.workspace_source import (
@@ -22,7 +23,6 @@ from agent.rag.workspace_source import (
 
 DEFAULT_CHROMA_DIR = PROJECT_ROOT / "chroma_db"
 DEFAULT_COLLECTION = "agentic_robo_swe_code"
-SearchStrategy = Literal["vector", "lexical", "hybrid"]
 
 
 @dataclass(frozen=True)

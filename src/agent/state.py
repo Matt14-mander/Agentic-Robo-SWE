@@ -28,6 +28,7 @@ class AgentState(TypedDict, total=False):
     task: str
     workspace_binding: dict[str, object]
     cpp_tools_enabled: bool
+    rag_strategy: Literal["lexical", "vector", "hybrid"]
 
     # Optional hints used by the benchmark harness. Normal agent calls retain the
     # general exploratory workflow when these keys are absent.

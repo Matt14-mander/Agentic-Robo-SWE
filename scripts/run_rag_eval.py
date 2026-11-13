@@ -109,7 +109,7 @@ def main() -> int:
     return 0
 
 
-def compare(args, cases, config, workspace) -> int:
+def compare(args, cases, config, workspace, *, backends=("hash", "semantic")) -> int:
     """Run all arms against identical chunk hashes; semantic failures must fail the experiment."""
     from agent.tools._paths import resolve_within_root
     destination = resolve_within_root(args.output or (
@@ -123,7 +123,7 @@ def compare(args, cases, config, workspace) -> int:
                ).encode()).hexdigest(), "arms": {}}
     (destination / "comparison.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     source_revision = None
-    for backend in ("hash", "semantic"):
+    for backend in backends:
         started = time.perf_counter()
         index = open_code_index(args.persist_dir, workspace=workspace,
                                 embedding=replace(config, backend=backend))

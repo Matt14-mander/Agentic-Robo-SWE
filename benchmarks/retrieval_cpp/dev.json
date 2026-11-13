@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "dataset": "independent-cpp-v1",
+  "split": "dev",
+  "cases": [
+    {
+      "id": "dev_1_identifier",
+      "query": "shortest_rotation",
+      "targets": [
+        {
+          "path": "angle_error.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "identifier"
+      ]
+    },
+    {
+      "id": "dev_1_concept",
+      "query": "求目标关节角和当前角之间跨越正负 π 边界的最短转角",
+      "targets": [
+        {
+          "path": "angle_error.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "concept"
+      ]
+    },
+    {
+      "id": "dev_2_identifier",
+      "query": "Deadline::remaining",
+      "targets": [
+        {
+          "path": "deadline.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "identifier"
+      ]
+    },
+    {
+      "id": "dev_2_concept",
+      "query": "Find code that measures how much time is left before an operation expires without using the wall clock",
+      "targets": [
+        {
+          "path": "deadline.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "concept"
+      ]
+    },
+    {
+      "id": "dev_3_identifier",
+      "query": "IntegralController",
+      "targets": [
+        {
+          "path": "clamp_integrator.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "identifier"
+      ]
+    },
+    {
+      "id": "dev_3_concept",
+      "query": "When the actuator is saturated, stop accumulating error unless it would move the controller back into range",
+      "targets": [
+        {
+          "path": "clamp_integrator.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "concept"
+      ]
+    },
+    {
+      "id": "dev_4_identifier",
+      "query": "transform_point",
+      "targets": [
+        {
+          "path": "rigid_transform.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "identifier"
+      ]
+    },
+    {
+      "id": "dev_4_concept",
+      "query": "把三维位置旋转后再加上平移，换到另一个坐标系",
+      "targets": [
+        {
+          "path": "rigid_transform.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "concept"
+      ]
+    },
+    {
+      "id": "dev_5_identifier",
+      "query": "read_network_u32",
+      "targets": [
+        {
+          "path": "byte_order.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "identifier"
+      ]
+    },
+    {
+      "id": "dev_5_concept",
+      "query": "Read four bytes in network order as an unsigned integer regardless of machine endianness",
+      "targets": [
+        {
+          "path": "byte_order.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "concept"
+      ]
+    },
+    {
+      "id": "dev_6_identifier",
+      "query": "retry_delay_ms",
+      "targets": [
+        {
+          "path": "retry.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "identifier"
+      ]
+    },
+    {
+      "id": "dev_6_concept",
+      "query": "每次重试等待时间翻倍但不得溢出或超过上限",
+      "targets": [
+        {
+          "path": "retry.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "concept"
+      ]
+    },
+    {
+      "id": "dev_7_identifier",
+      "query": "WindowMean",
+      "targets": [
+        {
+          "path": "moving_average.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "identifier"
+      ]
+    },
+    {
+      "id": "dev_7_concept",
+      "query": "Keep the mean of only the latest N sensor readings by removing the oldest sample",
+      "targets": [
+        {
+          "path": "moving_average.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "concept"
+      ]
+    },
+    {
+      "id": "dev_8_identifier",
+      "query": "BlockingQueue::pop",
+      "targets": [
+        {
+          "path": "mutex_queue.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "identifier"
+      ]
+    },
+    {
+      "id": "dev_8_concept",
+      "query": "消费者在队列没有数据时休眠，生产者加入元素后唤醒它",
+      "targets": [
+        {
+          "path": "mutex_queue.hpp"
+        }
+      ],
+      "tags": [
+        "dev",
+        "concept"
+      ]
+    }
+  ]
+}

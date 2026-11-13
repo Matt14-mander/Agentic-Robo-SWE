@@ -1,0 +1,440 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "created_at": "2026-11-13T13:30:36.717710+00:00",
+  "case_count": 16,
+  "retrieval_cache_enabled": false,
+  "cases_sha256": "56db013281b53b782e2adfb92deb4eb7887351ca71bec9535d4d48d47b1af165",
+  "arms": {
+    "lexical": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.6875,
+          "recall": 0.6875,
+          "mrr": 0.6875,
+          "path_hit_rate": 0.6875,
+          "symbol_hit_rate": 0.6875
+        },
+        "at_3": {
+          "hit_rate": 0.75,
+          "recall": 0.75,
+          "mrr": 0.7188,
+          "path_hit_rate": 0.75,
+          "symbol_hit_rate": 0.75
+        },
+        "at_5": {
+          "hit_rate": 0.8125,
+          "recall": 0.8125,
+          "mrr": 0.7344,
+          "path_hit_rate": 0.8125,
+          "symbol_hit_rate": 0.8125
+        }
+      },
+      "average_query_latency_ms": 14.457,
+      "retrieval": {
+        "embedding": {
+          "backend": "hash",
+          "version": 1,
+          "dimensions": 384,
+          "identity": "8c5983b920537e4737ec",
+          "fallback_reason": null
+        },
+        "source_revision": "5277449d95821e6e",
+        "index_revision": "5277449d95821e6e",
+        "parent_count": 20,
+        "chunk_count": 20
+      },
+      "model_load_seconds": 0.9,
+      "index_sync_seconds": 0.062,
+      "chunks_updated": 20,
+      "index_embedding": {
+        "backend": "hash",
+        "version": 1,
+        "dimensions": 384,
+        "identity": "8c5983b920537e4737ec",
+        "fallback_reason": null
+      },
+      "ranks": {
+        "heldout_1_identifier": 1,
+        "heldout_1_concept": 1,
+        "heldout_2_identifier": 1,
+        "heldout_2_concept": 1,
+        "heldout_3_identifier": 1,
+        "heldout_3_concept": null,
+        "heldout_4_identifier": 1,
+        "heldout_4_concept": null,
+        "heldout_5_identifier": 1,
+        "heldout_5_concept": 1,
+        "heldout_6_identifier": 1,
+        "heldout_6_concept": 4,
+        "heldout_7_identifier": 1,
+        "heldout_7_concept": null,
+        "heldout_8_identifier": 1,
+        "heldout_8_concept": 2
+      }
+    },
+    "hash_vector": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.375,
+          "recall": 0.375,
+          "mrr": 0.375,
+          "path_hit_rate": 0.375,
+          "symbol_hit_rate": 0.375
+        },
+        "at_3": {
+          "hit_rate": 0.5625,
+          "recall": 0.5625,
+          "mrr": 0.4479,
+          "path_hit_rate": 0.5625,
+          "symbol_hit_rate": 0.5625
+        },
+        "at_5": {
+          "hit_rate": 0.6875,
+          "recall": 0.6875,
+          "mrr": 0.476,
+          "path_hit_rate": 0.6875,
+          "symbol_hit_rate": 0.6875
+        }
+      },
+      "average_query_latency_ms": 14.616,
+      "retrieval": {
+        "embedding": {
+          "backend": "hash",
+          "version": 1,
+          "dimensions": 384,
+          "identity": "8c5983b920537e4737ec",
+          "fallback_reason": null
+        },
+        "source_revision": "5277449d95821e6e",
+        "index_revision": "5277449d95821e6e",
+        "parent_count": 20,
+        "chunk_count": 20
+      },
+      "model_load_seconds": 0.9,
+      "index_sync_seconds": 0.062,
+      "chunks_updated": 20,
+      "index_embedding": {
+        "backend": "hash",
+        "version": 1,
+        "dimensions": 384,
+        "identity": "8c5983b920537e4737ec",
+        "fallback_reason": null
+      },
+      "ranks": {
+        "heldout_1_identifier": 3,
+        "heldout_1_concept": null,
+        "heldout_2_identifier": 1,
+        "heldout_2_concept": null,
+        "heldout_3_identifier": 1,
+        "heldout_3_concept": 1,
+        "heldout_4_identifier": 2,
+        "heldout_4_concept": null,
+        "heldout_5_identifier": 1,
+        "heldout_5_concept": 4,
+        "heldout_6_identifier": 1,
+        "heldout_6_concept": 5,
+        "heldout_7_identifier": 1,
+        "heldout_7_concept": null,
+        "heldout_8_identifier": 3,
+        "heldout_8_concept": null
+      }
+    },
+    "hash_hybrid": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.625,
+          "recall": 0.625,
+          "mrr": 0.625,
+          "path_hit_rate": 0.625,
+          "symbol_hit_rate": 0.625
+        },
+        "at_3": {
+          "hit_rate": 0.8125,
+          "recall": 0.8125,
+          "mrr": 0.7188,
+          "path_hit_rate": 0.8125,
+          "symbol_hit_rate": 0.8125
+        },
+        "at_5": {
+          "hit_rate": 0.875,
+          "recall": 0.875,
+          "mrr": 0.7312,
+          "path_hit_rate": 0.875,
+          "symbol_hit_rate": 0.875
+        }
+      },
+      "average_query_latency_ms": 19.703,
+      "retrieval": {
+        "embedding": {
+          "backend": "hash",
+          "version": 1,
+          "dimensions": 384,
+          "identity": "8c5983b920537e4737ec",
+          "fallback_reason": null
+        },
+        "source_revision": "5277449d95821e6e",
+        "index_revision": "5277449d95821e6e",
+        "parent_count": 20,
+        "chunk_count": 20
+      },
+      "model_load_seconds": 0.9,
+      "index_sync_seconds": 0.062,
+      "chunks_updated": 20,
+      "index_embedding": {
+        "backend": "hash",
+        "version": 1,
+        "dimensions": 384,
+        "identity": "8c5983b920537e4737ec",
+        "fallback_reason": null
+      },
+      "ranks": {
+        "heldout_1_identifier": 1,
+        "heldout_1_concept": 2,
+        "heldout_2_identifier": 1,
+        "heldout_2_concept": 2,
+        "heldout_3_identifier": 1,
+        "heldout_3_concept": 1,
+        "heldout_4_identifier": 1,
+        "heldout_4_concept": null,
+        "heldout_5_identifier": 1,
+        "heldout_5_concept": 1,
+        "heldout_6_identifier": 1,
+        "heldout_6_concept": 2,
+        "heldout_7_identifier": 1,
+        "heldout_7_concept": null,
+        "heldout_8_identifier": 1,
+        "heldout_8_concept": 5
+      }
+    },
+    "semantic_vector": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.875,
+          "recall": 0.875,
+          "mrr": 0.875,
+          "path_hit_rate": 0.875,
+          "symbol_hit_rate": 0.875
+        },
+        "at_3": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.9375,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        },
+        "at_5": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.9375,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        }
+      },
+      "average_query_latency_ms": 34.888,
+      "retrieval": {
+        "embedding": {
+          "backend": "semantic",
+          "model": "jinaai/jina-embeddings-v2-base-code",
+          "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+          "files": {
+            "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+            "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+          },
+          "identity": "f44bdedd80bf13a08ef6",
+          "dimensions": 768,
+          "max_tokens": 512,
+          "pooling": "masked-mean-l2-v1",
+          "chunking": "token-children-v1",
+          "overlap_tokens": 32,
+          "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+          "threads": 4,
+          "batch_size": 4,
+          "texts_encoded": 36,
+          "truncated_texts": 0,
+          "fallback_reason": null
+        },
+        "source_revision": "5277449d95821e6e",
+        "index_revision": "5277449d95821e6e",
+        "parent_count": 20,
+        "chunk_count": 20
+      },
+      "model_load_seconds": 1.073,
+      "index_sync_seconds": 2.302,
+      "chunks_updated": 20,
+      "index_embedding": {
+        "backend": "semantic",
+        "model": "jinaai/jina-embeddings-v2-base-code",
+        "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+        "files": {
+          "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+          "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+        },
+        "identity": "f44bdedd80bf13a08ef6",
+        "dimensions": 768,
+        "max_tokens": 512,
+        "pooling": "masked-mean-l2-v1",
+        "chunking": "token-children-v1",
+        "overlap_tokens": 32,
+        "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+        "threads": 4,
+        "batch_size": 4,
+        "texts_encoded": 20,
+        "truncated_texts": 0,
+        "fallback_reason": null
+      },
+      "ranks": {
+        "heldout_1_identifier": 1,
+        "heldout_1_concept": 1,
+        "heldout_2_identifier": 1,
+        "heldout_2_concept": 2,
+        "heldout_3_identifier": 1,
+        "heldout_3_concept": 2,
+        "heldout_4_identifier": 1,
+        "heldout_4_concept": 1,
+        "heldout_5_identifier": 1,
+        "heldout_5_concept": 1,
+        "heldout_6_identifier": 1,
+        "heldout_6_concept": 1,
+        "heldout_7_identifier": 1,
+        "heldout_7_concept": 1,
+        "heldout_8_identifier": 1,
+        "heldout_8_concept": 1
+      }
+    },
+    "semantic_hybrid": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.875,
+          "recall": 0.875,
+          "mrr": 0.875,
+          "path_hit_rate": 0.875,
+          "symbol_hit_rate": 0.875
+        },
+        "at_3": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.9375,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        },
+        "at_5": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.9375,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        }
+      },
+      "average_query_latency_ms": 40.026,
+      "retrieval": {
+        "embedding": {
+          "backend": "semantic",
+          "model": "jinaai/jina-embeddings-v2-base-code",
+          "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+          "files": {
+            "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+            "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+          },
+          "identity": "f44bdedd80bf13a08ef6",
+          "dimensions": 768,
+          "max_tokens": 512,
+          "pooling": "masked-mean-l2-v1",
+          "chunking": "token-children-v1",
+          "overlap_tokens": 32,
+          "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+          "threads": 4,
+          "batch_size": 4,
+          "texts_encoded": 52,
+          "truncated_texts": 0,
+          "fallback_reason": null
+        },
+        "source_revision": "5277449d95821e6e",
+        "index_revision": "5277449d95821e6e",
+        "parent_count": 20,
+        "chunk_count": 20
+      },
+      "model_load_seconds": 1.073,
+      "index_sync_seconds": 2.302,
+      "chunks_updated": 20,
+      "index_embedding": {
+        "backend": "semantic",
+        "model": "jinaai/jina-embeddings-v2-base-code",
+        "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+        "files": {
+          "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+          "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+        },
+        "identity": "f44bdedd80bf13a08ef6",
+        "dimensions": 768,
+        "max_tokens": 512,
+        "pooling": "masked-mean-l2-v1",
+        "chunking": "token-children-v1",
+        "overlap_tokens": 32,
+        "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+        "threads": 4,
+        "batch_size": 4,
+        "texts_encoded": 20,
+        "truncated_texts": 0,
+        "fallback_reason": null
+      },
+      "ranks": {
+        "heldout_1_identifier": 1,
+        "heldout_1_concept": 1,
+        "heldout_2_identifier": 1,
+        "heldout_2_concept": 1,
+        "heldout_3_identifier": 1,
+        "heldout_3_concept": 2,
+        "heldout_4_identifier": 1,
+        "heldout_4_concept": 1,
+        "heldout_5_identifier": 1,
+        "heldout_5_concept": 1,
+        "heldout_6_identifier": 1,
+        "heldout_6_concept": 2,
+        "heldout_7_identifier": 1,
+        "heldout_7_concept": 1,
+        "heldout_8_identifier": 1,
+        "heldout_8_concept": 1
+      }
+    }
+  },
+  "source_revision": "5277449d95821e6e",
+  "dataset": {
+    "name": "independent-cpp-v1",
+    "public_heldout": true,
+    "corpus_files": {
+      "angle_error.hpp": "aec0ee93f26c9438cad5ab6bf06d1707cd77f5ba9b14b37b4fefe497ef6d615a",
+      "blocking_delay.hpp": "d685124cc89e427a24764fb98033e4acb207148b14fa9d26331fc997c6f782c9",
+      "borrowed_fd.hpp": "bfd4ca660e7df95ead67a70c49a0810877404f5daebe5e12af60cdbb8a5d526f",
+      "byte_order.hpp": "546b4f73fb4b959bd691c5a0f2e4a694884a7fc72e3b6eb063db2aa93e774078",
+      "clamp_integrator.hpp": "042a8aef300f84b3c57f39ce8af96257872ae6561b72b67b5fcb8226452fd441",
+      "crc32.hpp": "d1c30c001262b0c6b06a77895240885188f1a0e0dc87da763256fa949bb1ed27",
+      "deadline.hpp": "5bfde2d6e3c60cc03d2f52c95f60bd53678cb91dffb2ddceb79d3305a2d88277",
+      "linear_interpolation.hpp": "522bef309942aeebcf6b47318ade6b2b7f5c55ba13e8fe398c8a1c844194cfe0",
+      "monotonic_counter.hpp": "15bb8eb6699beeb746a3ab87630333fce93e598cb2f32849c4e3d56299862dce",
+      "moving_average.hpp": "0ff60a67adacc87d0cb4b672e8e13172c572fcae3f53eb0ae7a3b1ce6618af98",
+      "mutex_queue.hpp": "b9326e0897a26f3cf63c2e4449262ec3395fdc797f36cbe3da6acb810779cd78",
+      "naive_angles.hpp": "c5d54cf7715e9d7766a5f8deaa5356f45cd3384ace3992ca875da466f1e0aec2",
+      "packet_decoder.hpp": "813f94d7016e6c8e1d3aa8f042a0822d0bdd288d277c6ff90717de2aa97f858d",
+      "quaternion.hpp": "86bfc97da8e3b9aa41744cae389a0660d840f48b54a65a29858fe7d902540652",
+      "rate_limiter.hpp": "cd90e37a646d325afea7e7d5daf583eb15c597f4fedd53ce1823f628596b8a45",
+      "retry.hpp": "9afc00ce0b4585fae664eb0b19f544424991ed6ce99a8a93a71574d2ce8b41b0",
+      "rigid_transform.hpp": "06efec9fa077471d5c966fa51aaa769aa11ee7b6b963a92e3219899be64bb275",
+      "spsc_ring.hpp": "b9e4f18b721a8a793e55d1b0b13ec3063770efac59ebf98bd8a41503d480376e",
+      "sum_checksum.hpp": "3eb8412b1ffc8b6037916fa719519e0308ed30b1cfc09e8e9ed165c01bb2548a",
+      "unique_fd.hpp": "6c8814a279fff7b51df16576428bf12762bb43453d5a441333d1bf4ad90ec919"
+    },
+    "corpus_sha256": "aac38e11e431a8c7dcaafd32e59dfc684fc5ab5a38058b9dd427a1c060ab8c1b",
+    "manifest_sha256": {
+      "dev": "0a4daee852623ba88db1732b0e36f34bc214259942d7844f7c8e6194339f0909",
+      "heldout": "22198f918d9eccabdf3e43711586db2a2ab1d4966603ad7a30c4e9a4f5d5bda5"
+    },
+    "case_counts": {
+      "dev": 16,
+      "heldout": 16
+    },
+    "target_files_disjoint": true,
+    "split": "heldout",
+    "purpose": "retrieval-comparison"
+  }
+}
