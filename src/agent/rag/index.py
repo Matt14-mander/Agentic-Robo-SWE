@@ -8,12 +8,14 @@ import time
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
+from threading import RLock
 from typing import Any, Iterable, Literal
 
 from agent.rag.chunking import chunk_codebase, chunk_python_file
 from agent.rag.cache import RetrievalCache, RetrievalCacheStats
 from agent.rag.embedding import HashingEmbedder, tokenize
 from agent.rag.models import CodeChunk, IndexStats, SearchResult
+from agent.rag.sync_state import SyncJournal
 from agent.tools._paths import PROJECT_ROOT, resolve_within_root
 from agent.workspace import Workspace, current_workspace
 from agent.rag.workspace_source import (
@@ -41,6 +43,7 @@ class CodeIndex:
         cache: RetrievalCache | None = None,
         *,
         workspace: Workspace | None = None,
+        sync_state_path: Path | None = None,
     ) -> None:
         self.collection = collection
         self.workspace = workspace
@@ -49,6 +52,10 @@ class CodeIndex:
         self._revision: str | None = None
         # (source hash, indexed chunk revision), scoped to the paths already indexed.
         self._source_snapshots: dict[str, tuple[str, str]] = {}
+        self._sync_journal = SyncJournal(
+            workspace.root if workspace else PROJECT_ROOT, sync_state_path,
+        )
+        self._lock = RLock()
 
     def sync(
         self,
@@ -56,11 +63,18 @@ class CodeIndex:
         *,
         rebuild: bool = False,
     ) -> IndexStats:
+        with self._lock:
+            return self._sync(roots, rebuild=rebuild)
+
+    def _sync(self, roots: Iterable[str] | None, *, rebuild: bool) -> IndexStats:
         self._check_workspace()
         roots = tuple(roots) if roots is not None else ((".",) if self.workspace else ("src",))
         files, chunks = (
             chunk_workspace(self.workspace, roots) if self.workspace else chunk_codebase(roots)
         )
+        # Persist the requested scope even if inference fails before the first new
+        # file is written. Chunk metadata alone cannot recover that missing file.
+        self._sync_journal.begin(roots, rebuild)
         existing_payload = self.collection.get(include=["metadatas"])
         existing_ids = [str(item) for item in existing_payload.get("ids") or []]
         existing_metadatas = existing_payload.get("metadatas") or []
@@ -69,35 +83,39 @@ class CodeIndex:
             for chunk_id, metadata in zip(existing_ids, existing_metadatas)
             if isinstance(metadata, dict)
         }
-        if rebuild and existing_ids:
-            self.collection.delete(ids=existing_ids)
-            existing_hashes = {}
-
         current_ids = {chunk.id for chunk in chunks}
-        stale_ids = sorted(set(existing_hashes) - current_ids)
-        if stale_ids:
-            self.collection.delete(ids=stale_ids)
+        stale_ids = sorted(set(existing_ids) - current_ids)
 
         changed = [
             chunk for chunk in chunks
-            if existing_hashes.get(chunk.id) != chunk.content_hash
+            if rebuild or existing_hashes.get(chunk.id) != chunk.content_hash
         ]
-        for batch in _batches(changed, 128):
+        # Complete inference before mutating the collection, including rebuilds.
+        # Keep all old path metadata until every upsert succeeds. Partial writes
+        # retain the journal and are repaired before the next cache lookup.
+        prepared = [
+            (batch, self.embedder.embed([chunk.content for chunk in batch]))
+            for batch in _batches(changed, 128)
+        ]
+        for batch, embeddings in prepared:
             documents = [chunk.content for chunk in batch]
             self.collection.upsert(
                 ids=[chunk.id for chunk in batch],
                 documents=documents,
                 metadatas=[chunk.metadata() for chunk in batch],
-                embeddings=self.embedder.embed(documents),
+                embeddings=embeddings,
             )
+        if stale_ids:
+            self.collection.delete(ids=stale_ids)
 
+        self._sync_journal.clear()
         self._set_revision(_revision_for_chunks(chunks))
 
         return IndexStats(
             files=len(files),
             chunks=len(chunks),
             added_or_updated=len(changed),
-            deleted=len(stale_ids) + (len(existing_ids) if rebuild else 0),
+            deleted=len(stale_ids),
             unchanged=len(chunks) - len(changed),
         )
 
@@ -109,6 +127,16 @@ class CodeIndex:
         path_prefix: str | None = None,
         strategy: SearchStrategy = "hybrid",
         use_cache: bool = True,
+    ) -> list[SearchResult]:
+        with self._lock:
+            return self._search(
+                query, top_k=top_k, path_prefix=path_prefix,
+                strategy=strategy, use_cache=use_cache,
+            )
+
+    def _search(
+        self, query: str, *, top_k: int, path_prefix: str | None,
+        strategy: SearchStrategy, use_cache: bool,
     ) -> list[SearchResult]:
         self._check_workspace()
         if not query.strip():
@@ -180,6 +208,10 @@ class CodeIndex:
             raise ValueError("RAG workspace binding mismatch")
 
     def _ensure_revision(self) -> str:
+        pending = self._sync_journal.load()
+        if pending is not None:
+            roots, rebuild = pending
+            self._sync(roots, rebuild=rebuild)
         # Refresh source before consulting the result cache, even for use_cache=False.
         # Reading index metadata alone cannot detect editor/write_patch changes on disk.
         payload = self.collection.get(include=["metadatas"])
@@ -463,4 +495,8 @@ def open_code_index(
     )
     if workspace and any((collection.metadata or {}).get(key) != value for key, value in metadata.items()):
         raise ValueError("RAG collection workspace binding or schema mismatch")
-    return CodeIndex(collection, workspace=workspace)
+    # Collection IDs isolate retry state even when a collection name is reused.
+    journal_name = hashlib.sha256(str(collection.id).encode()).hexdigest()[:32]
+    return CodeIndex(
+        collection, workspace=workspace, sync_state_path=path / f"sync-{journal_name}.json",
+    )
