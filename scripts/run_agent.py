@@ -14,6 +14,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 from langgraph.types import Command
 
 from agent.persistence import open_persistent_graph
+from agent.rag.settings import STRATEGIES, resolve_strategy
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -31,6 +32,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-loops", type=int, default=12)
     parser.add_argument("--hitl", action="store_true", help="write_patch 前暂停并请求审批")
     parser.add_argument("--read-only", action="store_true", help="仅暴露读取/检索工具")
+    parser.add_argument("--rag-strategy", choices=STRATEGIES,
+                        help="默认检索策略；新会话默认读取 RAG_STRATEGY/hybrid，恢复时省略则沿用存档")
     parser.add_argument(
         "--semantic-cache",
         action="store_true",
@@ -66,6 +69,7 @@ def _print_status(snapshot: Any, thread_id: str) -> None:
     print(f"Loop step: {values.get('loop_step', 0)}")
     print(f"HITL enabled: {bool(values.get('hitl_enabled'))}")
     print(f"Read-only mode: {bool(values.get('read_only_mode'))}")
+    print(f"RAG strategy: {values.get('rag_strategy', '<legacy: environment default>')}")
     if values.get("semantic_cache_enabled"):
         status = "hit" if values.get("semantic_cache_hit") else "miss/store"
         similarity = values.get("semantic_cache_similarity")
@@ -165,10 +169,13 @@ def _run_session(args) -> int:
                     "semantic_cache_enabled": args.semantic_cache,
                     "semantic_cache_hit": False,
                     "cpp_tools_enabled": args.cpp_tools,
+                    "rag_strategy": resolve_strategy(args.rag_strategy),
                 }
                 if workspace:
                     graph_input["workspace_binding"] = workspace.binding()
 
+            if snapshot.values and args.rag_strategy is not None:
+                agent.update_state(config, {"rag_strategy": resolve_strategy(args.rag_strategy)})
             print(f"Thread: {thread_id}")
             from agent.repair_trace import use_repair_trace
             trace_context: AbstractContextManager = nullcontext()
@@ -180,6 +187,8 @@ def _run_session(args) -> int:
                 trace_context = use_repair_trace(trace_path, workspace.root, {
                     "thread_id": thread_id, "task": args.task or snapshot.values.get("task"),
                     "resumed": bool(args.resume or args.continue_run),
+                    "rag_strategy": resolve_strategy(args.rag_strategy,
+                                                      snapshot.values.get("rag_strategy")),
                     "max_loop_steps": (snapshot.values or {}).get("max_loop_steps", args.max_loops),
                 })
             with trace_context:

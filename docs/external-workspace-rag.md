@@ -24,6 +24,10 @@
 
 ## 与 clangd 的分工
 
+Agent 可通过工具的 `strategy` 参数选择 lexical/vector/hybrid，也可通过 `--rag-strategy`
+设置会话默认值；不会改变 workspace 边界或自动启用 C++ 执行权限。独立的 20 文件、32 查询
+公开评测及配置示例见 [检索策略与评测](rag-strategy-selection.md)。
+
 1. 未知实现位置或概念查询：`search_code_knowledge` 返回当前 workspace 的候选片段。
 2. 精确字符串：grep；已知路径：`read_file_chunk`，确认实际符号行列。
 3. 已开启 C++ 工具且完成 `cpp_build(configure_only=true)`：通过

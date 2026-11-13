@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "dataset": "independent-cpp-v1",
+  "split": "heldout",
+  "cases": [
+    {
+      "id": "heldout_1_identifier",
+      "query": "unit_quaternion",
+      "targets": [
+        {
+          "path": "quaternion.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "identifier"
+      ]
+    },
+    {
+      "id": "heldout_1_concept",
+      "query": "Normalize a four-component rotation while rejecting zero or nonfinite magnitude",
+      "targets": [
+        {
+          "path": "quaternion.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "concept"
+      ]
+    },
+    {
+      "id": "heldout_2_identifier",
+      "query": "TokenBucket",
+      "targets": [
+        {
+          "path": "rate_limiter.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "identifier"
+      ]
+    },
+    {
+      "id": "heldout_2_concept",
+      "query": "Allow a burst of requests but replenish the available allowance gradually with elapsed time",
+      "targets": [
+        {
+          "path": "rate_limiter.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "concept"
+      ]
+    },
+    {
+      "id": "heldout_3_identifier",
+      "query": "0xedb88320u",
+      "targets": [
+        {
+          "path": "crc32.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "identifier"
+      ]
+    },
+    {
+      "id": "heldout_3_concept",
+      "query": "逐位移位和异或计算数据校验值，最后对结果取反",
+      "targets": [
+        {
+          "path": "crc32.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "concept"
+      ]
+    },
+    {
+      "id": "heldout_4_identifier",
+      "query": "decode_frame",
+      "targets": [
+        {
+          "path": "packet_decoder.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "identifier"
+      ]
+    },
+    {
+      "id": "heldout_4_concept",
+      "query": "读取前两个字节表示的消息长度，在复制负载前确认缓冲区足够长",
+      "targets": [
+        {
+          "path": "packet_decoder.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "concept"
+      ]
+    },
+    {
+      "id": "heldout_5_identifier",
+      "query": "UniqueHandle::release",
+      "targets": [
+        {
+          "path": "unique_fd.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "identifier"
+      ]
+    },
+    {
+      "id": "heldout_5_concept",
+      "query": "Find a resource owner that cannot be copied, can transfer ownership, and closes the handle when destroyed",
+      "targets": [
+        {
+          "path": "unique_fd.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "concept"
+      ]
+    },
+    {
+      "id": "heldout_6_identifier",
+      "query": "memory_order_acquire memory_order_release",
+      "targets": [
+        {
+          "path": "spsc_ring.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "identifier"
+      ]
+    },
+    {
+      "id": "heldout_6_concept",
+      "query": "A single writer and reader exchange items in a bounded circular buffer without taking a mutex",
+      "targets": [
+        {
+          "path": "spsc_ring.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "concept"
+      ]
+    },
+    {
+      "id": "heldout_7_identifier",
+      "query": "interpolate",
+      "targets": [
+        {
+          "path": "linear_interpolation.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "identifier"
+      ]
+    },
+    {
+      "id": "heldout_7_concept",
+      "query": "在两个采样点之间按比例估计数值，并拒绝横坐标相同的输入",
+      "targets": [
+        {
+          "path": "linear_interpolation.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "concept"
+      ]
+    },
+    {
+      "id": "heldout_8_identifier",
+      "query": "CounterUnwrapper",
+      "targets": [
+        {
+          "path": "monotonic_counter.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "identifier"
+      ]
+    },
+    {
+      "id": "heldout_8_concept",
+      "query": "Extend a wrapping 32 bit hardware counter into a continuously increasing wider value",
+      "targets": [
+        {
+          "path": "monotonic_counter.hpp"
+        }
+      ],
+      "tags": [
+        "heldout",
+        "concept"
+      ]
+    }
+  ]
+}

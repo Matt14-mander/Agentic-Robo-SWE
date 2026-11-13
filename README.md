@@ -283,6 +283,11 @@ Top-5 漏召回的 `semantic_search_tool` 提升到第 3 位。当前索引规�
 
 ### 9. Phase 3.2 Retrieval Cache
 
+Agent 的 `search_code_knowledge` 支持 `strategy="lexical"|"vector"|"hybrid"`；
+`scripts/run_agent.py --rag-strategy` 设置并保存会话默认值，省略时使用 `RAG_STRATEGY`
+或 `hybrid`。配置、恢复行为与独立 C++ 开发/保留集结果见
+[检索策略与评测](docs/rag-strategy-selection.md)。
+
 语义索引会按模型实际 token 预算拆分过长片段，检索后保留命中子片段和父片段上下文。
 同一父片段的多个命中合并为一个结果；升级需重新同步新的语义 collection，详见
 [Token 切块与父上下文](docs/rag-token-chunking.md)。

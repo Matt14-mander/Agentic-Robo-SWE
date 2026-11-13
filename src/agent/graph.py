@@ -145,7 +145,13 @@ def execute_tools(state: AgentState, config: RunnableConfig) -> dict:
         return {"messages": [ToolMessage(content="ERROR: tool batch violates session capabilities",
                                          tool_call_id=call["id"], name=call["name"])
                              for call in calls]}
-    return ToolNode(all_registered_tools()).invoke(state, config)
+    from agent.rag.settings import resolve_strategy
+    tool_config: RunnableConfig = {
+        **config,
+        "configurable": {**config.get("configurable", {}),
+                         "rag_strategy": resolve_strategy(session=state.get("rag_strategy"))},
+    }
+    return ToolNode(all_registered_tools()).invoke(state, tool_config)
 
 
 def build_graph(*, checkpointer: Any | None = None):
