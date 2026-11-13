@@ -69,7 +69,9 @@ class RetrievalCache:
     ) -> RetrievalCacheKey:
         return RetrievalCacheKey(
             revision=revision,
-            query=" ".join(query.lower().split()),
+            # Match the raw retrieval input: case affects identifier tokenization,
+            # and semantic encoders can also distinguish whitespace and indentation.
+            query=query,
             top_k=top_k,
             path_prefix=path_prefix.replace("\\", "/").strip() if path_prefix else None,
             strategy=strategy,
