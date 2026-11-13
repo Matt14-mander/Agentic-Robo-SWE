@@ -1,0 +1,410 @@
+{
+  "schema": "rag-incremental-performance-v1",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.13.2",
+  "chromadb": "1.5.9",
+  "encoder": "offline hash",
+  "strategy": "lexical",
+  "top_k": 5,
+  "notes": "Synthetic C++; OS-cache-warm. Cold = first search after sync. Times include freshness, Chroma and result verification. Eight samples default: p95 is descriptive, not an SLA. Baseline does not have the new return-time verification.",
+  "results": [
+    {
+      "files": 200,
+      "chunks": 200,
+      "source_bytes": 2124800,
+      "baseline_commit": "175c11b2bca5fe8fc4635ddc5f544c74e1a3580f",
+      "incremental_initial_sync_ms": 3511.321,
+      "baseline": {
+        "cold_first_search": {
+          "queries": 1,
+          "p50_ms": 499.942,
+          "p95_ms": 499.942,
+          "samples_ms": [
+            499.942
+          ],
+          "work": {
+            "source_content_reads": 200,
+            "source_bytes_read": 2124800,
+            "collection_full_reads": 2,
+            "lexical_documents_tokenized": 200
+          }
+        },
+        "warm_uncached": {
+          "queries": 8,
+          "p50_ms": 472.008,
+          "p95_ms": 484.493,
+          "samples_ms": [
+            480.802,
+            458.036,
+            469.773,
+            474.244,
+            462.662,
+            481.793,
+            484.493,
+            450.519
+          ],
+          "work": {
+            "source_content_reads": 1600,
+            "source_bytes_read": 16998400,
+            "collection_full_reads": 16,
+            "lexical_documents_tokenized": 1600
+          }
+        },
+        "warm_cached": {
+          "queries": 8,
+          "p50_ms": 199.186,
+          "p95_ms": 215.156,
+          "samples_ms": [
+            197.369,
+            175.127,
+            193.118,
+            200.328,
+            215.156,
+            203.136,
+            198.044,
+            204.563
+          ],
+          "work": {
+            "source_content_reads": 1600,
+            "source_bytes_read": 16998400,
+            "collection_full_reads": 8,
+            "lexical_documents_tokenized": 0
+          }
+        },
+        "common_term_uncached": {
+          "queries": 8,
+          "p50_ms": 466.995,
+          "p95_ms": 489.562,
+          "samples_ms": [
+            458.568,
+            486.177,
+            442.161,
+            470.051,
+            463.94,
+            472.444,
+            489.562,
+            445.435
+          ],
+          "work": {
+            "source_content_reads": 1600,
+            "source_bytes_read": 16998400,
+            "collection_full_reads": 16,
+            "lexical_documents_tokenized": 1600
+          }
+        },
+        "single_file_edit": {
+          "queries": 1,
+          "p50_ms": 530.003,
+          "p95_ms": 530.003,
+          "samples_ms": [
+            530.003
+          ],
+          "work": {
+            "source_content_reads": 200,
+            "source_bytes_read": 2124800,
+            "collection_full_reads": 3,
+            "lexical_documents_tokenized": 200
+          }
+        }
+      },
+      "incremental": {
+        "cold_first_search": {
+          "queries": 1,
+          "p50_ms": 1090.656,
+          "p95_ms": 1090.656,
+          "samples_ms": [
+            1090.656
+          ],
+          "work": {
+            "source_metadata_checks": 602,
+            "source_content_reads": 201,
+            "source_bytes_read": 2135424,
+            "collection_full_reads": 1,
+            "lexical_documents_tokenized": 200
+          }
+        },
+        "warm_uncached": {
+          "queries": 8,
+          "p50_ms": 168.096,
+          "p95_ms": 179.441,
+          "samples_ms": [
+            166.707,
+            179.441,
+            169.484,
+            153.873,
+            165.421,
+            171.562,
+            169.502,
+            151.518
+          ],
+          "work": {
+            "source_metadata_checks": 1616,
+            "source_content_reads": 8,
+            "source_bytes_read": 84992,
+            "collection_full_reads": 0,
+            "lexical_documents_tokenized": 0
+          }
+        },
+        "warm_cached": {
+          "queries": 8,
+          "p50_ms": 154.088,
+          "p95_ms": 174.488,
+          "samples_ms": [
+            147.194,
+            157.638,
+            169.749,
+            174.488,
+            154.083,
+            95.925,
+            154.093,
+            151.248
+          ],
+          "work": {
+            "source_metadata_checks": 1616,
+            "source_content_reads": 8,
+            "source_bytes_read": 84992,
+            "collection_full_reads": 0,
+            "lexical_documents_tokenized": 0
+          }
+        },
+        "common_term_uncached": {
+          "queries": 8,
+          "p50_ms": 183.729,
+          "p95_ms": 191.139,
+          "samples_ms": [
+            179.513,
+            173.873,
+            129.606,
+            191.139,
+            183.153,
+            187.876,
+            184.305,
+            189.532
+          ],
+          "work": {
+            "source_metadata_checks": 1680,
+            "source_content_reads": 40,
+            "source_bytes_read": 424960,
+            "collection_full_reads": 0,
+            "lexical_documents_tokenized": 0
+          }
+        },
+        "single_file_edit": {
+          "queries": 1,
+          "p50_ms": 252.558,
+          "p95_ms": 252.558,
+          "samples_ms": [
+            252.558
+          ],
+          "work": {
+            "source_metadata_checks": 204,
+            "source_content_reads": 2,
+            "source_bytes_read": 21248,
+            "collection_full_reads": 0,
+            "lexical_documents_tokenized": 1
+          }
+        }
+      },
+      "ranking_and_content_equal": true
+    },
+    {
+      "files": 1000,
+      "chunks": 1000,
+      "source_bytes": 10624000,
+      "baseline_commit": "175c11b2bca5fe8fc4635ddc5f544c74e1a3580f",
+      "incremental_initial_sync_ms": 18732.603,
+      "baseline": {
+        "cold_first_search": {
+          "queries": 1,
+          "p50_ms": 2458.19,
+          "p95_ms": 2458.19,
+          "samples_ms": [
+            2458.19
+          ],
+          "work": {
+            "source_content_reads": 1000,
+            "source_bytes_read": 10624000,
+            "collection_full_reads": 2,
+            "lexical_documents_tokenized": 1000
+          }
+        },
+        "warm_uncached": {
+          "queries": 8,
+          "p50_ms": 2397.072,
+          "p95_ms": 2436.971,
+          "samples_ms": [
+            2333.96,
+            2370.525,
+            2390.184,
+            2283.857,
+            2424.706,
+            2403.96,
+            2433.273,
+            2436.971
+          ],
+          "work": {
+            "source_content_reads": 8000,
+            "source_bytes_read": 84992000,
+            "collection_full_reads": 16,
+            "lexical_documents_tokenized": 8000
+          }
+        },
+        "warm_cached": {
+          "queries": 8,
+          "p50_ms": 976.933,
+          "p95_ms": 1026.045,
+          "samples_ms": [
+            1000.063,
+            1007.621,
+            985.557,
+            968.308,
+            884.623,
+            961.054,
+            942.224,
+            1026.045
+          ],
+          "work": {
+            "source_content_reads": 8000,
+            "source_bytes_read": 84992000,
+            "collection_full_reads": 8,
+            "lexical_documents_tokenized": 0
+          }
+        },
+        "common_term_uncached": {
+          "queries": 8,
+          "p50_ms": 2377.328,
+          "p95_ms": 2451.014,
+          "samples_ms": [
+            2343.002,
+            2434.564,
+            2364.427,
+            2346.933,
+            2451.014,
+            2383.619,
+            2371.036,
+            2411.038
+          ],
+          "work": {
+            "source_content_reads": 8000,
+            "source_bytes_read": 84992000,
+            "collection_full_reads": 16,
+            "lexical_documents_tokenized": 8000
+          }
+        },
+        "single_file_edit": {
+          "queries": 1,
+          "p50_ms": 2504.178,
+          "p95_ms": 2504.178,
+          "samples_ms": [
+            2504.178
+          ],
+          "work": {
+            "source_content_reads": 1000,
+            "source_bytes_read": 10624000,
+            "collection_full_reads": 3,
+            "lexical_documents_tokenized": 1000
+          }
+        }
+      },
+      "incremental": {
+        "cold_first_search": {
+          "queries": 1,
+          "p50_ms": 5274.119,
+          "p95_ms": 5274.119,
+          "samples_ms": [
+            5274.119
+          ],
+          "work": {
+            "source_metadata_checks": 3002,
+            "source_content_reads": 1001,
+            "source_bytes_read": 10634624,
+            "collection_full_reads": 1,
+            "lexical_documents_tokenized": 1000
+          }
+        },
+        "warm_uncached": {
+          "queries": 8,
+          "p50_ms": 792.987,
+          "p95_ms": 849.153,
+          "samples_ms": [
+            849.153,
+            788.201,
+            788.503,
+            811.884,
+            792.545,
+            793.428,
+            784.551,
+            795.798
+          ],
+          "work": {
+            "source_metadata_checks": 8016,
+            "source_content_reads": 8,
+            "source_bytes_read": 84992,
+            "collection_full_reads": 0,
+            "lexical_documents_tokenized": 0
+          }
+        },
+        "warm_cached": {
+          "queries": 8,
+          "p50_ms": 791.25,
+          "p95_ms": 823.188,
+          "samples_ms": [
+            793.321,
+            753.171,
+            818.291,
+            823.188,
+            785.24,
+            816.771,
+            789.179,
+            785.524
+          ],
+          "work": {
+            "source_metadata_checks": 8016,
+            "source_content_reads": 8,
+            "source_bytes_read": 84992,
+            "collection_full_reads": 0,
+            "lexical_documents_tokenized": 0
+          }
+        },
+        "common_term_uncached": {
+          "queries": 8,
+          "p50_ms": 821.197,
+          "p95_ms": 859.93,
+          "samples_ms": [
+            804.296,
+            784.182,
+            802.939,
+            804.37,
+            852.03,
+            859.93,
+            838.024,
+            850.951
+          ],
+          "work": {
+            "source_metadata_checks": 8080,
+            "source_content_reads": 40,
+            "source_bytes_read": 424960,
+            "collection_full_reads": 0,
+            "lexical_documents_tokenized": 0
+          }
+        },
+        "single_file_edit": {
+          "queries": 1,
+          "p50_ms": 904.397,
+          "p95_ms": 904.397,
+          "samples_ms": [
+            904.397
+          ],
+          "work": {
+            "source_metadata_checks": 1004,
+            "source_content_reads": 2,
+            "source_bytes_read": 21248,
+            "collection_full_reads": 0,
+            "lexical_documents_tokenized": 1
+          }
+        }
+      },
+      "ranking_and_content_equal": true
+    }
+  ]
+}

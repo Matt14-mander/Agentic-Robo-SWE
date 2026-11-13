@@ -1,0 +1,157 @@
+{
+  "purpose": "incremental retrieval offline smoke; no semantic rerun",
+  "splits": {
+    "dev": {
+      "source_revision": "5277449d95821e6e",
+      "cases_sha256": "ee022056d7204cccd5d8df06ef3648c0e9dea79f739d672dd7e6fd460a89f91a",
+      "metrics_equal_to_prior": true,
+      "arms": {
+        "lexical": {
+          "at_1": {
+            "hit_rate": 0.75,
+            "recall": 0.75,
+            "mrr": 0.75,
+            "path_hit_rate": 0.75,
+            "symbol_hit_rate": 0.75
+          },
+          "at_3": {
+            "hit_rate": 0.75,
+            "recall": 0.75,
+            "mrr": 0.75,
+            "path_hit_rate": 0.75,
+            "symbol_hit_rate": 0.75
+          },
+          "at_5": {
+            "hit_rate": 0.75,
+            "recall": 0.75,
+            "mrr": 0.75,
+            "path_hit_rate": 0.75,
+            "symbol_hit_rate": 0.75
+          }
+        },
+        "hash_vector": {
+          "at_1": {
+            "hit_rate": 0.5625,
+            "recall": 0.5625,
+            "mrr": 0.5625,
+            "path_hit_rate": 0.5625,
+            "symbol_hit_rate": 0.5625
+          },
+          "at_3": {
+            "hit_rate": 0.75,
+            "recall": 0.75,
+            "mrr": 0.6458,
+            "path_hit_rate": 0.75,
+            "symbol_hit_rate": 0.75
+          },
+          "at_5": {
+            "hit_rate": 0.8125,
+            "recall": 0.8125,
+            "mrr": 0.6583,
+            "path_hit_rate": 0.8125,
+            "symbol_hit_rate": 0.8125
+          }
+        },
+        "hash_hybrid": {
+          "at_1": {
+            "hit_rate": 0.75,
+            "recall": 0.75,
+            "mrr": 0.75,
+            "path_hit_rate": 0.75,
+            "symbol_hit_rate": 0.75
+          },
+          "at_3": {
+            "hit_rate": 0.8125,
+            "recall": 0.8125,
+            "mrr": 0.7708,
+            "path_hit_rate": 0.8125,
+            "symbol_hit_rate": 0.8125
+          },
+          "at_5": {
+            "hit_rate": 0.8125,
+            "recall": 0.8125,
+            "mrr": 0.7708,
+            "path_hit_rate": 0.8125,
+            "symbol_hit_rate": 0.8125
+          }
+        }
+      }
+    },
+    "heldout": {
+      "source_revision": "5277449d95821e6e",
+      "cases_sha256": "56db013281b53b782e2adfb92deb4eb7887351ca71bec9535d4d48d47b1af165",
+      "metrics_equal_to_prior": true,
+      "arms": {
+        "lexical": {
+          "at_1": {
+            "hit_rate": 0.6875,
+            "recall": 0.6875,
+            "mrr": 0.6875,
+            "path_hit_rate": 0.6875,
+            "symbol_hit_rate": 0.6875
+          },
+          "at_3": {
+            "hit_rate": 0.75,
+            "recall": 0.75,
+            "mrr": 0.7188,
+            "path_hit_rate": 0.75,
+            "symbol_hit_rate": 0.75
+          },
+          "at_5": {
+            "hit_rate": 0.8125,
+            "recall": 0.8125,
+            "mrr": 0.7344,
+            "path_hit_rate": 0.8125,
+            "symbol_hit_rate": 0.8125
+          }
+        },
+        "hash_vector": {
+          "at_1": {
+            "hit_rate": 0.375,
+            "recall": 0.375,
+            "mrr": 0.375,
+            "path_hit_rate": 0.375,
+            "symbol_hit_rate": 0.375
+          },
+          "at_3": {
+            "hit_rate": 0.5625,
+            "recall": 0.5625,
+            "mrr": 0.4479,
+            "path_hit_rate": 0.5625,
+            "symbol_hit_rate": 0.5625
+          },
+          "at_5": {
+            "hit_rate": 0.6875,
+            "recall": 0.6875,
+            "mrr": 0.476,
+            "path_hit_rate": 0.6875,
+            "symbol_hit_rate": 0.6875
+          }
+        },
+        "hash_hybrid": {
+          "at_1": {
+            "hit_rate": 0.625,
+            "recall": 0.625,
+            "mrr": 0.625,
+            "path_hit_rate": 0.625,
+            "symbol_hit_rate": 0.625
+          },
+          "at_3": {
+            "hit_rate": 0.8125,
+            "recall": 0.8125,
+            "mrr": 0.7188,
+            "path_hit_rate": 0.8125,
+            "symbol_hit_rate": 0.8125
+          },
+          "at_5": {
+            "hit_rate": 0.875,
+            "recall": 0.875,
+            "mrr": 0.7312,
+            "path_hit_rate": 0.875,
+            "symbol_hit_rate": 0.875
+          }
+        }
+      }
+    }
+  }
+}

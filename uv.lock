@@ -43,6 +43,7 @@ dev = [
 ]
 rag = [
     { name = "chromadb" },
+    { name = "filelock" },
     { name = "numpy" },
     { name = "onnxruntime" },
     { name = "tokenizers" },
@@ -56,8 +57,9 @@ simulation = [
 
 [package.metadata]
 requires-dist = [
-    { name = "chromadb", marker = "extra == 'rag'", specifier = ">=1.5,<2" },
+    { name = "chromadb", marker = "extra == 'rag'", specifier = ">=1.5.9,<2" },
     { name = "e2b-code-interpreter", marker = "extra == 'sandbox'", specifier = ">=2.7" },
+    { name = "filelock", marker = "extra == 'rag'", specifier = ">=3.16,<4" },
     { name = "langchain-anthropic", specifier = ">=0.2" },
     { name = "langchain-core", specifier = ">=0.3" },
     { name = "langchain-openai", specifier = ">=0.2" },
