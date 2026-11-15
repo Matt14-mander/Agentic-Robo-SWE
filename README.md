@@ -281,7 +281,9 @@ Top-5 漏召回的 `semantic_search_tool` 提升到第 3 位。当前索引规�
 ### 9. Phase 3.2 Retrieval Cache
 
 实际 Agent 的重复源码检索使用进程内 LRU Cache，默认最多保存 128 个结果。缓存键包含
-标准化查询、`top_k`、路径前缀、检索策略和源码索引 revision。每次查询都会核对 Chroma
+原始查询文本（保留大小写、空格、换行和缩进）、`top_k`、路径前缀、检索策略和源码索引
+revision。不同查询不会因小写化或空白合并而共享结果；相同查询和检索参数仍可命中缓存。
+每次查询都会核对 Chroma
 中的 chunk 内容哈希；本进程或其它进程刷新索引后，旧结果会自动清空，不会返回过期代码。
 
 缓存记录 hit、miss、bypass、invalidation、eviction、命中率和估算节省延迟。可通过重复

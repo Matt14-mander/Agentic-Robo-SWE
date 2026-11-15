@@ -9,6 +9,7 @@ import pytest
 
 from agent.rag.chunking import chunk_python_file
 from agent.rag.cache import RetrievalCache
+from agent.rag.embedding import HashingEmbedder
 from agent.rag.index import CodeIndex
 from agent.rag.models import SearchResult
 from agent.tools._paths import PROJECT_ROOT
@@ -176,7 +177,7 @@ def test_search_rejects_unknown_strategy():
         index.search("query", strategy="unknown")
 
 
-def test_retrieval_cache_normalizes_query_and_tracks_bypass():
+def test_retrieval_cache_reuses_identical_query_and_tracks_bypass():
     path = PROJECT_ROOT / "benchmarks/workspaces/_test_rag_cache.py"
     relative = "benchmarks/workspaces/_test_rag_cache.py"
     collection = MemoryCollection()
@@ -190,7 +191,7 @@ def test_retrieval_cache_normalizes_query_and_tracks_bypass():
     try:
         index.sync([relative])
         first = index.search("zero norm normalization", top_k=1, strategy="vector")
-        second = index.search("  ZERO   NORM normalization  ", top_k=1, strategy="vector")
+        second = index.search("zero norm normalization", top_k=1, strategy="vector")
         index.search("zero norm normalization", top_k=2, strategy="vector")
         index.search(
             "zero norm normalization",
@@ -292,6 +293,74 @@ def live_rag(tmp_path, monkeypatch):
     index.sync(["controller.py"])
     monkeypatch.setattr(rag_ops, "get_code_index", lambda: index)
     return source, collection, index
+
+
+@pytest.mark.parametrize("strategy", ["vector", "lexical", "hybrid"])
+def test_cache_preserves_case_sensitive_identifier_tokenization(live_rag, strategy):
+    source, _, index = live_rag
+    source.write_text(
+        "def resetCounter():\n    pass\n\ndef resetcounter():\n    pass\n",
+        encoding="utf-8",
+    )
+    first = index.search("resetCounter", top_k=1, strategy=strategy)
+    second = index.search("resetcounter", top_k=1, strategy=strategy)
+    uncached = index.search("resetcounter", top_k=1, strategy=strategy, use_cache=False)
+
+    assert first[0].symbol == "resetCounter"
+    assert uncached[0].symbol == "resetcounter"
+    assert second == uncached
+    assert index.search("resetCounter", top_k=1, strategy=strategy) == first
+    assert index.search("resetcounter", top_k=1, strategy=strategy) == second
+    assert index.cache_stats().hits == 2
+    assert index.cache_stats().misses == 2
+
+
+@pytest.mark.parametrize("strategy", ["vector", "hybrid"])
+@pytest.mark.parametrize(("first_query", "second_query"), [
+    ("HTTPServer", "httpserver"),
+    ("read buffer", "read  buffer"),
+    ("read buffer", "read\nbuffer"),
+    ("if ready:\n    execute()", "if ready:\n        execute()"),
+    ("read buffer", " read buffer "),
+    ("read buffer", "read\tbuffer"),
+])
+def test_cache_preserves_encoder_sensitive_query_text(
+    live_rag, strategy, first_query, second_query,
+):
+    # Model-independent encoder double: distinct raw inputs can have distinct
+    # embeddings. No model assets or network access are required for this contract.
+    class TextSensitiveEmbedder(HashingEmbedder):
+        def embed(self, texts):
+            vectors = []
+            for text in texts:
+                if text == first_query or "def first_result" in text:
+                    vectors.append([1.0, 0.0])
+                elif text == second_query or "def second_result" in text:
+                    vectors.append([0.0, 1.0])
+                else:
+                    pytest.fail(f"Unexpected encoder input: {text!r}")
+            return vectors
+
+    source, collection, _ = live_rag
+    source.write_text(
+        "def first_result():\n    pass\n\ndef second_result():\n    pass\n",
+        encoding="utf-8",
+    )
+    index = CodeIndex(collection, embedder=TextSensitiveEmbedder(dimensions=32))
+    index.sync(["controller.py"])
+    first = index.search(first_query, top_k=1, strategy=strategy)
+    second = index.search(second_query, top_k=1, strategy=strategy)
+    uncached = index.search(second_query, top_k=1, strategy=strategy, use_cache=False)
+
+    assert first[0].symbol == "first_result"
+    assert uncached[0].symbol == "second_result"
+    assert second == uncached
+    assert index.search(first_query, top_k=1, strategy=strategy) == first
+    assert index.search(second_query, top_k=1, strategy=strategy) == second
+    assert collection.query_calls == 3
+    assert index.cache_stats().hits == 2
+    assert index.cache_stats().misses == 2
+    assert index.cache_stats().entries == 2
 
 
 @pytest.mark.parametrize("strategy", ["vector", "lexical", "hybrid"])
