@@ -296,9 +296,11 @@ Agent 的 `search_code_knowledge` 支持 `strategy="lexical"|"vector"|"hybrid"`�
 [Token 切块与父上下文](docs/rag-token-chunking.md)。
 
 实际 Agent 的重复源码检索使用进程内 LRU Cache，默认最多保存 128 个结果。缓存键包含
-标准化查询、`top_k`、路径前缀、检索策略和源码索引 revision。持久化 collection 使用文件锁
-和 generation 标记协调本进程与其他新版进程的更新；generation 变化后重载派生索引并检查
-revision。请使用项目索引入口写入 Chroma，旧版或直接操作底层 collection 不参与此协议。
+原始查询文本（保留大小写、空格、换行和缩进）、`top_k`、路径前缀、检索策略和源码索引
+revision。不同查询不会因小写化或空白合并而共享结果；相同查询和检索参数仍可命中缓存。
+持久化 collection 使用文件锁和 generation 标记协调本进程与其他新版进程的更新；
+generation 变化后重载派生索引并检查 revision。请使用项目索引入口写入 Chroma，
+旧版或直接操作底层 collection 不参与此协议。
 
 缓存记录 hit、miss、bypass、invalidation、eviction、命中率和估算节省延迟。可通过重复
 查询检查行为：
