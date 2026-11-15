@@ -1,0 +1,36 @@
+{
+  "source_commit": "8d880db7698da7782c4fa574bd077bd8b312776c",
+  "source_roots": [
+    "src"
+  ],
+  "chunk_schema": "token-children-v1",
+  "parent_count": 545,
+  "parents_over_budget_before": 62,
+  "indexed_chunk_count": 636,
+  "children_over_budget_after": 0,
+  "maximum_parent_tokens": 1885,
+  "maximum_child_tokens": 512,
+  "encoding_seconds": 157.923,
+  "embedding": {
+    "backend": "semantic",
+    "model": "jinaai/jina-embeddings-v2-base-code",
+    "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+    "files": {
+      "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+      "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+    },
+    "identity": "f44bdedd80bf13a08ef6",
+    "dimensions": 768,
+    "max_tokens": 512,
+    "pooling": "masked-mean-l2-v1",
+    "chunking": "token-children-v1",
+    "overlap_tokens": 32,
+    "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+    "threads": 4,
+    "batch_size": 4,
+    "texts_encoded": 636,
+    "truncated_texts": 0,
+    "fallback_reason": null
+  },
+  "source_archive_sha256": "e60fc6f72d7ac59e3dd3cff9a7eb0152a678e10be6a486f096f9d642c57c60d3"
+}

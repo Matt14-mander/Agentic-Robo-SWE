@@ -257,8 +257,9 @@ def test_rag_tool_formats_ranked_source_results(monkeypatch):
     from agent.tools import rag_ops
 
     class FakeIndex:
-        def search(self, query, top_k, path_prefix):
+        def search(self, query, top_k, path_prefix, strategy):
             assert query == "anti windup"
+            assert strategy == "hybrid"
             return [SearchResult(
                 path="src/control/pid.py",
                 symbol="PIDController.update",

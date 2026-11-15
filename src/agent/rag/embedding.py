@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
+from agent.rag.token_chunking import TOKEN_CHUNK_SCHEMA, TokenChunker
+
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 MODEL_ID = "jinaai/jina-embeddings-v2-base-code"
 MODEL_REVISION = "516f4baf13dec4ddddda8631e019b5737c8bc250"
@@ -147,6 +149,10 @@ class SemanticCodeEmbedder:
             self.tokenizer = Tokenizer.from_file(str(config.model_dir / "tokenizer.json"))
         except Exception as exc:
             raise RuntimeError(f"Cannot initialize code embedding runtime: {type(exc).__name__}") from exc
+        chunk_tokenizer = Tokenizer.from_str(self.tokenizer.to_str())
+        chunk_tokenizer.no_truncation()
+        chunk_tokenizer.no_padding()
+        self.chunker = TokenChunker(chunk_tokenizer, config.max_tokens)
         self.tokenizer.enable_truncation(max_length=config.max_tokens)
         self.tokenizer.enable_padding(pad_id=1, pad_token="<pad>")
         self.runtime_version = ort.__version__
@@ -155,12 +161,14 @@ class SemanticCodeEmbedder:
     def identity(self) -> str:
         return _identity({"backend": "semantic", "model": MODEL_ID, "revision": MODEL_REVISION,
                           "files": MODEL_FILES, "max_tokens": self.config.max_tokens,
+                          "chunking": TOKEN_CHUNK_SCHEMA,
                           "pooling": "masked-mean-l2-v1", "dimensions": self.dimensions})
 
     def describe(self) -> dict:
         return {"backend": "semantic", "model": MODEL_ID, "revision": MODEL_REVISION,
                 "files": MODEL_FILES, "identity": self.identity, "dimensions": self.dimensions,
                 "max_tokens": self.config.max_tokens, "pooling": "masked-mean-l2-v1",
+                "chunking": TOKEN_CHUNK_SCHEMA, "overlap_tokens": self.chunker.overlap,
                 "runtime": f"onnxruntime:{self.runtime_version}:CPUExecutionProvider",
                 "threads": self.config.threads, "batch_size": 4,
                 "texts_encoded": self.texts_encoded, "truncated_texts": self.truncated_texts,
