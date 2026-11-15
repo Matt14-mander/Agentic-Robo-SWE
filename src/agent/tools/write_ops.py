@@ -61,6 +61,8 @@ def write_patch(path: str, old_string: str, new_string: str) -> str:
 
     new_text = text.replace(old_string, new_string, 1)
     p.write_text(new_text, encoding="utf-8")
+    from agent.rag.freshness import notify_source_changed
+    notify_source_changed(p)
 
     n_old = old_string.count("\n") + 1
     n_new = new_string.count("\n") + 1

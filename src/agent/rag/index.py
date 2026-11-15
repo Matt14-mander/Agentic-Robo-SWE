@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
-import math
 import hashlib
+import os
 import time
-from collections import Counter
+from contextlib import nullcontext
 from dataclasses import dataclass, replace
 from pathlib import Path
+from threading import RLock
 from typing import Any, Iterable
 
 from agent.rag.chunking import chunk_codebase, chunk_python_file
 from agent.rag.cache import RetrievalCache, RetrievalCacheStats
-from agent.rag.embedding import Embedder, EmbeddingConfig, HashingEmbedder, create_embedder, tokenize
+from agent.rag.embedding import Embedder, EmbeddingConfig, HashingEmbedder, create_embedder
+from agent.rag.freshness import SourceDetector
+from agent.rag.inverted import InvertedIndex
+from agent.rag.storage import TrackedCollection, open_collection
 from agent.rag.models import CodeChunk, IndexStats, ParentContext, SearchResult
 from agent.rag.settings import SearchStrategy
 from agent.tools._paths import PROJECT_ROOT, resolve_within_root
@@ -41,6 +45,7 @@ class CodeIndex:
         cache: RetrievalCache | None = None,
         *,
         workspace: Workspace | None = None,
+        strict_freshness: bool = False,
     ) -> None:
         self.collection = collection
         self.workspace = workspace
@@ -50,6 +55,16 @@ class CodeIndex:
         # (source hash, indexed chunk revision), scoped to the paths already indexed.
         self._source_snapshots: dict[str, tuple[str, str]] = {}
         self._parents: dict[str, CodeChunk] = {}
+        self._parents_by_path: dict[str, set[str]] = {}
+        self._by_path: dict[str, dict[str, str]] = {}
+        self._lexical = InvertedIndex()
+        self._detector = SourceDetector(workspace.root if workspace else PROJECT_ROOT,
+                                       self._resolve_source, self._read_source, strict=strict_freshness)
+        self._lock = RLock()
+        self._guard = collection.guard if isinstance(collection, TrackedCollection) else nullcontext()
+        self._loaded = False
+        self._observed_token: str | None = None
+        self._collection_reads = 0
 
     def sync(
         self,
@@ -57,6 +72,11 @@ class CodeIndex:
         *,
         rebuild: bool = False,
     ) -> IndexStats:
+        with self._lock, self._guard:
+            self._loaded = False
+            return self._sync(roots, rebuild=rebuild)
+
+    def _sync(self, roots: Iterable[str] | None, *, rebuild: bool) -> IndexStats:
         self._check_workspace()
         roots = tuple(roots) if roots is not None else ((".",) if self.workspace else ("src",))
         files, chunks = (
@@ -95,6 +115,9 @@ class CodeIndex:
             )
 
         self._parents = parents
+        self._parents_by_path = {}
+        for key, parent in parents.items():
+            self._parents_by_path.setdefault(parent.path, set()).add(key)
         self._set_revision(_revision_for_chunks(chunks))
 
         return IndexStats(
@@ -114,6 +137,16 @@ class CodeIndex:
         strategy: SearchStrategy = "hybrid",
         use_cache: bool = True,
     ) -> list[SearchResult]:
+        with self._lock, self._guard:
+            for _ in range(3):
+                results = self._search(query, top_k=top_k, path_prefix=path_prefix,
+                                       strategy=strategy, use_cache=use_cache)
+                if self._verify_results(results):
+                    return results
+            raise RuntimeError("Sources changed repeatedly during retrieval; retry the query")
+
+    def _search(self, query: str, *, top_k: int, path_prefix: str | None,
+                strategy: SearchStrategy, use_cache: bool) -> list[SearchResult]:
         self._check_workspace()
         if not query.strip():
             raise ValueError("query must not be empty")
@@ -179,6 +212,14 @@ class CodeIndex:
     def cache_stats(self) -> RetrievalCacheStats:
         return self.cache.stats()
 
+    def performance_stats(self) -> dict[str, int]:
+        return {"source_metadata_checks": self._detector.metadata_checks,
+                "source_content_reads": self._detector.content_reads,
+                "source_bytes_read": self._detector.bytes_read,
+                "collection_full_reads": self._collection_reads,
+                "lexical_documents_tokenized": self._lexical.documents_tokenized,
+                "last_lexical_candidates": self._lexical.last_candidates}
+
     def retrieval_manifest(self) -> dict:
         return {"embedding": self.embedder.describe(),
                 "source_revision": _revision_for_chunks(self._parents.values()),
@@ -202,90 +243,128 @@ class CodeIndex:
         if active is not None and active != self.workspace:
             raise ValueError("RAG workspace binding mismatch")
 
-    def _ensure_revision(self) -> str:
-        # Refresh source before consulting the result cache, even for use_cache=False.
-        # Reading index metadata alone cannot detect editor/write_patch changes on disk.
-        payload = self.collection.get(include=["metadatas"])
-        if self._refresh_sources(payload):
-            payload = self.collection.get(include=["metadatas"])
-        ids = [str(item) for item in payload.get("ids") or []]
-        metadatas = payload.get("metadatas") or []
-        pairs = [
-            (chunk_id, str(metadata.get("content_hash", "")))
-            for chunk_id, metadata in zip(ids, metadatas)
-            if isinstance(metadata, dict)
-        ]
-        revision = _revision_for_pairs(pairs)
-        if revision != self._revision:
-            self._set_revision(revision)
-        return revision
+    def _resolve_source(self, relative: str) -> Path:
+        if self.workspace:
+            return self.workspace.resolve(relative)
+        path = (PROJECT_ROOT / relative).resolve()
+        path.relative_to(PROJECT_ROOT)
+        return path
 
-    def _refresh_sources(self, payload: dict[str, Any]) -> bool:
-        """Reconcile indexed files with disk; never expand or replace the index scope.
+    def _read_source(self, relative: str) -> tuple[Path, str]:
+        if self.workspace:
+            return read_workspace_source(self.workspace, relative)
+        path = self._resolve_source(relative)
+        try:
+            return path, path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            return path, ""
 
-        Hash source text on every lookup, but only parse and embed changed content.
-        Reopening a collection also checks legacy indexes without requiring a rebuild.
-        Read/update errors propagate so callers cannot silently serve stale cache entries.
-        """
+    def _load_collection(self) -> None:
+        self._collection_reads += 1
+        payload = self.collection.get(include=["documents", "metadatas"])
+        rows = {}
         by_path: dict[str, dict[str, str]] = {}
-        for chunk_id, metadata in zip(
-            payload.get("ids") or [], payload.get("metadatas") or []
-        ):
+        for key, document, metadata in zip(payload.get("ids") or [],
+                                           payload.get("documents") or [],
+                                           payload.get("metadatas") or []):
             if not isinstance(metadata, dict) or not metadata.get("path"):
                 raise ValueError("Indexed chunk has no source path; rebuild the code index")
-            by_path.setdefault(str(metadata["path"]), {})[str(chunk_id)] = str(
-                metadata.get("content_hash", "")
-            )
+            relative = str(metadata["path"])
+            self._resolve_source(relative)  # Validate stored paths before reading any source.
+            key = str(key)
+            rows[key] = (str(document), dict(metadata))
+            by_path.setdefault(relative, {})[key] = str(metadata.get("content_hash", ""))
+        changed_paths = set(self._by_path) ^ set(by_path)
+        for key, row in rows.items():
+            if self._lexical.rows.get(key) != row:
+                if key in self._lexical.rows:
+                    changed_paths.add(str(self._lexical.rows[key][1]["path"]))
+                changed_paths.add(str(row[1]["path"]))
+                self._lexical.upsert(key, *row)
+        for key in set(self._lexical.rows) - rows.keys():
+            changed_paths.add(str(self._lexical.rows[key][1]["path"]))
+            self._lexical.remove(key)
+        for relative in changed_paths:
+            self._source_snapshots.pop(relative, None)
+        for relative in set(self._parents_by_path) - by_path.keys():
+            for key in self._parents_by_path.pop(relative):
+                self._parents.pop(key, None)
+        self._by_path = by_path
+        if not self._loaded:
+            self._source_snapshots.clear()
+            self._detector.stamps.clear()
+        self._loaded = True
 
-        snapshots: dict[str, tuple[str, str]] = {}
-        parents: dict[str, CodeChunk] = {}
-        cached_parents: dict[str, dict[str, CodeChunk]] = {}
-        for key, chunk in self._parents.items():
-            cached_parents.setdefault(chunk.path, {})[key] = chunk
-        updated = False
-        for relative, existing in by_path.items():
-            if self.workspace:
-                path, source = read_workspace_source(self.workspace, relative)
-            else:
-                path = (PROJECT_ROOT / relative).resolve()
-                path.relative_to(PROJECT_ROOT)
-                try:
-                    source = path.read_text(encoding="utf-8")
-                except FileNotFoundError:
-                    source = ""
-            source_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
-            snapshot = (source_hash, _revision_for_pairs(existing.items()))
-            if self._source_snapshots.get(relative) == snapshot:
-                parents.update(cached_parents.get(relative, {}))
-                snapshots[relative] = snapshot
-                continue
+    def _ensure_revision(self) -> str:
+        tracked = isinstance(self.collection, TrackedCollection)
+        token = self.collection.revision_token() if tracked else None
+        if tracked:
+            self.collection.refresh_reader(token)
+        reload = not self._loaded or not tracked or token != self._observed_token
+        if reload:
+            self._load_collection()
+        dirty = self._detector.changed(self._by_path)
+        dirty.update(set(self._by_path) - self._source_snapshots.keys())
+        for relative in sorted(dirty):
+            self._refresh_path(relative)
+        if reload or dirty or self._revision is None:
+            revision = _revision_for_pairs((key, value) for rows in self._by_path.values()
+                                           for key, value in rows.items())
+            if revision != self._revision:
+                self._set_revision(revision)
+        if tracked:
+            self._observed_token = self.collection.revision_token()
+        assert self._revision is not None
+        return self._revision
 
-            # Chunk exactly the text hashed above, avoiding a second, inconsistent read.
-            chunks = (
-                chunk_workspace_source(self.workspace, path, source) if self.workspace
-                else chunk_python_file(path, source_text=source)
-            )
-            parents.update((chunk.id, chunk) for chunk in chunks)
-            chunks = self._embedding_chunks(chunks)
-            current = {chunk.id: chunk.revision_hash for chunk in chunks}
-            changed = [chunk for chunk in chunks if existing.get(chunk.id) != chunk.revision_hash]
-            stale = sorted(set(existing) - set(current))
-            # Keep old path metadata available for a retry if an upsert fails.
-            for batch in _batches(changed, 128):
-                documents = [chunk.content for chunk in batch]
-                self.collection.upsert(
-                    ids=[chunk.id for chunk in batch],
-                    documents=documents,
-                    metadatas=[chunk.metadata() for chunk in batch],
-                    embeddings=self.embedder.embed(documents),
-                )
-            if stale:
-                self.collection.delete(ids=stale)
-            updated = updated or bool(changed or stale)
-            snapshots[relative] = (source_hash, _revision_for_pairs(current.items()))
-        self._source_snapshots = snapshots
-        self._parents = parents
-        return updated
+    def _refresh_path(self, relative: str) -> None:
+        existing = self._by_path[relative]
+        path, source, stamp = self._detector.read_stable(relative)
+        source_hash = hashlib.sha256(source.encode("utf-8")).hexdigest()
+        snapshot = (source_hash, _revision_for_pairs(existing.items()))
+        if self._source_snapshots.get(relative) == snapshot:
+            self._detector.accept(relative, stamp)
+            return
+        parents = (chunk_workspace_source(self.workspace, path, source) if self.workspace
+                   else chunk_python_file(path, source_text=source))
+        chunks = self._embedding_chunks(parents)
+        current = {chunk.id: chunk.revision_hash for chunk in chunks}
+        changed = [chunk for chunk in chunks if existing.get(chunk.id) != chunk.revision_hash]
+        stale = sorted(set(existing) - current.keys())
+        # Publish derived state only after every backend operation succeeds. An
+        # exception leaves this path dirty so the next lookup retries before cache.
+        for batch in _batches(changed, 128):
+            documents = [chunk.content for chunk in batch]
+            self.collection.upsert(ids=[chunk.id for chunk in batch], documents=documents,
+                                   metadatas=[chunk.metadata() for chunk in batch],
+                                   embeddings=self.embedder.embed(documents))
+        if stale:
+            self.collection.delete(ids=stale)
+        for key in stale:
+            self._lexical.remove(key)
+        for chunk in changed:
+            self._lexical.upsert(chunk.id, chunk.content, chunk.metadata())
+        for key in self._parents_by_path.pop(relative, set()):
+            self._parents.pop(key, None)
+        self._parents.update((chunk.id, chunk) for chunk in parents)
+        self._parents_by_path[relative] = {chunk.id for chunk in parents}
+        if current:
+            self._by_path[relative] = current
+            self._source_snapshots[relative] = (source_hash, _revision_for_pairs(current.items()))
+            self._detector.accept(relative, stamp)
+        else:
+            self._by_path.pop(relative, None)
+            self._source_snapshots.pop(relative, None)
+            self._detector.stamps.pop(relative, None)
+
+    def _verify_results(self, results: list[SearchResult]) -> bool:
+        valid = True
+        for relative in {result.path for result in results}:
+            _, source, _ = self._detector.read_stable(relative)
+            if hashlib.sha256(source.encode("utf-8")).hexdigest() != self._source_snapshots[relative][0]:
+                self._detector.dirty.add(relative)
+                valid = False
+        return valid
 
     def _set_revision(self, revision: str) -> None:
         self._revision = revision
@@ -334,67 +413,10 @@ class CodeIndex:
             ))
         return _collapse_parents(results)
 
-    def _lexical_candidates(
-        self,
-        query: str,
-        path_prefix: str | None,
-    ) -> list[_Candidate]:
-        payload = self.collection.get(include=["documents", "metadatas"])
-        ids = [str(item) for item in payload.get("ids") or []]
-        documents = payload.get("documents") or []
-        metadatas = payload.get("metadatas") or []
-        normalized_prefix = path_prefix.replace("\\", "/") if path_prefix else None
-        rows: list[tuple[str, str, dict[str, Any]]] = []
-        for chunk_id, document, metadata in zip(ids, documents, metadatas):
-            if not isinstance(metadata, dict):
-                continue
-            path = str(metadata.get("path", ""))
-            if normalized_prefix and not path.startswith(normalized_prefix):
-                continue
-            rows.append((chunk_id, str(document), metadata))
-
-        query_tokens = list(dict.fromkeys(tokenize(query)))
-        if not query_tokens or not rows:
-            return []
-        document_tokens = [tokenize(document) for _, document, _ in rows]
-        document_frequency = {
-            token: sum(token in set(tokens) for tokens in document_tokens)
-            for token in query_tokens
-        }
-        average_length = sum(len(tokens) for tokens in document_tokens) / len(document_tokens)
-        ranked: list[tuple[float, _Candidate]] = []
-        for (chunk_id, document, metadata), tokens in zip(rows, document_tokens):
-            frequencies = Counter(tokens)
-            score = 0.0
-            for token in query_tokens:
-                frequency = frequencies[token]
-                if not frequency:
-                    continue
-                frequency_in_docs = document_frequency[token]
-                inverse_document_frequency = math.log(
-                    1.0 + (len(rows) - frequency_in_docs + 0.5) / (frequency_in_docs + 0.5)
-                )
-                length_ratio = len(tokens) / average_length if average_length else 1.0
-                score += inverse_document_frequency * (
-                    frequency * 2.2 / (frequency + 1.2 * (0.25 + 0.75 * length_ratio))
-                )
-
-            query_set = set(query_tokens)
-            symbol_tokens = set(tokenize(str(metadata.get("symbol", ""))))
-            path_tokens = set(tokenize(str(metadata.get("path", ""))))
-            score += 2.5 * len(query_set & symbol_tokens)
-            score += 0.6 * len(query_set & path_tokens)
-            if score <= 0:
-                continue
-            ranked.append((score, _Candidate(
-                chunk_id=chunk_id,
-                result=_make_result(document, metadata, score),
-            )))
-        ranked.sort(key=lambda item: (-item[0], item[1].chunk_id))
-        maximum = ranked[0][0] if ranked else 1.0
+    def _lexical_candidates(self, query: str, path_prefix: str | None) -> list[_Candidate]:
         return _collapse_parents([
-            _Candidate(candidate.chunk_id, _with_score(candidate.result, score / maximum))
-            for score, candidate in ranked
+            _Candidate(key, _make_result(*self._lexical.rows[key], score))
+            for key, score in self._lexical.search(query, path_prefix)
         ])
 
     @staticmethod
@@ -489,7 +511,7 @@ def open_code_index(
 ) -> CodeIndex:
     """Open the persistent Chroma collection with a clear optional-dependency error."""
     try:
-        import chromadb  # type: ignore[import-not-found,import-untyped]
+        import chromadb  # type: ignore[import-not-found,import-untyped]  # noqa: F401
     except ImportError as exc:
         raise RuntimeError(
             "ChromaDB is not installed. Run: uv sync --extra rag"
@@ -508,18 +530,19 @@ def open_code_index(
     legacy_hash = embedder.identity == HashingEmbedder().identity
     if not legacy_hash:
         collection_name = f"{collection_name}_{embedder.identity}"
-    client = chromadb.PersistentClient(path=str(path))
     metadata = {"hnsw:space": "cosine"}
     if workspace:
         metadata["source_root"] = str(workspace.root)
         metadata["source_schema"] = "workspace-text-v1"
-    collection = client.get_or_create_collection(
-        name=collection_name,
-        metadata={**metadata, "embedding_identity": embedder.identity},
-    )
+    collection = open_collection(path, collection_name,
+                                 {**metadata, "embedding_identity": embedder.identity})
     if workspace and any((collection.metadata or {}).get(key) != value for key, value in metadata.items()):
         raise ValueError("RAG collection workspace binding or schema mismatch")
     stored_identity = (collection.metadata or {}).get("embedding_identity")
     if stored_identity != embedder.identity and not (stored_identity is None and legacy_hash):
         raise ValueError("RAG embedding identity mismatch; choose a fresh collection")
-    return CodeIndex(collection, embedder=embedder, workspace=workspace)
+    freshness = os.getenv("RAG_FRESHNESS", "incremental")
+    if freshness not in {"incremental", "strict"}:
+        raise ValueError("RAG_FRESHNESS must be incremental or strict")
+    return CodeIndex(collection, embedder=embedder, workspace=workspace,
+                     strict_freshness=freshness == "strict")
