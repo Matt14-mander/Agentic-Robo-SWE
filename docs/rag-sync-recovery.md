@@ -72,3 +72,9 @@ uv run pytest -q tests/test_rag_sync_recovery.py tests/test_rag.py \
 `tests/test_rag_pr_integration.py` 新增 5 项组合回归：三种策略覆盖已预热的另一索引实例
 恢复“推理失败但尚未写入 collection”的范围切换；普通同步/rebuild 覆盖 token 子片段
 恢复后的新父上下文。原有各 PR 的回归仍保留。
+
+集成版完整离线回归：548 passed、1 skipped、46 deselected（与上述平台/标记边界相同），
+报告 `.agent_state/merge-rag-full.xml`。相关既有回归 124 passed，新增组合回归 5 passed；
+独立 C++ 开发/公开保留集各 16 题的三组 hash-only 指标保持不变。全项目 Ruff、mypy
+（86 个源码文件）及 diff whitespace 检查通过。本轮未重新测量延迟，不把历史单 PR
+性能数字作为集成后的新实测。
