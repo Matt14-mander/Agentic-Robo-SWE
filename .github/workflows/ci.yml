@@ -25,7 +25,7 @@ jobs:
         run: |
           test -n "$ROBO_TEST_RUNNER_IMAGE"
           test -n "$ROBO_TEST_ORACLE_IMAGE"
-          uv run pytest -q tests/test_workspaces.py tests/test_cpp_workspace.py tests/test_workspace_rag.py tests/test_isolated_evaluation.py tests/test_repository_integration.py --junitxml=phase70-results.xml
+          uv run pytest -q tests/test_workspaces.py tests/test_cpp_workspace.py tests/test_workspace_rag.py tests/test_rag_sync_recovery.py tests/test_isolated_evaluation.py tests/test_repository_integration.py --junitxml=phase70-results.xml
       - name: Preserve architecture acceptance results
         if: always()
         uses: actions/upload-artifact@v4

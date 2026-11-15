@@ -25,6 +25,10 @@
   包括缓存命中与父片段上下文。跨进程通过 collection 文件锁和 generation 标记失效，
   具体边界、严格模式及性能数据见 [增量检索](rag-incremental-retrieval.md)。
 
+  已发起但未完成的同步例外：待完成记录独立保存于 artifacts 的 Chroma 目录中，查询会先
+  重试该次同步的根目录和 rebuild 设置，再读取索引。新文件尚未写入任何片段也可以恢复；
+  重新打开索引后沿用该记录，不扩展到整个 workspace。详见 [同步恢复协议](rag-sync-recovery.md)。
+
 ## 与 clangd 的分工
 
 Agent 可通过工具的 `strategy` 参数选择 lexical/vector/hybrid，也可通过 `--rag-strategy`

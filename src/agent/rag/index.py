@@ -19,6 +19,7 @@ from agent.rag.inverted import InvertedIndex
 from agent.rag.storage import TrackedCollection, open_collection
 from agent.rag.models import CodeChunk, IndexStats, ParentContext, SearchResult
 from agent.rag.settings import SearchStrategy
+from agent.rag.sync_state import SyncJournal
 from agent.tools._paths import PROJECT_ROOT, resolve_within_root
 from agent.workspace import Workspace, current_workspace
 from agent.rag.workspace_source import (
@@ -46,6 +47,7 @@ class CodeIndex:
         *,
         workspace: Workspace | None = None,
         strict_freshness: bool = False,
+        sync_state_path: Path | None = None,
     ) -> None:
         self.collection = collection
         self.workspace = workspace
@@ -54,6 +56,9 @@ class CodeIndex:
         self._revision: str | None = None
         # (source hash, indexed chunk revision), scoped to the paths already indexed.
         self._source_snapshots: dict[str, tuple[str, str]] = {}
+        self._sync_journal = SyncJournal(
+            workspace.root if workspace else PROJECT_ROOT, sync_state_path,
+        )
         self._parents: dict[str, CodeChunk] = {}
         self._parents_by_path: dict[str, set[str]] = {}
         self._by_path: dict[str, dict[str, str]] = {}
@@ -78,12 +83,15 @@ class CodeIndex:
 
     def _sync(self, roots: Iterable[str] | None, *, rebuild: bool) -> IndexStats:
         self._check_workspace()
+        # Recovery also enters here directly: discard all derived state on reload.
+        self._loaded = False
         roots = tuple(roots) if roots is not None else ((".",) if self.workspace else ("src",))
         files, chunks = (
             chunk_workspace(self.workspace, roots) if self.workspace else chunk_codebase(roots)
         )
         parents = {chunk.id: chunk for chunk in chunks}
         chunks = self._embedding_chunks(chunks)
+        self._sync_journal.begin(roots, rebuild)
         existing_payload = self.collection.get(include=["metadatas"])
         existing_ids = [str(item) for item in existing_payload.get("ids") or []]
         existing_metadatas = existing_payload.get("metadatas") or []
@@ -92,28 +100,32 @@ class CodeIndex:
             for chunk_id, metadata in zip(existing_ids, existing_metadatas)
             if isinstance(metadata, dict)
         }
-        if rebuild and existing_ids:
-            self.collection.delete(ids=existing_ids)
-            existing_hashes = {}
-
         current_ids = {chunk.id for chunk in chunks}
-        stale_ids = sorted(set(existing_hashes) - current_ids)
-        if stale_ids:
-            self.collection.delete(ids=stale_ids)
+        stale_ids = sorted(set(existing_ids) - current_ids)
 
         changed = [
             chunk for chunk in chunks
-            if existing_hashes.get(chunk.id) != chunk.revision_hash
+            if rebuild or existing_hashes.get(chunk.id) != chunk.revision_hash
         ]
-        for batch in _batches(changed, 128):
+        # Complete inference before mutating the collection, including rebuilds.
+        # Keep all old path metadata until every upsert succeeds. Partial writes
+        # retain the journal and are repaired before the next cache lookup.
+        prepared = [
+            (batch, self.embedder.embed([chunk.content for chunk in batch]))
+            for batch in _batches(changed, 128)
+        ]
+        for batch, embeddings in prepared:
             documents = [chunk.content for chunk in batch]
             self.collection.upsert(
                 ids=[chunk.id for chunk in batch],
                 documents=documents,
                 metadatas=[chunk.metadata() for chunk in batch],
-                embeddings=self.embedder.embed(documents),
+                embeddings=embeddings,
             )
+        if stale_ids:
+            self.collection.delete(ids=stale_ids)
 
+        self._sync_journal.clear()
         self._parents = parents
         self._parents_by_path = {}
         for key, parent in parents.items():
@@ -124,7 +136,7 @@ class CodeIndex:
             files=len(files),
             chunks=len(chunks),
             added_or_updated=len(changed),
-            deleted=len(stale_ids) + (len(existing_ids) if rebuild else 0),
+            deleted=len(stale_ids),
             unchanged=len(chunks) - len(changed),
         )
 
@@ -296,6 +308,11 @@ class CodeIndex:
         self._loaded = True
 
     def _ensure_revision(self) -> str:
+        # Check intent even when generation and cached source metadata are unchanged.
+        pending = self._sync_journal.load()
+        if pending is not None:
+            roots, rebuild = pending
+            self._sync(roots, rebuild=rebuild)
         tracked = isinstance(self.collection, TrackedCollection)
         token = self.collection.revision_token() if tracked else None
         if tracked:
@@ -544,5 +561,7 @@ def open_code_index(
     freshness = os.getenv("RAG_FRESHNESS", "incremental")
     if freshness not in {"incremental", "strict"}:
         raise ValueError("RAG_FRESHNESS must be incremental or strict")
+    journal_name = hashlib.sha256(str(collection.id).encode()).hexdigest()[:32]
     return CodeIndex(collection, embedder=embedder, workspace=workspace,
-                     strict_freshness=freshness == "strict")
+                     strict_freshness=freshness == "strict",
+                     sync_state_path=path / f"sync-{journal_name}.json")
