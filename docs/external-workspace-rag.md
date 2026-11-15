@@ -21,8 +21,15 @@
   子片段带精确行列范围，同一父窗口不重复占用结果名额。详见 [Token 切块](rag-token-chunking.md)。
 - 建索引是显式操作；查询自动刷新已索引文件，失败时不返回旧缓存。
   新文件以及删除/清空后重新加入的文件需要再次同步。切换源码根时，sync 以本次指定范围为准。
+  热查询通过文件变更元数据做增量检测，关键词使用倒排索引；返回前复核命中文件内容，
+  包括缓存命中与父片段上下文。跨进程通过 collection 文件锁和 generation 标记失效，
+  具体边界、严格模式及性能数据见 [增量检索](rag-incremental-retrieval.md)。
 
 ## 与 clangd 的分工
+
+Agent 可通过工具的 `strategy` 参数选择 lexical/vector/hybrid，也可通过 `--rag-strategy`
+设置会话默认值；不会改变 workspace 边界或自动启用 C++ 执行权限。独立的 20 文件、32 查询
+公开评测及配置示例见 [检索策略与评测](rag-strategy-selection.md)。
 
 1. 未知实现位置或概念查询：`search_code_knowledge` 返回当前 workspace 的候选片段。
 2. 精确字符串：grep；已知路径：`read_file_chunk`，确认实际符号行列。

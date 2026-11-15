@@ -229,9 +229,12 @@ Jina 代码语义模型；不可用时明确警告并回退到本地 hashing emb
 `--embedding hash` 保持无模型的离线基线，不需要额外 API Key。向量持久化在被 Git 忽略的
 `chroma_db/`。配置、复现命令与实测见 [代码语义 embedding](docs/semantic-code-embedding.md)。
 
-检索前会核对已索引文件的当前内容：`write_patch`、编辑器或其他进程修改源码后，
+检索前会核对已索引文件的变更元数据：`write_patch`、编辑器或其他进程修改源码后，
 下一次查询自动刷新变化的片段并使旧检索缓存失效；文件删除或清空后移除对应片段。
-未变化文件不重复切块或计算 embedding，但每次查询仍需读取已索引文件做内容哈希。
+持久化索引热查询只读取变化文件及返回结果对应的源码，不再全量读取片段、哈希源码或重新
+分词。关键词检索使用增量倒排索引；缓存命中也会复核命中文件的内容。仍有 O(已索引文件数)
+的元数据轮询。`RAG_FRESHNESS=strict` 可恢复全量内容检查，适用于变更元数据不可靠的文件系统。
+实现、边界和可复现性能对比见 [增量检索](docs/rag-incremental-retrieval.md)。
 刷新失败会报错，不回退到旧结果。新文件以及删除/清空后重新加入的文件仍需运行上述
 索引命令纳入检索范围；检索不会自动扩大原有索引范围。
 
@@ -283,13 +286,19 @@ Top-5 漏召回的 `semantic_search_tool` 提升到第 3 位。当前索引规�
 
 ### 9. Phase 3.2 Retrieval Cache
 
+Agent 的 `search_code_knowledge` 支持 `strategy="lexical"|"vector"|"hybrid"`；
+`scripts/run_agent.py --rag-strategy` 设置并保存会话默认值，省略时使用 `RAG_STRATEGY`
+或 `hybrid`。配置、恢复行为与独立 C++ 开发/保留集结果见
+[检索策略与评测](docs/rag-strategy-selection.md)。
+
 语义索引会按模型实际 token 预算拆分过长片段，检索后保留命中子片段和父片段上下文。
 同一父片段的多个命中合并为一个结果；升级需重新同步新的语义 collection，详见
 [Token 切块与父上下文](docs/rag-token-chunking.md)。
 
 实际 Agent 的重复源码检索使用进程内 LRU Cache，默认最多保存 128 个结果。缓存键包含
-标准化查询、`top_k`、路径前缀、检索策略和源码索引 revision。每次查询都会核对 Chroma
-中的 chunk 内容哈希；本进程或其它进程刷新索引后，旧结果会自动清空，不会返回过期代码。
+标准化查询、`top_k`、路径前缀、检索策略和源码索引 revision。持久化 collection 使用文件锁
+和 generation 标记协调本进程与其他新版进程的更新；generation 变化后重载派生索引并检查
+revision。请使用项目索引入口写入 Chroma，旧版或直接操作底层 collection 不参与此协议。
 
 缓存记录 hit、miss、bypass、invalidation、eviction、命中率和估算节省延迟。可通过重复
 查询检查行为：

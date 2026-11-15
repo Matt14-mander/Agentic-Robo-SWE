@@ -24,7 +24,7 @@ dev = [
 ]
 # —— Phase 2+ 预留 ——
 sandbox = ["e2b-code-interpreter>=2.7"]
-rag = ["chromadb>=1.5,<2", "numpy>=1.26,<3", "onnxruntime>=1.20,<2", "tokenizers>=0.20,<1"]
+rag = ["chromadb>=1.5.9,<2", "numpy>=1.26,<3", "onnxruntime>=1.20,<2", "tokenizers>=0.20,<1", "filelock>=3.16,<4"]
 checkpoint = ["langgraph-checkpoint-sqlite>=2.0"]
 simulation = ["mujoco>=3.2,<4"]
 
