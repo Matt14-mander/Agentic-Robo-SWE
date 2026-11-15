@@ -1,0 +1,324 @@
+{
+  "schema_version": 1,
+  "status": "complete",
+  "created_at": "2026-11-12T15:17:01.202641+00:00",
+  "case_count": 4,
+  "retrieval_cache_enabled": false,
+  "cases_sha256": "818ab55572530b382ff6bc6b4ca670f2cbd2c084e86b2ac56177da371cf9a34b",
+  "arms": {
+    "lexical": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.5,
+          "recall": 0.5,
+          "mrr": 0.5,
+          "path_hit_rate": 0.5,
+          "symbol_hit_rate": 0.5
+        },
+        "at_3": {
+          "hit_rate": 0.75,
+          "recall": 0.75,
+          "mrr": 0.625,
+          "path_hit_rate": 0.75,
+          "symbol_hit_rate": 0.75
+        },
+        "at_5": {
+          "hit_rate": 0.75,
+          "recall": 0.75,
+          "mrr": 0.625,
+          "path_hit_rate": 0.75,
+          "symbol_hit_rate": 0.75
+        }
+      },
+      "average_query_latency_ms": 4.896,
+      "retrieval": {
+        "embedding": {
+          "backend": "hash",
+          "version": 1,
+          "dimensions": 384,
+          "identity": "8c5983b920537e4737ec",
+          "fallback_reason": null
+        },
+        "source_revision": "cafe5e50a05e9257",
+        "chunk_count": 4
+      },
+      "model_load_seconds": 0.885,
+      "index_sync_seconds": 0.036,
+      "chunks_updated": 4,
+      "index_embedding": {
+        "backend": "hash",
+        "version": 1,
+        "dimensions": 384,
+        "identity": "8c5983b920537e4737ec",
+        "fallback_reason": null
+      },
+      "ranks": {
+        "angle_difference": 2,
+        "function_declaration": 1,
+        "stdin_driver": null,
+        "build_definition": 1
+      }
+    },
+    "hash_vector": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.25,
+          "recall": 0.25,
+          "mrr": 0.25,
+          "path_hit_rate": 0.25,
+          "symbol_hit_rate": 0.25
+        },
+        "at_3": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.5417,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        },
+        "at_5": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.5417,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        }
+      },
+      "average_query_latency_ms": 5.511,
+      "retrieval": {
+        "embedding": {
+          "backend": "hash",
+          "version": 1,
+          "dimensions": 384,
+          "identity": "8c5983b920537e4737ec",
+          "fallback_reason": null
+        },
+        "source_revision": "cafe5e50a05e9257",
+        "chunk_count": 4
+      },
+      "model_load_seconds": 0.885,
+      "index_sync_seconds": 0.036,
+      "chunks_updated": 4,
+      "index_embedding": {
+        "backend": "hash",
+        "version": 1,
+        "dimensions": 384,
+        "identity": "8c5983b920537e4737ec",
+        "fallback_reason": null
+      },
+      "ranks": {
+        "angle_difference": 2,
+        "function_declaration": 3,
+        "stdin_driver": 3,
+        "build_definition": 1
+      }
+    },
+    "hash_hybrid": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.5,
+          "recall": 0.5,
+          "mrr": 0.5,
+          "path_hit_rate": 0.5,
+          "symbol_hit_rate": 0.5
+        },
+        "at_3": {
+          "hit_rate": 0.75,
+          "recall": 0.75,
+          "mrr": 0.625,
+          "path_hit_rate": 0.75,
+          "symbol_hit_rate": 0.75
+        },
+        "at_5": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.6875,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        }
+      },
+      "average_query_latency_ms": 7.749,
+      "retrieval": {
+        "embedding": {
+          "backend": "hash",
+          "version": 1,
+          "dimensions": 384,
+          "identity": "8c5983b920537e4737ec",
+          "fallback_reason": null
+        },
+        "source_revision": "cafe5e50a05e9257",
+        "chunk_count": 4
+      },
+      "model_load_seconds": 0.885,
+      "index_sync_seconds": 0.036,
+      "chunks_updated": 4,
+      "index_embedding": {
+        "backend": "hash",
+        "version": 1,
+        "dimensions": 384,
+        "identity": "8c5983b920537e4737ec",
+        "fallback_reason": null
+      },
+      "ranks": {
+        "angle_difference": 2,
+        "function_declaration": 1,
+        "stdin_driver": 4,
+        "build_definition": 1
+      }
+    },
+    "semantic_vector": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        },
+        "at_3": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        },
+        "at_5": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 1.0,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        }
+      },
+      "average_query_latency_ms": 21.278,
+      "retrieval": {
+        "embedding": {
+          "backend": "semantic",
+          "model": "jinaai/jina-embeddings-v2-base-code",
+          "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+          "files": {
+            "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+            "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+          },
+          "identity": "9a0dc73795282c194900",
+          "dimensions": 768,
+          "max_tokens": 512,
+          "pooling": "masked-mean-l2-v1",
+          "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+          "threads": 4,
+          "batch_size": 4,
+          "texts_encoded": 8,
+          "truncated_texts": 0,
+          "fallback_reason": null
+        },
+        "source_revision": "cafe5e50a05e9257",
+        "chunk_count": 4
+      },
+      "model_load_seconds": 0.741,
+      "index_sync_seconds": 0.206,
+      "chunks_updated": 4,
+      "index_embedding": {
+        "backend": "semantic",
+        "model": "jinaai/jina-embeddings-v2-base-code",
+        "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+        "files": {
+          "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+          "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+        },
+        "identity": "9a0dc73795282c194900",
+        "dimensions": 768,
+        "max_tokens": 512,
+        "pooling": "masked-mean-l2-v1",
+        "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+        "threads": 4,
+        "batch_size": 4,
+        "texts_encoded": 4,
+        "truncated_texts": 0,
+        "fallback_reason": null
+      },
+      "ranks": {
+        "angle_difference": 1,
+        "function_declaration": 1,
+        "stdin_driver": 1,
+        "build_definition": 1
+      }
+    },
+    "semantic_hybrid": {
+      "metrics": {
+        "at_1": {
+          "hit_rate": 0.5,
+          "recall": 0.5,
+          "mrr": 0.5,
+          "path_hit_rate": 0.5,
+          "symbol_hit_rate": 0.5
+        },
+        "at_3": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.7083,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        },
+        "at_5": {
+          "hit_rate": 1.0,
+          "recall": 1.0,
+          "mrr": 0.7083,
+          "path_hit_rate": 1.0,
+          "symbol_hit_rate": 1.0
+        }
+      },
+      "average_query_latency_ms": 22.744,
+      "retrieval": {
+        "embedding": {
+          "backend": "semantic",
+          "model": "jinaai/jina-embeddings-v2-base-code",
+          "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+          "files": {
+            "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+            "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+          },
+          "identity": "9a0dc73795282c194900",
+          "dimensions": 768,
+          "max_tokens": 512,
+          "pooling": "masked-mean-l2-v1",
+          "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+          "threads": 4,
+          "batch_size": 4,
+          "texts_encoded": 12,
+          "truncated_texts": 0,
+          "fallback_reason": null
+        },
+        "source_revision": "cafe5e50a05e9257",
+        "chunk_count": 4
+      },
+      "model_load_seconds": 0.741,
+      "index_sync_seconds": 0.206,
+      "chunks_updated": 4,
+      "index_embedding": {
+        "backend": "semantic",
+        "model": "jinaai/jina-embeddings-v2-base-code",
+        "revision": "516f4baf13dec4ddddda8631e019b5737c8bc250",
+        "files": {
+          "tokenizer.json": "b01c78a902aa4facb2f47f95449f48e2f7bbfea5d2472ee2f6ce92323c6f86e5",
+          "model_quantized.onnx": "ed45870251c9f0cf656e78aab0d37a23489066df8a222bb1c8caf8a45f2cb16d"
+        },
+        "identity": "9a0dc73795282c194900",
+        "dimensions": 768,
+        "max_tokens": 512,
+        "pooling": "masked-mean-l2-v1",
+        "runtime": "onnxruntime:1.26.0:CPUExecutionProvider",
+        "threads": 4,
+        "batch_size": 4,
+        "texts_encoded": 4,
+        "truncated_texts": 0,
+        "fallback_reason": null
+      },
+      "ranks": {
+        "angle_difference": 2,
+        "function_declaration": 1,
+        "stdin_driver": 3,
+        "build_definition": 1
+      }
+    }
+  },
+  "source_revision": "cafe5e50a05e9257"
+}

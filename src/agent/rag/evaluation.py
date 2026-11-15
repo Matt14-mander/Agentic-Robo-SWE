@@ -291,6 +291,8 @@ def run_rag_evaluation(
         "metrics": {f"at_{k}": _metrics_at_k(results, k) for k in normalized_ks},
         "results": [result.to_dict() for result in results],
     }
+    if hasattr(index, "retrieval_manifest"):
+        report["retrieval"] = index.retrieval_manifest()
     report_path = destination / "report.json"
     _write_json_atomic(report_path, report)
     return report, report_path

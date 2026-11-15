@@ -1,0 +1,3 @@
+corpus/*.hpp text eol=lf
+dev.json text eol=lf
+heldout.json text eol=lf

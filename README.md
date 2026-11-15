@@ -223,12 +223,18 @@ uv run python scripts/index_codebase.py --root src --root examples
 Phase 3.0 使用 AST 按模块、函数、类和方法切块，保存路径、符号、行号和内容哈希；
 函数之间及文件末尾的模块语句、方法之间及之后的类体内容和注释均保留。
 装饰器随对应函数、类或方法切块，起始行号包含装饰器；嵌套/条件定义保留在所属片段中。
-重复执行只更新变化 chunk，并删除已消失 chunk。默认 hashing embedding 完全本地运行，
-无需下载模型或配置额外 API Key，向量持久化在被 Git 忽略的 `chroma_db/`。
+重复执行只更新变化 chunk，并删除已消失 chunk。默认 `auto` 优先使用已下载、校验通过的
+Jina 代码语义模型；不可用时明确警告并回退到本地 hashing embedding。两者使用独立 collection。
+通过 `scripts/download_code_embedding.py` 显式下载权重；`--embedding semantic` 严格启用，
+`--embedding hash` 保持无模型的离线基线，不需要额外 API Key。向量持久化在被 Git 忽略的
+`chroma_db/`。配置、复现命令与实测见 [代码语义 embedding](docs/semantic-code-embedding.md)。
 
-检索前会核对已索引文件的当前内容：`write_patch`、编辑器或其他进程修改源码后，
+检索前会核对已索引文件的变更元数据：`write_patch`、编辑器或其他进程修改源码后，
 下一次查询自动刷新变化的片段并使旧检索缓存失效；文件删除或清空后移除对应片段。
-未变化文件不重复切块或计算 embedding，但每次查询仍需读取已索引文件做内容哈希。
+持久化索引热查询只读取变化文件及返回结果对应的源码，不再全量读取片段、哈希源码或重新
+分词。关键词检索使用增量倒排索引；缓存命中也会复核命中文件的内容。仍有 O(已索引文件数)
+的元数据轮询。`RAG_FRESHNESS=strict` 可恢复全量内容检查，适用于变更元数据不可靠的文件系统。
+实现、边界和可复现性能对比见 [增量检索](docs/rag-incremental-retrieval.md)。
 刷新失败会报错，不回退到旧结果。新文件以及删除/清空后重新加入的文件仍需运行上述
 索引命令纳入检索范围；检索不会自动扩大原有索引范围。
 
@@ -280,6 +286,15 @@ Top-5 漏召回的 `semantic_search_tool` 提升到第 3 位。当前索引规�
 
 ### 9. Phase 3.2 Retrieval Cache
 
+Agent 的 `search_code_knowledge` 支持 `strategy="lexical"|"vector"|"hybrid"`；
+`scripts/run_agent.py --rag-strategy` 设置并保存会话默认值，省略时使用 `RAG_STRATEGY`
+或 `hybrid`。配置、恢复行为与独立 C++ 开发/保留集结果见
+[检索策略与评测](docs/rag-strategy-selection.md)。
+
+语义索引会按模型实际 token 预算拆分过长片段，检索后保留命中子片段和父片段上下文。
+同一父片段的多个命中合并为一个结果；升级需重新同步新的语义 collection，详见
+[Token 切块与父上下文](docs/rag-token-chunking.md)。
+
 索引同步会先完成向量计算，再写入新片段，最后删除过期片段。持久化索引保存独立的待完成
 同步记录；同步失败或进程重启后，下一次查询先重试原范围，再检查缓存。恢复失败会报错，
 不返回旧缓存或部分结果。协议、重建统计与边界见 [索引同步恢复](docs/rag-sync-recovery.md)。
@@ -287,8 +302,9 @@ Top-5 漏召回的 `semantic_search_tool` 提升到第 3 位。当前索引规�
 实际 Agent 的重复源码检索使用进程内 LRU Cache，默认最多保存 128 个结果。缓存键包含
 原始查询文本（保留大小写、空格、换行和缩进）、`top_k`、路径前缀、检索策略和源码索引
 revision。不同查询不会因小写化或空白合并而共享结果；相同查询和检索参数仍可命中缓存。
-每次查询都会核对 Chroma
-中的 chunk 内容哈希；本进程或其它进程刷新索引后，旧结果会自动清空，不会返回过期代码。
+持久化 collection 使用文件锁和 generation 标记协调本进程与其他新版进程的更新；
+generation 变化后重载派生索引并检查 revision。请使用项目索引入口写入 Chroma，
+旧版或直接操作底层 collection 不参与此协议。
 
 缓存记录 hit、miss、bypass、invalidation、eviction、命中率和估算节省延迟。可通过重复
 查询检查行为：

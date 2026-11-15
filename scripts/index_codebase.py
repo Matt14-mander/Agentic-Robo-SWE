@@ -6,10 +6,12 @@ import argparse
 import sys
 
 from agent.rag import open_code_index
+from agent.rag.cli import add_embedding_arguments, embedding_config
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Index source code into persistent ChromaDB")
+    add_embedding_arguments(parser)
     parser.add_argument("--workspace", help="External target repository; defaults to the harness")
     parser.add_argument("--artifact-root", help="External workspace artifacts, outside the target")
     parser.add_argument(
@@ -48,7 +50,7 @@ def main() -> int:
         if args.workspace and args.persist_dir:
             raise ValueError("--persist-dir cannot override workspace RAG artifacts")
         workspace = Workspace.create(args.workspace, args.artifact_root) if args.workspace else None
-        index = open_code_index(args.persist_dir, workspace=workspace)
+        index = open_code_index(args.persist_dir, workspace=workspace, embedding=embedding_config(args))
         stats = index.sync(args.roots, rebuild=args.rebuild)
     except (RuntimeError, ValueError, OSError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
@@ -59,6 +61,7 @@ def main() -> int:
         f"({stats.added_or_updated} updated, {stats.unchanged} unchanged, "
         f"{stats.deleted} deleted)"
     )
+    print(f"Embedding: {index.embedder.describe()}")
     if args.query:
         if args.repeat_query < 1:
             print("ERROR: --repeat-query must be positive", file=sys.stderr)

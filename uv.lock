@@ -43,6 +43,10 @@ dev = [
 ]
 rag = [
     { name = "chromadb" },
+    { name = "filelock" },
+    { name = "numpy" },
+    { name = "onnxruntime" },
+    { name = "tokenizers" },
 ]
 sandbox = [
     { name = "e2b-code-interpreter" },
@@ -53,8 +57,9 @@ simulation = [
 
 [package.metadata]
 requires-dist = [
-    { name = "chromadb", marker = "extra == 'rag'", specifier = ">=1.5,<2" },
+    { name = "chromadb", marker = "extra == 'rag'", specifier = ">=1.5.9,<2" },
     { name = "e2b-code-interpreter", marker = "extra == 'sandbox'", specifier = ">=2.7" },
+    { name = "filelock", marker = "extra == 'rag'", specifier = ">=3.16,<4" },
     { name = "langchain-anthropic", specifier = ">=0.2" },
     { name = "langchain-core", specifier = ">=0.3" },
     { name = "langchain-openai", specifier = ">=0.2" },
@@ -63,11 +68,14 @@ requires-dist = [
     { name = "langgraph-cli", extras = ["inmem"], marker = "extra == 'dev'", specifier = ">=0.1.55" },
     { name = "mujoco", marker = "extra == 'simulation'", specifier = ">=3.2,<4" },
     { name = "mypy", marker = "extra == 'dev'" },
+    { name = "numpy", marker = "extra == 'rag'", specifier = ">=1.26,<3" },
+    { name = "onnxruntime", marker = "extra == 'rag'", specifier = ">=1.20,<2" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23" },
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "ruff", marker = "extra == 'dev'" },
+    { name = "tokenizers", marker = "extra == 'rag'", specifier = ">=0.20,<1" },
 ]
 provides-extras = ["dev", "sandbox", "rag", "checkpoint", "simulation"]
 

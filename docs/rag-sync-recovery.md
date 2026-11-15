@@ -38,8 +38,9 @@ embedding 在任意批次失败时，原有索引内容保持不变。写入或�
 ## 边界
 
 - 这是可重试协议，不是 Chroma 多批次 ACID 事务或完整旧版本快照回滚。
-- 同一个 CodeIndex 实例通过锁串行化 sync 和 search。仍要求每个 collection 单写者，
-  不保证多个进程或多个实例并发同步时的事务隔离；直接读取底层 collection 绕过恢复检查。
+- 同一个 CodeIndex 实例通过锁串行化 sync 和 search。2026-11-15 集成增量检索后，
+  新版持久化入口还使用同一存储目录的共享文件锁，协调多个实例/进程的恢复、查询与同步。
+  自定义 collection 仍由调用方协调单写者；直接读取底层 collection 绕过恢复检查。
 - 全部待更新向量需暂存内存，内存开销随本轮更新片段数增长。
 - 源码读取/切块在持久化任务前失败时，不修改已有 collection；修复输入后重新执行 sync。
 
@@ -60,3 +61,20 @@ crocoddyl）；结果保存在 `.agent_state/sync-recovery-full.xml`。全项目
 uv run pytest -q tests/test_rag_sync_recovery.py tests/test_rag.py \
   tests/test_workspace_rag.py tests/test_rag_evaluation.py tests/test_rag_chunking.py -m "not cpp"
 ```
+
+## 2026-11-15 PR 集成
+
+恢复日志现与真实 embedding、token 子片段、精确查询缓存键和增量倒排索引共同工作。
+每次查询先检查 pending intent，即使 collection generation 未改变也必须恢复；恢复同步
+完成后重新加载派生状态，再进行检索和返回前源码校验。同步采用子片段 revision_hash，
+并重新建立父上下文映射。缓存继续保留原始查询文本，不重新引入大小写或空白合并。
+
+`tests/test_rag_pr_integration.py` 新增 5 项组合回归：三种策略覆盖已预热的另一索引实例
+恢复“推理失败但尚未写入 collection”的范围切换；普通同步/rebuild 覆盖 token 子片段
+恢复后的新父上下文。原有各 PR 的回归仍保留。
+
+集成版完整离线回归：548 passed、1 skipped、46 deselected（与上述平台/标记边界相同），
+报告 `.agent_state/merge-rag-full.xml`。相关既有回归 124 passed，新增组合回归 5 passed；
+独立 C++ 开发/公开保留集各 16 题的三组 hash-only 指标保持不变。全项目 Ruff、mypy
+（86 个源码文件）及 diff whitespace 检查通过。本轮未重新测量延迟，不把历史单 PR
+性能数字作为集成后的新实测。
